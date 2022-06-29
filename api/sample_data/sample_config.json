@@ -1,0 +1,6 @@
+{
+    "custom_fields": [
+        {"id": "g_len", "col": "g_len", "name": "Gene length"},
+        {"id": "corrected_lca", "col": "corrected_lca", "name": "Corrected LCA"}
+    ]
+}
