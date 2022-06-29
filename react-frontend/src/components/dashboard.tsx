@@ -33,7 +33,6 @@ class Dashboard extends React.Component<Props, State> {
 	}
 
     handleTextChange(newRow: any, new_seq: string) {
-        console.log(newRow)
         this.setState({selected_row: newRow});
         this.setState({aa_seq: new_seq})
       }
