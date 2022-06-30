@@ -7,32 +7,63 @@ import Col from "react-bootstrap/esm/Col";
 import Accordion from 'react-bootstrap/Accordion';
 import Button from 'react-bootstrap/Button';
 import CustomOutput from './custom_output';
-
+import { Modal } from 'react-bootstrap';
+import MultiSelectFields from './MultiSelectFields'
 
 interface SelectionData {
     row: {g_name: "Pick a gene", taxon_assignment: "Pick a gene", plot_label: "Pick a gene", best_hit: "Pick a gene", c_name: "Pick a gene", bh_evalue: 0, best_hitID: "?"};
     aa_seq: string;
 }
 
-// Information on selected scatterplot point
+
+/**
+ * Customizable representation of table rows for a selected dot
+ */
 class SelectionView extends React.Component<any, any> {
   constructor(props: any){
 		super(props);
-		this.state = { table_data: [], key: "", loading: false}
-    this.state = { custom_fields: []}
+    const options = [{ value:'One', selected:true }, { value: 'Two' }, { value:'Three' }]
+    this.state = { custom_fields: [], show_field_modal: false, options: options}
 	}
 
-  // Call API upon component mount
+  /**
+   * Fetch user configs on componenMount
+   */
 	componentDidMount() {
 		const endpoint = "http://127.0.0.1:5000/api/v1/data/userconfig";
 		fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {
-        // render additional components
+        // catch networking errors
+        if (data === undefined) {
+          data = []
+        }
 				this.setState( {custom_fields: data.custom_fields} )
 			})
 	}
   
+  /**
+   * Toogle modal open
+   */
+  showModal = () => {
+    this.setState({ show_field_modal: true });
+  };
+
+  /**
+   * Toggle modal closed
+   */
+  hideModal = () => {
+    this.setState({ show_field_modal: false });
+  };
+
+  /**
+   * Selection passed upwards
+   * @param fields JSON
+   */
+  handleFieldsChange = (fields: any) => {
+    this.setState({ custom_fields: fields})
+  }
+
   render() {
     return(
       <Card className="m-2">
@@ -123,11 +154,29 @@ class SelectionView extends React.Component<any, any> {
                     />
                 </InputGroup>
               </Col>
+              <Col className='md-2' xs={3}> 
+                <Button className='m-2' onClick={this.showModal}>
+                  <span className='bi bi-list-ul m-2'/>More Fields
+                </Button>
+              </Col>
             </Row>
+            <Modal show={this.state.show_field_modal} handleClose={this.hideModal}>
+              <Modal.Header>
+                <Modal.Title>Choose custom fields</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                <MultiSelectFields
+                onFieldsChange={this.handleFieldsChange}
+                default_fields={this.state.custom_fields}/>  
+              </Modal.Body>
+              <Modal.Footer>
+                <Button onClick={this.hideModal}>Close</Button>
+              </Modal.Footer>
+            </Modal>
             <Row>
               { // Load custom fields from prop and render additional UI elements
               this.state.custom_fields.map((item: any) => (
-                <CustomOutput id={item.id} col={item.col} row={this.props.row} name={item.name}/>
+                <CustomOutput col={item.value} row={this.props.row} name={item.label}/>
               ))}
             </Row>
             <Row>
