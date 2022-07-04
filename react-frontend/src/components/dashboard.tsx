@@ -45,21 +45,6 @@ class Dashboard extends React.Component<Props, State> {
                 <Col xs={8}>
                     <Scatter3D
                     handleTextChange={this.handleTextChange}/>
-                    <Row>
-                        <Col xs={1}>
-                            <Form>
-                                <Form.Check 
-                                    type="switch"
-                                    id="custom-switch"
-                                    label="Auto-size"
-                                />
-                            </Form>
-                        </Col>
-                        <Col xs={6}>
-                            <Form.Label>Dot size</Form.Label>
-                            <Form.Range min={1} max={20} step={1} />
-                        </Col>
-                    </Row>
                 </Col>
                 <Col>
                      <Tabs>

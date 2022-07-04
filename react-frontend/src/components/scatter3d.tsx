@@ -1,5 +1,8 @@
 import { Component } from 'react';
 import Plot from 'react-plotly.js';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import Form from 'react-bootstrap/Form';
 
 /**
  * Main Scatterplot Component
@@ -12,7 +15,9 @@ class Scatter3D extends Component<any, any> {
 			traces: [], // traces dicts for plotly
 			selected_gene: "", // g_name
 			aa_seq: "", // inherited
-			ui_revision: "true" // bound to plot to preserve camera position
+			ui_revision: "true", // bound to plot to preserve camera position
+			auto_size: true, // automatically size dots in scatterplot
+			marker_size: 10
 		}
         this.handleTextChange = this.handleTextChange.bind(this);
 	}
@@ -25,7 +30,8 @@ class Scatter3D extends Component<any, any> {
 		fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {
-				this.setState( {data: data} )
+				this.setState( {data: data} );
+				this.set_auto_size(data);
 			})
 	}
 
@@ -52,6 +58,39 @@ class Scatter3D extends Component<any, any> {
 	legend_lock_uirevision(){
 		this.setState({ ui_revision: "true" })
 		return(true)
+	}
+
+	/**
+	 * Set automatic marker size
+	 */
+	set_auto_size(data: any){
+		if (data == undefined) {
+			data = this.state.data
+		}
+		let total_points = 0;
+		// overall size of all trace arrays
+		for (var trace of data) {
+			total_points = total_points + trace.length
+		}
+		// this was chosen arbitrarily
+		let new_size = 65 - Math.round(total_points / 10)
+		// set a minimum size arbitrarily
+		if (new_size < 3) {
+			new_size = 3
+		}
+		this.setState( { marker_size: new_size } )
+	}
+
+	/**
+	 * Toggle automatic sizing of plot markers
+	 */
+	toggle_auto_size(){
+		// toggle
+		this.setState({ auto_size: !this.state.auto_size })
+		// update markers if automatic sizing was enabled
+		if (this.state.auto_size == false) {
+			this.set_auto_size(undefined)
+		}
 	}
 
 	/**
@@ -93,10 +132,28 @@ class Scatter3D extends Component<any, any> {
                 z: z,
                 name: label,
                 text: label,
+				marker: {
+					size: this.state.marker_size
+				}
             }
             traces.push(trace)
         })
 		return traces
+	}
+
+	build_plot() {
+		return (
+			<Plot
+				divId='scatterplot'
+					data = {this.transformData(this.state.data)}
+					layout = {{autosize: true, showlegend: true, uirevision: this.state.ui_revision}}
+                    onClick={(e: any) => this.handleTextChange(this.state.data[e.points[0].curveNumber][e.points[0].pointNumber])}
+					useResizeHandler = {true}
+    				style = {{width: "100%", height: 800}}
+					onLegendClick={(e: any) => this.legend_lock_uirevision()}
+					
+				/>
+		)
 	}
 
 	/**
@@ -106,16 +163,24 @@ class Scatter3D extends Component<any, any> {
 	render() {
 		return (
 			<div>
-				<Plot
-				divId='scatterplot'
-					data = {this.transformData(this.state.data)}
-					layout = {{autosize: true, showlegend: true, uirevision: this.state.ui_revision}}
-                    onClick={(e: any) => this.handleTextChange(this.state.data[e.points[0].curveNumber][e.points[0].pointNumber])}
-					useResizeHandler = {true}
-    				style = {{width: "100%", height: 800}}
-					onLegendClick={(e: any) => this.legend_lock_uirevision()}
-
-				 />
+				{this.build_plot()}
+				<Row>
+                    <Col xs={1}>
+                        <Form>
+                            <Form.Check 
+                                type="switch"
+                                id="custom-switch"
+                                label="Auto-size"
+								checked={this.state.auto_size}
+								onChange={(e: any) => this.toggle_auto_size()}
+                            />
+                        </Form>
+                    </Col>
+                    <Col xs={6}>
+                        <Form.Label>Dot size</Form.Label>
+                        <Form.Range min={1} max={20} step={1} />
+                    </Col>
+                </Row>
 			</div>
 		)
 	}

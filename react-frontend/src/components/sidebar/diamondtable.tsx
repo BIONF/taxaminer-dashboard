@@ -25,7 +25,7 @@ class Table extends Component<any, any> {
 		    fetch(endpoint)
 			    .then(response => response.json())
 			    .then(data => {
-				    this.setState( {table_data: data}, () => {console.log(this.state)})
+				    this.setState( {table_data: data} )
                     this.setState({loading: false})
 			    })
         }

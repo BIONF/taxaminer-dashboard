@@ -77,8 +77,6 @@ class SelectionView extends React.Component<any, any> {
                 <InputGroup.Text id="gene-info-name">Gene Name</InputGroup.Text>
                   <Form.Control
                     placeholder="Selected a Gene to get started"
-                    aria-label="Username"
-                    aria-describedby="basic-addon1"
                     contentEditable={false}
                     value={this.props.row.g_name}
                   />
@@ -86,11 +84,9 @@ class SelectionView extends React.Component<any, any> {
             </Col>
             <Col className="md-2">
               <InputGroup className="m-2">
-                <InputGroup.Text id="gene-info-name">Label</InputGroup.Text>
+                <InputGroup.Text id="gene-label">Label</InputGroup.Text>
                   <Form.Control
                     placeholder="Selected a Gene to get started"
-                    aria-label="Username"
-                    aria-describedby="basic-addon1"
                     contentEditable={false}
                     value={this.props.row.plot_label}
                     />
@@ -100,11 +96,9 @@ class SelectionView extends React.Component<any, any> {
           <Row>
             <Col className="md-2" xs={8}>
               <InputGroup className="m-2">
-                <InputGroup.Text id="gene-info-name">Best hit</InputGroup.Text>
+                <InputGroup.Text id="best-hit">Best hit</InputGroup.Text>
                   <Form.Control
                     placeholder="Selected a Gene to get started"
-                    aria-label="Username"
-                    aria-describedby="basic-addon1"
                     contentEditable={false}
                     value={this.props.row.best_hit}
                   />
@@ -112,11 +106,9 @@ class SelectionView extends React.Component<any, any> {
             </Col>
             <Col className='md-2'>
               <InputGroup className="m-2">
-                  <InputGroup.Text id="gene-info-name">ID</InputGroup.Text>
+                  <InputGroup.Text id="ncbi-id">ID</InputGroup.Text>
                     <Form.Control
                     placeholder="None"
-                    aria-label="Username"
-                    aria-describedby="basic-addon1"
                     contentEditable={false}
                     value={this.props.row.best_hitID}
                     />
@@ -132,11 +124,9 @@ class SelectionView extends React.Component<any, any> {
             <Row>
               <Col className="md-2">
                 <InputGroup className="m-2">
-                  <InputGroup.Text id="gene-info-name">Contig</InputGroup.Text>
+                  <InputGroup.Text id="contig">Contig</InputGroup.Text>
                   <Form.Control
                     placeholder="Selected a Gene to get started"
-                    aria-label="Username"
-                    aria-describedby="basic-addon1"
                     contentEditable={false}
                     value={this.props.row.c_name}
                   />
@@ -144,11 +134,9 @@ class SelectionView extends React.Component<any, any> {
               </Col>
               <Col className="md-2">
                 <InputGroup className="m-2">
-                  <InputGroup.Text id="gene-info-name">e-value</InputGroup.Text>
+                  <InputGroup.Text id="e-value">e-value</InputGroup.Text>
                     <Form.Control
                       placeholder="Selected a Gene to get started"
-                      aria-label="Username"
-                      aria-describedby="basic-addon1"
                       contentEditable={false}
                       value={this.props.row.bh_evalue}
                     />
