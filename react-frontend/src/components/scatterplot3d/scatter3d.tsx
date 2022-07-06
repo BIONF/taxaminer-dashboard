@@ -4,6 +4,9 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Form from 'react-bootstrap/Form';
 import { InputGroup } from 'react-bootstrap';
+import Select from 'react-select';
+
+const colors = require("./colors.json")
 
 /**
  * Main Scatterplot Component
@@ -18,8 +21,10 @@ class Scatter3D extends Component<any, any> {
 			aa_seq: "", // inherited
 			ui_revision: "true", // bound to plot to preserve camera position
 			auto_size: true, // automatically size dots in scatterplot
-			marker_size: 5,
-			manual_size: 5
+			marker_size: 5, // actual dot size in the plot
+			manual_size: 5, // dot size selected by user
+			color_palette: "rainbow", // currently selected color palette
+			color_options: colors.options // color palette options
 		}
         this.handleTextChange = this.handleTextChange.bind(this);
 	}
@@ -53,13 +58,19 @@ class Scatter3D extends Component<any, any> {
     }
 
 	/**
-	 * This fixes a problem where clicking on the legend resets the camera.
+	 * This fixes a problem where some interactions reset the camera.
 	 * Manually updating the uirevision state blocks plot resets
 	 * @returns True (as required by OnLegendClick() => )
 	 */
-	legend_lock_uirevision(){
+	lock_uirevision(){
 		this.setState({ ui_revision: "true" })
 		return(true)
+	}
+
+	set_color_palette(key: string){
+		var locked = this.lock_uirevision()
+		console.log(key)
+		this.setState({color_palette: key})
 	}
 
 	/**
@@ -165,11 +176,19 @@ class Scatter3D extends Component<any, any> {
 			<Plot
 				divId='scatterplot'
 					data = {this.transformData(this.state.data)}
-					layout = {{autosize: true, showlegend: true, uirevision: this.state.ui_revision}}
+					layout = {{
+						autosize: true,
+						showlegend: true,
+						uirevision: this.state.ui_revision,
+						// @ts-ignore
+						// overrides are incomplete here, ignore for now
+						legend: {itemsizing: 'constant'},
+						colorway : colors.palettes[this.state.color_palette]
+						}}
                     onClick={(e: any) => this.handleTextChange(this.state.data[e.points[0].curveNumber][e.points[0].pointNumber])}
 					useResizeHandler = {true}
     				style = {{width: "100%", height: 800}}
-					onLegendClick={(e: any) => this.legend_lock_uirevision()}
+					onLegendClick={(e: any) => this.lock_uirevision()}
 					
 				/>
 		)
@@ -204,9 +223,19 @@ class Scatter3D extends Component<any, any> {
 								step={1}
 								defaultValue={5}
 								onChange={(e :any) => this.set_manual_size(e.target.value)}
+								className="m-2"
 							/>
 						</InputGroup>
                     </Col>
+					<Col>
+						<Form.Label>Color Palette</Form.Label>
+						<Select
+						defaultInputValue='Rainbow'
+						defaultValue={"rainbow"}
+						options={this.state.color_options}
+						onChange={(e: any) => this.set_color_palette(e.value)}
+						/>
+					</Col>
                 </Row>
 			</div>
 		)

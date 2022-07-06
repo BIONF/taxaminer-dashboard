@@ -7,7 +7,7 @@ import { TopBar } from './topbar';
 import { DataSetSelector } from './sidebar/dataset_selector';
 import SelectionView from './sidebar/selection/selection';
 import { DataSetMeta } from './sidebar/dataset_metadata';
-import Scatter3D from './scatter3d';
+import Scatter3D from './scatterplot3d/scatter3d';
 import Form from 'react-bootstrap/Form';
 import { FilterUI } from './sidebar/filterui';
 import Table from './sidebar/diamondtable';
