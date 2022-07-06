@@ -3,6 +3,7 @@ import Plot from 'react-plotly.js';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Form from 'react-bootstrap/Form';
+import { InputGroup } from 'react-bootstrap';
 
 /**
  * Main Scatterplot Component
@@ -17,7 +18,8 @@ class Scatter3D extends Component<any, any> {
 			aa_seq: "", // inherited
 			ui_revision: "true", // bound to plot to preserve camera position
 			auto_size: true, // automatically size dots in scatterplot
-			marker_size: 10
+			marker_size: 5,
+			manual_size: 5
 		}
         this.handleTextChange = this.handleTextChange.bind(this);
 	}
@@ -61,6 +63,17 @@ class Scatter3D extends Component<any, any> {
 	}
 
 	/**
+	 * Fire if the size slider was changed
+	 * @param size value of the slider
+	 */
+	set_manual_size(size: number) {
+		if (this.state.auto_size === false) {
+			this.setState( { marker_size: size, manual_size: size} )
+		} else {
+			this.setState( { manual_size: size} )
+		}
+	}
+	/**
 	 * Set automatic marker size
 	 */
 	set_auto_size(data: any){
@@ -90,6 +103,8 @@ class Scatter3D extends Component<any, any> {
 		// update markers if automatic sizing was enabled
 		if (this.state.auto_size == false) {
 			this.set_auto_size(undefined)
+		} else {
+			this.setState( { marker_size: this.state.manual_size} )
 		}
 	}
 
@@ -141,6 +156,10 @@ class Scatter3D extends Component<any, any> {
 		return traces
 	}
 
+	/**
+	 * Build the 3D scatterplot
+	 * @returns Plotly Plot as React component
+	 */
 	build_plot() {
 		return (
 			<Plot
@@ -176,9 +195,17 @@ class Scatter3D extends Component<any, any> {
                             />
                         </Form>
                     </Col>
-                    <Col xs={6}>
-                        <Form.Label>Dot size</Form.Label>
-                        <Form.Range min={1} max={20} step={1} />
+                    <Col xs={5}>
+						<InputGroup>
+							<Form.Label>Dot size</Form.Label>
+							<Form.Range 
+								min={1} 
+								max={10}
+								step={1}
+								defaultValue={5}
+								onChange={(e :any) => this.set_manual_size(e.target.value)}
+							/>
+						</InputGroup>
                     </Col>
                 </Row>
 			</div>
