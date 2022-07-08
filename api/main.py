@@ -97,7 +97,7 @@ def summary():
     return jsonify(data)
 
 
-@app.route('/api/v1/data/userconfig', methods=['GET'])
+@app.route('/api/v1/data/userconfig', methods=['GET', 'PUT'])
 @cross_origin()
 def get_config():
     """
@@ -106,10 +106,20 @@ def get_config():
     """
     query_parameters = request.args
 
-    data = file_io.load_user_config()
-
-    # return as json
-    return data
+    # get user settings
+    if request.method == "GET":
+        data = file_io.load_user_config()
+        # return as json
+        return data
+    
+    # set user settings
+    elif request.method == "PUT":
+        settings = file_io.parse_user_config()
+        # apply changes
+        for key in request.json.keys():
+            settings[key] = request.json[key]
+        file_io.write_user_config(settings)
+        return "OK"
 
 
 if __name__ == "__main__":

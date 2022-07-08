@@ -13,7 +13,7 @@ class CustomOutput extends React.Component<any, any> {
     render() {
         return (
             <>
-            <Col className="md-2">
+            <Col className="md-2" xs={6}>
                     <InputGroup className="m-2">
                         <InputGroup.Text id={this.props.id}>{this.props.name}</InputGroup.Text>
                         <Form.Control

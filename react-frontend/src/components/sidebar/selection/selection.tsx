@@ -53,7 +53,18 @@ class SelectionView extends React.Component<any, any> {
    * Toggle modal closed
    */
   hideModal = () => {
+    // Hide modal
     this.setState({ show_field_modal: false });
+
+    // Save user settings to API
+    const request = {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+      body: JSON.stringify({ custom_fields: this.state.custom_fields })
+    };
+
+    fetch("http://127.0.0.1:5000/api/v1/data/userconfig", request)
+    .then(response => console.log(response))
   };
 
   /**
@@ -114,7 +125,7 @@ class SelectionView extends React.Component<any, any> {
                     />
                     <Button 
                     id="button.ncbi" 
-                    href={'https://www.ncbi.nlm.nih.gov/taxonomy/?term=' + this.props.row.best_hitID.toString()}
+                    href={'https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=' + this.props.row.best_hitID.toString()}
                     target="_blank">
                       <span className="bi bi-box-arrow-up-right"></span>
                     </Button>

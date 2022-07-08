@@ -81,3 +81,13 @@ def load_user_config():
     
     return "".join(lines)
 
+def parse_user_config():
+    """Parse user config to JSON"""
+    with open('./sample_data/sample_config.json', 'r') as f:
+        data = json.load(f)
+    return data
+
+def write_user_config(json_data):
+    """Write user config to disk"""
+    with open('./sample_data/sample_config.json', 'w') as json_file:
+        json.dump(json_data, json_file)

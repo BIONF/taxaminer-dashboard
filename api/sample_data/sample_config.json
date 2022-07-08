@@ -1,6 +1,1 @@
-{
-    "custom_fields": [
-        {"value": "g_len", "label": "Gene length"},
-        {"value": "corrected_lca", "label": "Corrected LCA"}
-    ]
-}
+{"custom_fields": [{"value": "g_len", "label": "Gene length"}]}
