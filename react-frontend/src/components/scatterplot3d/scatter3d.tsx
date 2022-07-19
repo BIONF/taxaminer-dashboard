@@ -24,7 +24,8 @@ class Scatter3D extends Component<any, any> {
 			marker_size: 5, // actual dot size in the plot
 			manual_size: 5, // dot size selected by user
 			color_palette: "rainbow", // currently selected color palette
-			color_options: colors.options // color palette options
+			color_options: colors.options, // color palette options
+			camera_ratios: {xy: 1.0, xz: 1.0, yz: 1.0}
 		}
         this.handleTextChange = this.handleTextChange.bind(this);
 	}
@@ -41,6 +42,29 @@ class Scatter3D extends Component<any, any> {
 				this.set_auto_size(data);
 			})
 	}
+
+	/**
+	 * Pass camera data to parent to update PCA Plot
+	 * @param e event data
+	 */
+	passCameraData(e: any) {
+		if(e['scene.camera'].up){
+			// coordinate ratios
+			const my_camera = e['scene.camera'].eye
+			const xy = Math.round(my_camera.x / my_camera.y * 100) / 100
+			const xz = Math.round(my_camera.x / my_camera.z * 100) / 100
+			const yz = Math.round(my_camera.y / my_camera.z * 100) / 100
+
+			const new_ratios = {xy: xy, xz: xz, yz: yz}
+			const old_ratios = this.state.camera_ratios
+
+			// If ratios have changed
+			if (new_ratios.xy !== old_ratios.xy || new_ratios.xz !== old_ratios.xz || new_ratios.yz !== old_ratios.yz) {
+				this.props.sendCameraData(e['scene.camera'])
+				this.setState({camera_ratios: new_ratios})
+			}
+		}
+    }
 
 	/**
 	 * A dot in the plot was clicked => update current row, pass to parent
@@ -69,7 +93,6 @@ class Scatter3D extends Component<any, any> {
 
 	set_color_palette(key: string){
 		var locked = this.lock_uirevision()
-		console.log(key)
 		this.setState({color_palette: key})
 	}
 
@@ -186,9 +209,11 @@ class Scatter3D extends Component<any, any> {
 						colorway : colors.palettes[this.state.color_palette]
 						}}
                     onClick={(e: any) => this.handleTextChange(this.state.data[e.points[0].curveNumber][e.points[0].pointNumber])}
+					onRelayout={(e: any) => this.passCameraData(e)}
 					useResizeHandler = {true}
     				style = {{width: "100%", height: 800}}
 					onLegendClick={(e: any) => this.lock_uirevision()}
+					config={{scrollZoom: true}}
 					
 				/>
 		)

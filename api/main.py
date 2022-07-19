@@ -122,5 +122,22 @@ def get_config():
         return "OK"
 
 
+@app.route('/api/v1/data/pca_contribution', methods=['GET'])
+@cross_origin()
+def pca_contributions():
+    """
+    Amino acid sequence for a specific data point
+    :return:
+    """
+    query_parameters = request.args
+
+    my_id = query_parameters.get("id")
+
+    data = file_io.load_pca_coords()
+
+    # return as json
+    return jsonify(data)
+
+
 if __name__ == "__main__":
     app.run()

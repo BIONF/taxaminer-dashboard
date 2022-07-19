@@ -1,1 +1,1 @@
-{"custom_fields": [{"value": "g_len", "label": "Gene length"}]}
+{"custom_fields": [{"value": "g_len", "label": "Gene length"}, {"label": "Contig length", " value": "c_len"}]}

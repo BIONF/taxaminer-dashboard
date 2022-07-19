@@ -1,6 +1,8 @@
 import csv
 import json
 
+from flask import jsonify
+
 
 def convert_csv_to_json(path):
     """Load the main scatterplot datafile and convert it to JSON"""
@@ -91,3 +93,21 @@ def write_user_config(json_data):
     """Write user config to disk"""
     with open('./sample_data/sample_config.json', 'w') as json_file:
         json.dump(json_data, json_file)
+
+def load_pca_coords():
+    """3D plot of variable contribution"""
+    with open("./sample_data/pca_loadings.csv", 'r') as file:
+        lines = file.readlines()
+    
+    final_lines = []
+    for line in lines[1:-1]:
+        fields = line.split(",")
+        new_dict = dict()
+        new_dict['label'] = fields[0]
+        new_dict['x'] = [fields[1]]
+        new_dict['y'] = [fields[2]]
+        new_dict['z'] = [fields[3]]
+        final_lines.append(new_dict)
+    
+    return final_lines
+

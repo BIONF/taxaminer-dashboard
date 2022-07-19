@@ -155,7 +155,7 @@ class SelectionView extends React.Component<any, any> {
               </Col>
               <Col className='md-2' xs={3}> 
                 <Button className='m-2' onClick={this.showModal}>
-                  <span className='bi bi-list-ul m-2'/>More Fields
+                  <span className='bi bi-list-ul m-2'/>Fields
                 </Button>
               </Col>
             </Row>
