@@ -111,3 +111,16 @@ def load_pca_coords():
     
     return final_lines
 
+def indexed_data(path):
+    """Load the main scatterplot datafile and convert it to JSON"""
+    with open(path, encoding='utf-8') as csvf:
+        # load csv file data using csv library's dictionary reader
+        csv_reader = csv.DictReader(csvf)
+        labeled_dict = dict()
+
+        for row in csv_reader:
+            labeled_dict[row['g_name']] = row
+
+
+    return labeled_dict
+

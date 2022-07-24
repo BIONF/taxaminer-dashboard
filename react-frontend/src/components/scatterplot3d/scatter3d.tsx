@@ -27,7 +27,7 @@ class Scatter3D extends Component<any, any> {
 			color_options: colors.options, // color palette options
 			camera_ratios: {xy: 1.0, xz: 1.0, yz: 1.0}
 		}
-        this.handleTextChange = this.handleTextChange.bind(this);
+        this.sendClick = this.sendClick.bind(this);
 	}
 
 	/**
@@ -48,6 +48,9 @@ class Scatter3D extends Component<any, any> {
 	 * @param e event data
 	 */
 	passCameraData(e: any) {
+		if(e['scene.camera'] == undefined) {
+			return
+		}
 		if(e['scene.camera'].up){
 			// coordinate ratios
 			const my_camera = e['scene.camera'].eye
@@ -67,18 +70,11 @@ class Scatter3D extends Component<any, any> {
     }
 
 	/**
-	 * A dot in the plot was clicked => update current row, pass to parent
+	 * A dot in the plot was clicked => pass to parent
 	 * @param e Plot OnClick() event
 	 */
-    handleTextChange(e: any){
-		// fetch the corresponding aa sequence and pass it up
-		const endpoint = "http://127.0.0.1:5000/api/v1/data/seq?fasta_id=" + e.g_name;
-		fetch(endpoint)
-			.then(response => response.json())
-			.then(data => {
-				this.setState( {aa_seq: data} )
-				this.props.handleTextChange(e, data);
-			})
+    sendClick(e: any){
+		this.props.sendClick(e.g_name);
     }
 
 	/**
@@ -208,7 +204,7 @@ class Scatter3D extends Component<any, any> {
 						legend: {itemsizing: 'constant'},
 						colorway : colors.palettes[this.state.color_palette]
 						}}
-                    onClick={(e: any) => this.handleTextChange(this.state.data[e.points[0].curveNumber][e.points[0].pointNumber])}
+                    onClick={(e: any) => this.sendClick(this.state.data[e.points[0].curveNumber][e.points[0].pointNumber])}
 					onRelayout={(e: any) => this.passCameraData(e)}
 					useResizeHandler = {true}
     				style = {{width: "100%", height: 800}}

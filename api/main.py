@@ -40,6 +40,23 @@ def api_filter():
     return jsonify(json_data)
 
 
+@app.route('/api/v1/data/main', methods=['GET'])
+@cross_origin()
+def main_data():
+    """
+    Filtered main data
+    :return: requested data as JSON string
+    """
+    query_parameters = request.args
+
+    my_id = query_parameters.get("id")
+
+    json_data = file_io.indexed_data("./sample_data/gene_table_taxon_assignment.csv")
+
+    # return as json
+    return jsonify(json_data)
+
+
 @app.route('/api/v1/data/diamond', methods=['GET'])
 @cross_origin()
 def diamond_data():
