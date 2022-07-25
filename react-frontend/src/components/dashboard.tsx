@@ -1,4 +1,4 @@
-import React, { createContext } from 'react';
+import React from 'react';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col'
 import Container from 'react-bootstrap/esm/Container';
@@ -9,9 +9,10 @@ import SelectionView from './sidebar/selection/selection';
 import { DataSetMeta } from './sidebar/dataset_metadata';
 import Scatter3D from './scatterplot3d/scatter3d';
 import PCAPlot from './sidebar/PCAPlot/PCAPlot';
-import { FilterUI } from './sidebar/filterui';
+import { FilterUI } from './sidebar/Filters/filterui';
 import Table from './sidebar/DiamondTable/diamondtable';
 import { TableView } from './tableview/TableView';
+import ScatterMatrix from './sidebar/ScatterMatrix/ScatterMatrix';
 
 // Stylesheet
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -26,6 +27,9 @@ interface State {
     select_mode: string
     selected_data: Set<string>
     data: any
+    e_value: any
+    filters: any
+    scatter_data: any
 }
   
 
@@ -39,7 +43,10 @@ class Dashboard extends React.Component<Props, State> {
             camera: null,
             select_mode: 'neutral',
             selected_data: new Set(),
-            data: undefined
+            data: undefined,
+            scatter_data: { colors: "rainbow" },
+            e_value: 1.0,
+            filters: {e_value: 1.0, show_unassinged: true}
         }
         this.handleDataClick = this.handleDataClick.bind(this);
 	}
@@ -64,9 +71,9 @@ class Dashboard extends React.Component<Props, State> {
     handleDataClick(key: string) {
         this.setState({selected_row: this.state.data[key]});
 
-        if(this.state.select_mode == 'add') {
+        if(this.state.select_mode === 'add') {
             this.state.selected_data.add(key)
-        } else if(this.state.select_mode == 'remove') {
+        } else if(this.state.select_mode === 'remove') {
             this.state.selected_data.delete(key)
         }
 
@@ -78,12 +85,37 @@ class Dashboard extends React.Component<Props, State> {
 			})
     }
 
+    /**
+     * Pass the camera position from the main scatterplot
+     * @param childData camera data (Plotly)
+     */
     callbackFunction = (childData: any) => {
         this.setState({camera: childData})
     }
     
+    /**
+     * Set the current selection mode globally
+     * @param new_mode 'add','remove' odr 'neutral'
+     */
     setSelectMode = (new_mode: string) =>  {
         this.setState({select_mode: new_mode})
+    }
+
+    /**
+     * Set filter values
+     * @param values values passed from FilterUI components
+     */
+    setFilters = (values: any) => {
+        this.setState({filters: values})
+    }
+
+    /**
+     * Uses the scatter data from the main plot to slave the scatter matrix
+     * @param values 
+     */
+    shareScatterData = (values: any) => {
+        console.log(values)
+        this.setState({scatter_data: values})
     }
 
     render() {
@@ -94,7 +126,10 @@ class Dashboard extends React.Component<Props, State> {
                 <Col xs={7}>
                     <Scatter3D
                     sendClick={this.handleDataClick}
-                    sendCameraData={this.callbackFunction}/>
+                    sendCameraData={this.callbackFunction}
+                    e_value={this.state.filters.e_value}
+                    show_unassigned={this.state.filters.show_unassinged}
+                    passScatterData={this.shareScatterData}/>
                 </Col>
                 <Col>
                      <Tabs>
@@ -106,7 +141,8 @@ class Dashboard extends React.Component<Props, State> {
                             aa_seq={this.state.aa_seq}/>
                         </Tab>
                         <Tab eventKey="Filter" title="Filters">
-                            <FilterUI/>
+                            <FilterUI
+                            sendValuesUp={this.setFilters}/>
                         </Tab>
                         <Tab eventKey="diamon" title="Diamond Output">
                             <Row>
@@ -117,6 +153,14 @@ class Dashboard extends React.Component<Props, State> {
                            />
                                 </Col>
                             </Row>
+                        </Tab>
+                        <Tab eventKey="scatter_matrix" title="Scatter Matrix">
+                            <ScatterMatrix
+                                sendClick={this.handleDataClick}
+                                e_value={this.state.filters.e_value}
+                                show_unassigned={this.state.filters.show_unassinged}
+                                scatter_data = {this.state.scatter_data}
+                                />
                         </Tab>
                         <Tab eventKey="PCA" title="PCA">
                             <Row>
