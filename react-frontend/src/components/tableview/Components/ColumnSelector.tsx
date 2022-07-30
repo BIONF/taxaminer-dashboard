@@ -13,10 +13,18 @@ const animatedComponents = makeAnimated();
  * @param passMode bind function to pass mode up
  * @returns 
  */
-function ColumnSelector(passMode: any) {
+function ColumnSelector(props: any) {
   const [mode, SetMode] = useState('neutral');
 
+  function passCols(e: any) {
+    let new_keys: string[] = []
 
+    // extract col IDs
+    e.forEach((element: any) => {
+      new_keys.push(element.value)
+    });
+    props.passColsUp(new_keys)
+  }
 
   return (
     <div>
@@ -24,11 +32,12 @@ function ColumnSelector(passMode: any) {
         <Col>
           <Card>
             <Card.Body>
-              <Card.Title>Edit Mode</Card.Title>
+              <Card.Title>Select Columns</Card.Title>
               <Select 
               options={options} 
               components={animatedComponents} 
-              isMulti defaultValue={options}/>
+              isMulti defaultValue={options}
+              onChange={(e: any) => passCols(e)}/>
             </Card.Body>
           </Card>
         </Col>

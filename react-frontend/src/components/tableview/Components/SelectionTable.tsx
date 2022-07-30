@@ -12,11 +12,20 @@ import { Row, Col } from 'react-bootstrap';
 // local imports
 import "./customstyle.css"
 
+interface Props {
+    col_keys: string
+}
+
+const rich_cols = {
+    "g_name":  {dataField: "g_name", text: "ID", sort: true, filter: textFilter()},
+    "plot_label": {dataField: "g_name", text: "Plot Label", sort: true, filter: textFilter()},
+    "bh_evalue": { dataField: "bh_evalue", text: "Best hit e-value", sort: true}
+}
 
 class SelectionTable extends Component<any, any> {
     constructor(props: any){
 		super(props);
-		this.state ={ table_data: [], key: "", loading: false, custom_fields: [], show_field_modal: false}
+		this.state ={ table_data: [], key: "", loading: false, custom_fields: [], show_field_modal: false, cols: this.columns}
 	}
 
     /**
@@ -25,6 +34,18 @@ class SelectionTable extends Component<any, any> {
     */
     handleFieldsChange = (fields: any) => {
         this.setState({ custom_fields: fields})
+    }
+
+    /**
+     * Add custom cols on component mount
+     */
+    componentDidMount() {
+        // also update table cols
+        let new_cols: string[] = []
+        this.props.col_keys.forEach((element: string) => {
+            new_cols.push((rich_cols as any)[element])
+        });
+        this.setState({cols: new_cols})
     }
 
     /**
@@ -38,6 +59,15 @@ class SelectionTable extends Component<any, any> {
                 new_rows.push(this.props.master_data[key])
             }
             this.setState({table_data: new_rows})
+
+            // also update table cols
+            let new_cols: string[] = []
+            this.props.col_keys.forEach((element: string) => {
+                new_cols.push((rich_cols as any)[element])
+            });
+
+            this.setState({cols: new_cols})
+            console.log(this.state.cols)
         }
     }
 
@@ -79,7 +109,7 @@ class SelectionTable extends Component<any, any> {
                 className="md-2"
                 keyField="id" 
                 data={this.state.table_data} 
-                columns={this.columns}
+                columns={this.state.cols}
                 rowEvents={this.rowEvents}
                 pagination={ paginationFactory() }
                 filter={ filterFactory() }

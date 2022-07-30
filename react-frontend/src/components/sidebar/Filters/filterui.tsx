@@ -51,7 +51,7 @@ class FilterUI extends React.Component<Props, any> {
                         defaultChecked={true}
                         onChange={(e) => this.updateShowUnassigned(e.target.checked)}
                     />
-                    <Form.Label>e-value</Form.Label>
+                    <Form.Label>e-value {"<"} {this.state.e_value}</Form.Label>
                     <Form.Range 
                         value={this.state.e_value_slider}
                         min={0}

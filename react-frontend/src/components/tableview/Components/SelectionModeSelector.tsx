@@ -3,18 +3,51 @@ import { Button, ButtonGroup } from 'react-bootstrap';
 import Card from 'react-bootstrap/Card';
 import { Row, Col } from 'react-bootstrap';
 
+interface Props {
+  passMode: Function
+  selection: Set<string>
+}
+
 /**
  * 
- * @param passMode bind function to pass mode up
+ * @param props passMode, selection
  * @returns 
  */
-function SelectionModeSelector(passMode: any) {
+function SelectionModeSelector(props: Props) {
   const [mode, SetMode] = useState('neutral');
 
   // lift mode up
   useEffect(() => {
-    passMode.passMode(mode)
+    props.passMode(mode)
   }, [mode])
+
+  /**
+   * Download the selected data in a specified files format
+   * @param type file format
+   */
+  function download_file(type: string) {
+    // pas the selection
+    const my_body = {
+      'genes': Array.from(props.selection)
+    }
+
+    // API call
+    fetch("http://localhost:5000/download/" + type, {
+      method: 'POST',
+      body: JSON.stringify(my_body),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then((res) => { return res.blob(); })
+    // create a temporary link & click to download blob as file
+    .then((data) => {
+      var a = document.createElement("a");
+      a.href = window.URL.createObjectURL(data);
+      a.download = "selection." + type;
+      a.click();
+    }); 
+  }
 
   return (
     <div>
@@ -36,7 +69,7 @@ function SelectionModeSelector(passMode: any) {
           <Card.Body>
             <Card.Title>Export data</Card.Title>
             <ButtonGroup className='md-2' style={{width: "100%"}}>
-              <Button variant="primary" className='btn-block'>FASTA</Button>
+              <Button variant="primary" className='btn-block' onClick={() => download_file("fasta")}>FASTA</Button>
               <Button variant="primary" className='btn-block'>CSV</Button>
               <Button variant="primary" className='btn-block'>JSON</Button>
             </ButtonGroup>

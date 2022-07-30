@@ -1,6 +1,6 @@
 import flask
 import file_io
-from flask import request, jsonify
+from flask import Response, request, jsonify, send_file
 from flask_cors import CORS, cross_origin
 
 # flask server
@@ -51,7 +51,7 @@ def main_data():
 
     my_id = query_parameters.get("id")
 
-    json_data = file_io.indexed_data("./sample_data/gene_table_taxon_assignment.csv")
+    json_data = file_io.indexed_data(f"./datasets/{my_id}/gene_table_taxon_assignment.csv")
 
     # return as json
     return jsonify(json_data)
@@ -85,7 +85,6 @@ def amino_acid_seq():
     query_parameters = request.args
 
     my_id = query_parameters.get("id")
-
     fasta_id = query_parameters.get("fasta_id")
     seq = file_io.fast_fasta_loader("./sample_data/proteins.faa", fasta_id)
 
@@ -155,6 +154,27 @@ def pca_contributions():
     # return as json
     return jsonify(data)
 
+@app.route("/download/fasta", methods=['POST'])
+@cross_origin()
+def download_fasta():
+    """Download a .fasta of the user selection."""
+    print(request.json)
+    # genes to include
+    genes = request.json['genes']
+    sequences = []
+
+    # load requested sequences
+    for gene in genes:
+        sequences.append(">" + gene + '\n' + file_io.fast_fasta_loader("./sample_data/proteins.faa", gene))
+
+    # write temp file
+    with open("./temp/selection_fasta.fasta", "w+") as file:
+        file.writelines(sequences)
+
+    response_text = "\n".join(sequences)
+
+    # API answer
+    return Response(response_text, mimetype="text", headers={"Content-disposition": "attachment; filename=myplot.csv"})
 
 if __name__ == "__main__":
     app.run()

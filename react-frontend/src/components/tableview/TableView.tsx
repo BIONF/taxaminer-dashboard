@@ -17,12 +17,12 @@ interface Props {
 }
   
 interface State {
-    selected_row: any
     aa_seq: string
     camera: any
     select_mode: string
     selected_data: Set<string>
     data: any
+    col_keys: string[]
 }
   
 
@@ -31,12 +31,13 @@ class TableView extends React.Component<Props, State> {
 	constructor(props: any){
 		super(props);
 		this.state ={ 
-            selected_row: {g_name: "Pick a gene", taxonomic_assignment: "Pick a gene", plot_label: "Pick a gene", best_hit: "Pick a gene", c_name: "Pick a gene", bh_evalue: 0, best_hitID: "None"}, 
+            // selected_row: {g_name: "Pick a gene", taxonomic_assignment: "Pick a gene", plot_label: "Pick a gene", best_hit: "Pick a gene", c_name: "Pick a gene", bh_evalue: 0, best_hitID: "None"}, 
             aa_seq: "Pick a gene",
             camera: null,
             select_mode: 'neutral',
             selected_data: new Set(),
-            data: undefined
+            data: undefined,
+            col_keys: ["plot_label", "g_name", "bh_evalue"]
         }
 	}
 
@@ -52,6 +53,10 @@ class TableView extends React.Component<Props, State> {
 			})
 	}
 
+    setTableCols = (cols: string[]) => {
+        this.setState({col_keys: cols})
+    }
+
     render() {
         return (
             <Container fluid>
@@ -62,6 +67,7 @@ class TableView extends React.Component<Props, State> {
                         keys={this.props.keys}
                         // pass table click events up
                         passClick={this.props.passClick}
+                        col_keys = {this.state.col_keys}
                         />
                     </Col>
                     <Col>
@@ -70,10 +76,14 @@ class TableView extends React.Component<Props, State> {
                         </Row>
                         <Row>
                             <SelectionModeSelector
-                            passMode = {this.props.setSelectMode}/>
+                            passMode = {this.props.setSelectMode}
+                            selection = {this.props.keys}
+                            />
                         </Row>
                         <Row>
-                            <ColumnSelector/>
+                            <ColumnSelector
+                            passColsUp = {this.setTableCols}
+                            />
                         </Row>
                     </Col>
                 </Row>
