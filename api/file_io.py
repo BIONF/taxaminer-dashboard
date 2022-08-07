@@ -3,6 +3,10 @@ import json
 
 from flask import jsonify
 
+def load_datasets():
+    with open('./datasets/datasets.json', 'r') as f:
+        data = json.load(f)
+    return data
 
 def convert_csv_to_json(path):
     """Load the main scatterplot datafile and convert it to JSON"""
@@ -71,21 +75,21 @@ def taxonomic_hits_loader(fasta_id, path):
 
 def load_summary(dataset_id):
     """Load a dataset summary"""
-    with open("./sample_data/summary.txt", "r") as summary:
+    with open(f"./datasets/{dataset_id}/summary.txt", "r") as summary:
         lines = summary.readlines()
     
     return "".join(lines)
 
 def load_user_config():
     """Load a user config"""
-    with open("./sample_data/sample_config.json", "r") as file:
+    with open("./user/sample_config.json", "r") as file:
         lines = file.readlines()
     
     return "".join(lines)
 
 def parse_user_config():
     """Parse user config to JSON"""
-    with open('./sample_data/sample_config.json', 'r') as f:
+    with open('./user/sample_config.json', 'r') as f:
         data = json.load(f)
     return data
 
@@ -94,9 +98,9 @@ def write_user_config(json_data):
     with open('./sample_data/sample_config.json', 'w') as json_file:
         json.dump(json_data, json_file)
 
-def load_pca_coords():
+def load_pca_coords(dataset_id):
     """3D plot of variable contribution"""
-    with open("./sample_data/pca_loadings.csv", 'r') as file:
+    with open(f"./datasets/{dataset_id}/pca_loadings.csv", 'r') as file:
         lines = file.readlines()
     
     final_lines = []

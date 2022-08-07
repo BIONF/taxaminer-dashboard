@@ -18,14 +18,28 @@ interface Props {
 
 const rich_cols = {
     "g_name":  {dataField: "g_name", text: "ID", sort: true, filter: textFilter()},
-    "plot_label": {dataField: "g_name", text: "Plot Label", sort: true, filter: textFilter()},
+    "plot_label": {dataField: "plot_label", text: "Plot Label", sort: true, filter: textFilter()},
     "bh_evalue": { dataField: "bh_evalue", text: "Best hit e-value", sort: true}
 }
+
+const columns = [
+    {
+        dataField: "g_name",
+        text: "ID",
+        sort: true,
+        filter: textFilter()
+    },
+    {
+        dataField: "bh_evalue",
+        text: "Best hit e-value",
+        sort: true,
+    },
+];
 
 class SelectionTable extends Component<any, any> {
     constructor(props: any){
 		super(props);
-		this.state ={ table_data: [], key: "", loading: false, custom_fields: [], show_field_modal: false, cols: this.columns}
+		this.state ={ table_data: [], key: "", loading: false, custom_fields: [], show_field_modal: false, cols: columns}
 	}
 
     /**
@@ -67,7 +81,7 @@ class SelectionTable extends Component<any, any> {
             });
 
             this.setState({cols: new_cols})
-            console.log(this.state.cols)
+            // console.log(this.state.cols)
         }
     }
 
@@ -84,21 +98,6 @@ class SelectionTable extends Component<any, any> {
         }
       };
     
-    // These are preset values
-    // TODO: make user selectable
-    columns = [
-        {
-            dataField: "g_name",
-            text: "ID",
-            sort: true,
-            filter: textFilter()
-        },
-        {
-            dataField: "bh_evalue",
-            text: "Best hit e-value",
-            sort: true,
-        },
-    ];
 
   render() {
     return (

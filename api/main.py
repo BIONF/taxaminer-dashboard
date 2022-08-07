@@ -23,6 +23,18 @@ def page_not_found(e):
     return "<h1>404</h1><p>The resource could not be found.</p>", 404
 
 
+@app.route('/api/v1/data/datasets', methods=['GET'])
+@cross_origin()
+def datasets():
+    query_parameters = request.args
+    my_id = query_parameters.get("id")
+
+    json_data = file_io.load_datasets()
+
+    # return as json
+    return jsonify(json_data)
+
+
 @app.route('/api/v1/data/scatterplot', methods=['GET'])
 @cross_origin()
 def api_filter():
@@ -31,10 +43,9 @@ def api_filter():
     :return: requested data as JSON string
     """
     query_parameters = request.args
-
     my_id = query_parameters.get("id")
 
-    json_data = file_io.convert_csv_to_json("./sample_data/gene_table_taxon_assignment.csv")
+    json_data = file_io.convert_csv_to_json(f"./datasets/{my_id}/gene_table_taxon_assignment.csv")
 
     # return as json
     return jsonify(json_data)
@@ -69,7 +80,7 @@ def diamond_data():
     my_id = query_parameters.get("id")
     fasta_id = query_parameters.get("fasta_id")
 
-    json_data = file_io.taxonomic_hits_loader(fasta_id, "./sample_data/taxonomic_hits.txt")
+    json_data = file_io.taxonomic_hits_loader(fasta_id, f"./datasets/{my_id}/taxonomic_hits.txt")
 
     # return as json
     return jsonify(json_data)
@@ -86,7 +97,8 @@ def amino_acid_seq():
 
     my_id = query_parameters.get("id")
     fasta_id = query_parameters.get("fasta_id")
-    seq = file_io.fast_fasta_loader("./sample_data/proteins.faa", fasta_id)
+
+    seq = file_io.fast_fasta_loader(f"./datasets/{my_id}/proteins.faa", fasta_id)
 
     # add newlines for formatting, this should be replaced by React code later
     every = 40
@@ -103,14 +115,12 @@ def summary():
     :return:
     """
     query_parameters = request.args
-
     my_id = query_parameters.get("id")
 
-    fasta_id = query_parameters.get("fasta_id")
     data = file_io.load_summary(dataset_id=my_id)
 
     # return as json
-    return jsonify(data)
+    return Response(data, mimetype="text")
 
 
 @app.route('/api/v1/data/userconfig', methods=['GET', 'PUT'])
@@ -149,7 +159,7 @@ def pca_contributions():
 
     my_id = query_parameters.get("id")
 
-    data = file_io.load_pca_coords()
+    data = file_io.load_pca_coords(my_id)
 
     # return as json
     return jsonify(data)
@@ -158,18 +168,16 @@ def pca_contributions():
 @cross_origin()
 def download_fasta():
     """Download a .fasta of the user selection."""
-    print(request.json)
     # genes to include
     genes = request.json['genes']
     sequences = []
 
+    query_parameters = request.args
+    my_id = query_parameters.get("id")
+
     # load requested sequences
     for gene in genes:
-        sequences.append(">" + gene + '\n' + file_io.fast_fasta_loader("./sample_data/proteins.faa", gene))
-
-    # write temp file
-    with open("./temp/selection_fasta.fasta", "w+") as file:
-        file.writelines(sequences)
+        sequences.append(">" + gene + '\n' + file_io.fast_fasta_loader(f"./datasets/{my_id}/proteins.faa", gene))
 
     response_text = "\n".join(sequences)
 

@@ -9,6 +9,7 @@ import Select from 'react-select';
 const colors = require("./colors.json")
 
 interface Props {
+	dataset_id: any
 	sendClick: any
 	sendCameraData: any
 	passScatterData: any
@@ -42,13 +43,29 @@ class Scatter3D extends Component<Props, any> {
 	 * Call API on component mount to load plot data
 	 */
 	componentDidMount() {
-		const endpoint = "http://127.0.0.1:5000/api/v1/data/scatterplot?id=1";
+		const endpoint = `http://127.0.0.1:5000/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
 		fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {
 				this.setState( {data: data} );
 				this.set_auto_size(data);
 			})
+	}
+
+	/**
+	 * Reload plot if dataset has changed
+	 * @param prev previous state
+	 */
+	componentDidUpdate(prev: any) {
+		if (prev.dataset_id != this.props.dataset_id) {
+			const endpoint = `http://127.0.0.1:5000/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
+			fetch(endpoint)
+			.then(response => response.json())
+			.then(data => {
+				this.setState( {data: data} );
+				this.set_auto_size(data);
+			})
+		}
 	}
 
 	/**

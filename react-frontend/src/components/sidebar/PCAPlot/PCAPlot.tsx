@@ -3,10 +3,16 @@ import Plot from 'react-plotly.js';
 import { Row } from 'react-bootstrap';
 import { Col } from 'react-bootstrap';
 
+
+interface Props {
+	dataset_id: number
+	camera: any
+}
+
 /**
  * Main Scatterplot Component
  */
-class PCAPlot extends Component<any, any> {
+class PCAPlot extends Component<Props, any> {
 	constructor(props: any){
 		super(props);
 		this.state ={ 
@@ -24,7 +30,7 @@ class PCAPlot extends Component<any, any> {
 	 * Call API on component mount to load plot data
 	 */
 	componentDidMount() {
-		const endpoint = "http://127.0.0.1:5000/api/v1/data/pca_contribution";
+		const endpoint = `http://127.0.0.1:5000/api/v1/data/pca_contribution?id=${this.props.dataset_id}`;
 		fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {
