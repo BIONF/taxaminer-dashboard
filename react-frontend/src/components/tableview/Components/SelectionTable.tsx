@@ -94,7 +94,7 @@ class SelectionTable extends Component<any, any> {
          * @param rowIndex row Index
          */
         onClick: (e: any, row: any, rowIndex:any) => {
-            this.props.passClick(row.g_name)
+            this.props.passClick([row.g_name])
         }
       };
     

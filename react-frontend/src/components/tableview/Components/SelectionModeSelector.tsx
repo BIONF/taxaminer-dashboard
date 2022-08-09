@@ -6,6 +6,7 @@ import { Row, Col } from 'react-bootstrap';
 interface Props {
   passMode: Function
   selection: Set<string>
+  dataset_id: number
 }
 
 /**
@@ -32,7 +33,7 @@ function SelectionModeSelector(props: Props) {
     }
 
     // API call
-    fetch("http://localhost:5000/download/" + type, {
+    fetch(`http://localhost:5000/download/${type}?id=${props.dataset_id}`, {
       method: 'POST',
       body: JSON.stringify(my_body),
       headers: {

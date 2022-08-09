@@ -14,6 +14,7 @@ interface Props {
     keys: Set<string>
     setSelectMode: any
     passClick: any
+    dataset_id: number
 }
   
 interface State {
@@ -53,6 +54,10 @@ class TableView extends React.Component<Props, State> {
 			})
 	}
 
+    /**
+     * Update table columns
+     * @param cols array of col names (keys)
+     */
     setTableCols = (cols: string[]) => {
         this.setState({col_keys: cols})
     }
@@ -78,6 +83,7 @@ class TableView extends React.Component<Props, State> {
                             <SelectionModeSelector
                             passMode = {this.props.setSelectMode}
                             selection = {this.props.keys}
+                            dataset_id = {this.props.dataset_id}
                             />
                         </Row>
                         <Row>

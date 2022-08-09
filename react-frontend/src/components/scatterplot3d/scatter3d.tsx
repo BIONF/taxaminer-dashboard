@@ -5,6 +5,7 @@ import Col from 'react-bootstrap/Col';
 import Form from 'react-bootstrap/Form';
 import { InputGroup } from 'react-bootstrap';
 import Select from 'react-select';
+import { trace } from 'console';
 
 const colors = require("./colors.json")
 
@@ -34,7 +35,8 @@ class Scatter3D extends Component<Props, any> {
 			manual_size: 5, // dot size selected by user
 			color_palette: "rainbow", // currently selected color palette
 			color_options: colors.options, // color palette options
-			camera_ratios: {xy: 1.0, xz: 1.0, yz: 1.0}
+			camera_ratios: {xy: 1.0, xz: 1.0, yz: 1.0},
+			legendonly: []
 		}
         this.sendClick = this.sendClick.bind(this);
 	}
@@ -99,7 +101,7 @@ class Scatter3D extends Component<Props, any> {
 	 * @param e Plot OnClick() event
 	 */
     sendClick(e: any){
-		this.props.sendClick(e.g_name);
+		this.props.sendClick([e.g_name]);
     }
 
 	/**
@@ -115,7 +117,7 @@ class Scatter3D extends Component<Props, any> {
 	set_color_palette(key: string){
 		var locked = this.lock_uirevision()
 		this.setState({color_palette: key})
-		this.props.passScatterData({ colors: key})
+		this.props.passScatterData({ colors: key, legendonly: this.state.legendonly})
 	}
 
 	/**
@@ -162,6 +164,23 @@ class Scatter3D extends Component<Props, any> {
 			this.set_auto_size(undefined)
 		} else {
 			this.setState( { marker_size: this.state.manual_size} )
+		}
+	}
+
+	/**
+	 * Track grouped de-/selection using the scatterplot legend
+	 * This is tied to onRestyle to avoid desync with onClick() events
+	 * @param e restyle event
+	 */
+	updateLegendSelection(e: any, ) {
+		let visible: string[] = []
+
+		var plot: any = document.getElementById('scatterplot')
+		const legendonly = plot.data.filter((trace: any) => trace.visible === "legendonly")
+		this.lock_uirevision()
+		if (legendonly != this.state.legend_only) {
+			this.setState({legendonly: legendonly})
+			this.props.passScatterData({ colors: this.state.color_palette, legendonly: legendonly})
 		}
 	}
 
@@ -220,7 +239,8 @@ class Scatter3D extends Component<Props, any> {
                 text: label,
 				marker: {
 					size: this.state.marker_size
-				}
+				},
+				visible: true
             }
             traces.push(trace)
         })
@@ -249,7 +269,7 @@ class Scatter3D extends Component<Props, any> {
 					onRelayout={(e: any) => this.passCameraData(e)}
 					useResizeHandler = {true}
     				style = {{width: "100%", height: 800}}
-					onLegendClick={(e: any) => this.lock_uirevision()}
+					onRestyle={(e: any) => this.updateLegendSelection(e)}
 					config={{scrollZoom: true}}
 					
 				/>

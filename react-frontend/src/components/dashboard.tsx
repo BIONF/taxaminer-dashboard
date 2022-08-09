@@ -31,6 +31,7 @@ interface State {
     e_value: any
     filters: any
     scatter_data: any
+    legend_only: string[]
 }
   
 
@@ -46,9 +47,10 @@ class Dashboard extends React.Component<Props, State> {
             select_mode: 'neutral',
             selected_data: new Set(),
             data: undefined,
-            scatter_data: { colors: "rainbow" },
+            scatter_data: { colors: "rainbow", legendonly: []},
             e_value: 1.0,
-            filters: {e_value: 1.0, show_unassinged: true}
+            filters: {e_value: 1.0, show_unassinged: true},
+            legend_only: []
         }
 
         // Bind functions passing data from child objects to local context
@@ -87,16 +89,18 @@ class Dashboard extends React.Component<Props, State> {
      * @param newRow new data row
      * @param new_seq 
      */
-    handleDataClick(key: string) {
-        this.setState({selected_row: this.state.data[key]});
+    handleDataClick(keys: string[]) {
+        this.setState({selected_row: this.state.data[keys[0]]});
 
         if(this.state.select_mode === 'add') {
-            this.state.selected_data.add(key)
+            keys.forEach(key => this.state.selected_data.add(key))
+            // this.state.selected_data.concat(key)
         } else if(this.state.select_mode === 'remove') {
-            this.state.selected_data.delete(key)
+            keys.forEach(key => this.state.selected_data.delete(key))
+            //this.state.selected_data.delete(key)
         }
 
-        const endpoint = `http://127.0.0.1:5000/api/v1/data/seq?id=${this.state.dataset_id}&fasta_id=${key}`;
+        const endpoint = `http://127.0.0.1:5000/api/v1/data/seq?id=${this.state.dataset_id}&fasta_id=${keys[0]}`;
 		fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {
@@ -133,7 +137,6 @@ class Dashboard extends React.Component<Props, State> {
      * @param values 
      */
     shareScatterData = (values: any) => {
-        console.log(values)
         this.setState({scatter_data: values})
     }
 
@@ -200,6 +203,7 @@ class Dashboard extends React.Component<Props, State> {
                 keys={this.state.selected_data}
                 setSelectMode={this.setSelectMode}
                 passClick={this.handleDataClick}
+                dataset_id={this.state.dataset_id}
                 />
         </Container>
         );

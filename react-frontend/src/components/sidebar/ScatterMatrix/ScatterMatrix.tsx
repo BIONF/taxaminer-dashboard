@@ -1,11 +1,10 @@
 import { Component } from 'react';
 import Plot from 'react-plotly.js';
-
-const colors = require("./colors.json")
+const colors = require("./colors.json");
 
 interface Props {
-	sendClick: any
-	e_value: any
+	sendClick: Function
+	e_value: number
 	show_unassigned: boolean
     scatter_data: any
 }
@@ -13,7 +12,7 @@ interface Props {
 /**
  * Main Scatterplot Component
  */
-class Scatter3D extends Component<Props, any> {
+class ScatterMatrix extends Component<Props, any> {
 	constructor(props: any){
 		super(props);
 		this.state ={ 
@@ -84,6 +83,10 @@ class Scatter3D extends Component<Props, any> {
 	}
 
 
+	/**
+	 * 
+	 * @returns Set scatterplot axis
+	 */
     set_axis() {
         return(
             {
@@ -103,7 +106,12 @@ class Scatter3D extends Component<Props, any> {
 	 * @param data API data
 	 * @returns list of traces
 	 */
-	transformData (data: any[]) {
+	transformData (data: any[], legendonly: any[]) {
+		let legendonly_names: string[] = []
+
+		legendonly.forEach((dot: any) => {
+			legendonly_names.push(dot.name)
+		})
 
 		// Avoid NoneType Exceptions
 		if (data == null) {
@@ -116,6 +124,7 @@ class Scatter3D extends Component<Props, any> {
 		    const y : string[] = [];
             const z : string[] = [];
             let label = "";
+			let gene_name = "";
             const gene_names : string[] = [];
             let chunk = each;
 
@@ -127,6 +136,7 @@ class Scatter3D extends Component<Props, any> {
 					y.push(each['Dim.2'])
 					z.push(each['Dim.3'])
 					label = each['plot_label']
+					gene_name = each['g_name']
 					gene_names.push(each['g_name'])
 				} 
 				// Include unassigned data points (which usually don't have a e-value)
@@ -142,6 +152,14 @@ class Scatter3D extends Component<Props, any> {
 		    })
 
 			// Setup the plot trace
+			let visible = undefined
+			if (legendonly_names.includes(label)) {
+				visible = "legendonly"
+			} else {
+				visible = true
+			}
+
+			// plotly trace
             const trace = {
                 type: 'splom',
                 dimensions: [
@@ -151,10 +169,29 @@ class Scatter3D extends Component<Props, any> {
                 ],
                 name: label,
                 text: label,
+				visible: visible,
+
+				// track the unique gene name
+				customdata: gene_names
             }
             traces.push(trace)
         })
 		return traces
+	}
+
+	/**
+	 * Handle Selection events
+	 * @param points plotly points
+	 */
+	handleSelection(points: any) {
+		let selected_ids: string[] = []
+
+		points.map((each: any) => {
+			selected_ids.push(each.customdata)
+		})
+
+		// pass data up
+		this.props.sendClick(selected_ids)
 	}
 
 	/**
@@ -165,7 +202,7 @@ class Scatter3D extends Component<Props, any> {
 		return (
 			<Plot
 				divId='scattermatrix'
-					data = {this.transformData(this.state.data)}
+					data = {this.transformData(this.state.data, this.props.scatter_data.legendonly)}
 					layout = {{
 						autosize: true,
 						showlegend: true,
@@ -183,6 +220,11 @@ class Scatter3D extends Component<Props, any> {
 						colorway : colors.palettes[this.props.scatter_data.colors]
 						}}
                     style = {{width: "100%", height: 700}}
+
+					// disable legend trace selection (=> slave to main plot)
+					onLegendClick={() => false}
+					onLegendDoubleClick={() => false}
+					onSelected={(e:any) => this.handleSelection(e.points)}
 				/>
 		)
 	}
@@ -200,4 +242,4 @@ class Scatter3D extends Component<Props, any> {
 	}
 }
 
-export default Scatter3D;
+export default ScatterMatrix;
