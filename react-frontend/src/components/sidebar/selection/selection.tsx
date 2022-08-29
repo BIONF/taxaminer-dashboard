@@ -10,11 +10,6 @@ import CustomOutput from './custom_output';
 import { Modal } from 'react-bootstrap';
 import MultiSelectFields from './MultiSelectFields'
 
-interface SelectionData {
-    row: {g_name: "Pick a gene", taxon_assignment: "Pick a gene", plot_label: "Pick a gene", best_hit: "Pick a gene", c_name: "Pick a gene", bh_evalue: 0, best_hitID: "?"};
-    aa_seq: string;
-}
-
 interface Props {
   base_url: string
   row: any

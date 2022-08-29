@@ -91,8 +91,11 @@ class TaxaminerDashboard extends React.Component<Props, State> {
      * @param new_seq 
      */
     handleDataClick(keys: string[]) {
-        this.setState({selected_row: this.state.data[keys[0]]});
-        console.log(".")
+        const new_row = this.state.data[keys[0]];
+        console.log(keys)
+        if (new_row != undefined) {
+            this.setState({selected_row: this.state.data[keys[0]]});
+        }
 
         if(this.state.select_mode === 'add') {
             keys.forEach(key => this.state.selected_data.add(key))
