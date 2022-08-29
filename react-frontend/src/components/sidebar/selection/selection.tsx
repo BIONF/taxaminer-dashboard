@@ -15,11 +15,16 @@ interface SelectionData {
     aa_seq: string;
 }
 
+interface Props {
+  base_url: string
+  row: any
+  aa_seq: string
+}
 
 /**
  * Customizable representation of table rows for a selected dot
  */
-class SelectionView extends React.Component<any, any> {
+class SelectionView extends React.Component<Props, any> {
   constructor(props: any){
 		super(props);
     const options = [{ value:'One', selected:true }, { value: 'Two' }, { value:'Three' }]
@@ -30,7 +35,7 @@ class SelectionView extends React.Component<any, any> {
    * Fetch user configs on componenMount
    */
 	componentDidMount() {
-		const endpoint = "http://127.0.0.1:5000/api/v1/data/userconfig";
+		const endpoint = `http://${this.props.base_url}:5500/api/v1/data/userconfig`;
 		fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {
@@ -63,7 +68,7 @@ class SelectionView extends React.Component<any, any> {
       body: JSON.stringify({ custom_fields: this.state.custom_fields })
     };
 
-    fetch("http://127.0.0.1:5000/api/v1/data/userconfig", request)
+    fetch(`http://${this.props.base_url}:5500/api/v1/data/userconfig`, request)
     .then(response => console.log(response))
   };
 
@@ -90,6 +95,7 @@ class SelectionView extends React.Component<any, any> {
                     placeholder="Selected a Gene to get started"
                     contentEditable={false}
                     value={this.props.row.g_name}
+                    onChange={() => false}
                   />
               </InputGroup>
             </Col>
@@ -100,6 +106,7 @@ class SelectionView extends React.Component<any, any> {
                     placeholder="Selected a Gene to get started"
                     contentEditable={false}
                     value={this.props.row.plot_label}
+                    onChange={() => false}
                     />
                 </InputGroup>
             </Col>
@@ -112,6 +119,7 @@ class SelectionView extends React.Component<any, any> {
                     placeholder="Selected a Gene to get started"
                     contentEditable={false}
                     value={this.props.row.best_hit}
+                    onChange={() => false}
                   />
                 </InputGroup>
             </Col>
@@ -122,6 +130,7 @@ class SelectionView extends React.Component<any, any> {
                     placeholder="None"
                     contentEditable={false}
                     value={this.props.row.best_hitID}
+                    onChange={() => false}
                     />
                     <Button 
                     id="button.ncbi" 
@@ -140,6 +149,7 @@ class SelectionView extends React.Component<any, any> {
                     placeholder="Selected a Gene to get started"
                     contentEditable={false}
                     value={this.props.row.c_name}
+                    onChange={() => false}
                   />
                 </InputGroup>
               </Col>
@@ -150,6 +160,7 @@ class SelectionView extends React.Component<any, any> {
                       placeholder="Selected a Gene to get started"
                       contentEditable={false}
                       value={this.props.row.bh_evalue}
+                      onChange={() => false}
                     />
                 </InputGroup>
               </Col>

@@ -6,6 +6,7 @@ import "./style.css";
 
 interface Props {
     dataset_id: number
+    base_url: string
 }
 
 interface State {
@@ -51,7 +52,7 @@ class DataSetMeta extends React.Component<Props, State> {
      * Fetch meta data from API
      */
     fetchMetaData() {
-        const endpoint = `http://127.0.0.1:5000/api/v1/data/summary?id=${this.props.dataset_id}`;
+        const endpoint = `http://${this.props.base_url}:5500/api/v1/data/summary?id=${this.props.dataset_id}`;
 		fetch(endpoint)
 			.then(response => response.text())
 			.then(data => {

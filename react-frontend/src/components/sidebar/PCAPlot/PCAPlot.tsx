@@ -5,6 +5,7 @@ import { Col } from 'react-bootstrap';
 
 
 interface Props {
+	base_url: string
 	dataset_id: number
 	camera: any
 }
@@ -30,7 +31,7 @@ class PCAPlot extends Component<Props, any> {
 	 * Call API on component mount to load plot data
 	 */
 	componentDidMount() {
-		const endpoint = `http://127.0.0.1:5000/api/v1/data/pca_contribution?id=${this.props.dataset_id}`;
+		const endpoint = `http://${this.props.base_url}:5500/api/v1/data/pca_contribution?id=${this.props.dataset_id}`;
 		fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {

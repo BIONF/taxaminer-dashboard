@@ -18,6 +18,7 @@ import ScatterMatrix from './sidebar/ScatterMatrix/ScatterMatrix';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 interface Props {
+    base_url: string
 }
   
 interface State {
@@ -35,7 +36,7 @@ interface State {
 }
   
 
-class Dashboard extends React.Component<Props, State> {
+class TaxaminerDashboard extends React.Component<Props, State> {
     // Set up states for loading data
 	constructor(props: any){
 		super(props);
@@ -64,7 +65,7 @@ class Dashboard extends React.Component<Props, State> {
      */
     setDataset(id: number) {
         this.setState( {dataset_id: id} );
-        const endpoint = `http://127.0.0.1:5000/api/v1/data/main?id=${id}`;
+        const endpoint = `http://${this.props.base_url}:5500/api/v1/data/main?id=${id}`;
 		fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {
@@ -76,7 +77,7 @@ class Dashboard extends React.Component<Props, State> {
 	 * Call API on component mount to main table data
 	 */
 	componentDidMount() {
-		const endpoint = `http://127.0.0.1:5000/api/v1/data/main?id=${this.state.dataset_id}`;
+		const endpoint = `http://${this.props.base_url}:5500/api/v1/data/main?id=${this.state.dataset_id}`;
 		fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {
@@ -91,6 +92,7 @@ class Dashboard extends React.Component<Props, State> {
      */
     handleDataClick(keys: string[]) {
         this.setState({selected_row: this.state.data[keys[0]]});
+        console.log(".")
 
         if(this.state.select_mode === 'add') {
             keys.forEach(key => this.state.selected_data.add(key))
@@ -100,7 +102,7 @@ class Dashboard extends React.Component<Props, State> {
             //this.state.selected_data.delete(key)
         }
 
-        const endpoint = `http://127.0.0.1:5000/api/v1/data/seq?id=${this.state.dataset_id}&fasta_id=${keys[0]}`;
+        const endpoint = `http://${this.props.base_url}:5500/api/v1/data/seq?id=${this.state.dataset_id}&fasta_id=${keys[0]}`;
 		fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {
@@ -147,6 +149,7 @@ class Dashboard extends React.Component<Props, State> {
                 <Row>
                 <Col xs={7}>
                     <Scatter3D
+                    base_url={this.props.base_url}
                     dataset_id={this.state.dataset_id}
                     sendClick={this.handleDataClick}
                     sendCameraData={this.callbackFunction}
@@ -158,9 +161,13 @@ class Dashboard extends React.Component<Props, State> {
                      <Tabs>
                         <Tab eventKey="Overview" title="Overview">
                             <DataSetSelector
+                            base_url={this.props.base_url}
                             dataset_changed={this.setDataset}/>
-                            <DataSetMeta dataset_id={this.state.dataset_id}/>
-                            <SelectionView 
+                            <DataSetMeta
+                            base_url={this.props.base_url}
+                            dataset_id={this.state.dataset_id}/>
+                            <SelectionView
+                            base_url={this.props.base_url}
                             row={this.state.selected_row}
                             aa_seq={this.state.aa_seq}/>
                         </Tab>
@@ -172,6 +179,7 @@ class Dashboard extends React.Component<Props, State> {
                             <Row>
                                 <Col>
                                 <Table
+                                base_url={this.props.base_url}
                                 dataset_id={this.state.dataset_id}
                                 row={this.state.selected_row}
                                 />
@@ -180,6 +188,7 @@ class Dashboard extends React.Component<Props, State> {
                         </Tab>
                         <Tab eventKey="scatter_matrix" title="Scatter Matrix">
                             <ScatterMatrix
+                                base_url={this.props.base_url}
                                 sendClick={this.handleDataClick}
                                 e_value={this.state.filters.e_value}
                                 show_unassigned={this.state.filters.show_unassinged}
@@ -190,6 +199,7 @@ class Dashboard extends React.Component<Props, State> {
                             <Row>
                                 <Col>
                                 <PCAPlot
+                                    base_url={this.props.base_url}
                                     camera = {this.state.camera}
                                     dataset_id = {this.state.dataset_id}/>
                                 </Col>
@@ -199,6 +209,7 @@ class Dashboard extends React.Component<Props, State> {
                 </Col>
                 </Row>
                 <TableView
+                base_url={this.props.base_url}
                 data={this.state.data}
                 keys={this.state.selected_data}
                 setSelectMode={this.setSelectMode}
@@ -210,4 +221,4 @@ class Dashboard extends React.Component<Props, State> {
     } 
 }
 
-export { Dashboard }
+export { TaxaminerDashboard }

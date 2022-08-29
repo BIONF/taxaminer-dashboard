@@ -20,6 +20,7 @@ import ColumnSelector from "./ColumnSelector";
 interface Props {
     dataset_id: any
     row: any
+    base_url: string
 }
 
 
@@ -57,7 +58,7 @@ class Table extends Component<Props, any> {
         if (prev_props.row !== this.props.row) {
             this.setState({loading: true})
             // fetch the table data
-		    const endpoint = `http://127.0.0.1:5000/api/v1/data/diamond?id=${this.props.dataset_id}&fasta_id=${this.props.row.g_name}`;
+		    const endpoint = `http://${this.props.base_url}:5500/api/v1/data/diamond?id=${this.props.dataset_id}&fasta_id=${this.props.row.g_name}`;
 		    fetch(endpoint)
 			    .then(response => response.json())
 			    .then(data => {

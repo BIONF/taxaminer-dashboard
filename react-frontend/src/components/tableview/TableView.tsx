@@ -15,6 +15,7 @@ interface Props {
     setSelectMode: any
     passClick: any
     dataset_id: number
+    base_url: string
 }
   
 interface State {
@@ -46,7 +47,7 @@ class TableView extends React.Component<Props, State> {
 	 * Call API on component mount to load plot data
 	 */
 	componentDidMount() {
-		const endpoint = "http://127.0.0.1:5000/api/v1/data/main?id=1";
+		const endpoint = `http://${this.props.base_url}:5500/api/v1/data/main?id=1`;
 		fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {

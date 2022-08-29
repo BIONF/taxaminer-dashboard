@@ -1,4 +1,4 @@
-import { Dashboard } from './components/dashboard';
+import { TaxaminerDashboard } from './components/dashboard';
 
 // Stylesheet
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -8,7 +8,7 @@ import { useState } from 'react';
 function App() {
   // Info on selected gene
   return (
-    <Dashboard/>
+    <TaxaminerDashboard base_url='127.0.0.1'/>
   );
 }
 

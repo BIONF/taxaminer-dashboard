@@ -16,6 +16,7 @@ interface Props {
 	passScatterData: any
 	e_value: any
 	show_unassigned: boolean
+	base_url: string
 }
 
 /**
@@ -36,7 +37,9 @@ class Scatter3D extends Component<Props, any> {
 			color_palette: "rainbow", // currently selected color palette
 			color_options: colors.options, // color palette options
 			camera_ratios: {xy: 1.0, xz: 1.0, yz: 1.0},
-			legendonly: []
+			legendonly: [],
+			last_click : "",
+			figure: {data: [], layout: {}, frames: [], config: {}}
 		}
         this.sendClick = this.sendClick.bind(this);
 	}
@@ -45,12 +48,13 @@ class Scatter3D extends Component<Props, any> {
 	 * Call API on component mount to load plot data
 	 */
 	componentDidMount() {
-		const endpoint = `http://127.0.0.1:5000/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
+		const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
 		fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {
 				this.setState( {data: data} );
 				this.set_auto_size(data);
+				this.build_plot()
 			})
 	}
 
@@ -60,7 +64,7 @@ class Scatter3D extends Component<Props, any> {
 	 */
 	componentDidUpdate(prev: any) {
 		if (prev.dataset_id != this.props.dataset_id) {
-			const endpoint = `http://127.0.0.1:5000/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
+			const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
 			fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {
@@ -101,7 +105,11 @@ class Scatter3D extends Component<Props, any> {
 	 * @param e Plot OnClick() event
 	 */
     sendClick(e: any){
-		this.props.sendClick([e.g_name]);
+		if (e.g_name != this.state.last_click) {
+			console.log("Selection fired from scatterplot")
+			this.setState({last_click: e.g_name})
+			this.props.sendClick([e.g_name]);
+		}
     }
 
 	/**
@@ -110,12 +118,12 @@ class Scatter3D extends Component<Props, any> {
 	 * @returns True (as required by OnLegendClick() => )
 	 */
 	lock_uirevision(){
-		this.setState({ ui_revision: "true" })
+		// this.setState({ ui_revision: "true" })
 		return(true)
 	}
 
 	set_color_palette(key: string){
-		var locked = this.lock_uirevision()
+		//var locked = this.lock_uirevision()
 		this.setState({color_palette: key})
 		this.props.passScatterData({ colors: key, legendonly: this.state.legendonly})
 	}
@@ -177,11 +185,11 @@ class Scatter3D extends Component<Props, any> {
 
 		var plot: any = document.getElementById('scatterplot')
 		const legendonly = plot.data.filter((trace: any) => trace.visible === "legendonly")
-		this.lock_uirevision()
 		if (legendonly != this.state.legend_only) {
 			this.setState({legendonly: legendonly})
 			this.props.passScatterData({ colors: this.state.color_palette, legendonly: legendonly})
 		}
+		this.setState({ ui_revision: "false"})
 	}
 
 	/**
@@ -252,28 +260,17 @@ class Scatter3D extends Component<Props, any> {
 	 * @returns Plotly Plot as React component
 	 */
 	build_plot() {
-		return (
-			<Plot
-				divId='scatterplot'
-					data = {this.transformData(this.state.data)}
-					layout = {{
-						autosize: true,
-						showlegend: true,
-						uirevision: this.state.ui_revision,
-						// @ts-ignore
-						// overrides are incomplete here, ignore for now
-						legend: {itemsizing: 'constant'},
-						colorway : colors.palettes[this.state.color_palette]
-						}}
-                    onClick={(e: any) => this.sendClick(this.state.data[e.points[0].curveNumber][e.points[0].pointNumber])}
-					onRelayout={(e: any) => this.passCameraData(e)}
-					useResizeHandler = {true}
-    				style = {{width: "100%", height: 800}}
-					onRestyle={(e: any) => this.updateLegendSelection(e)}
-					config={{scrollZoom: true}}
-					
-				/>
-		)
+		console.log("Rebuilding Scatterplot")
+
+		// store figure components
+		this.state.figure.data = this.transformData(this.state.data)
+		this.state.figure.layout = {autosize: true, showlegend: true, uirevision: 1,
+			// @ts-ignore
+			// overrides are incomplete here, ignore for now
+			legend: {itemsizing: 'constant'},
+			colorway : colors.palettes[this.state.color_palette]
+			}
+		this.state.figure.config = {scrollZoom: true}
 	}
 
 	/**
@@ -283,7 +280,18 @@ class Scatter3D extends Component<Props, any> {
 	render() {
 		return (
 			<div>
-				{this.build_plot()}
+				<Plot
+				data={this.state.figure.data}
+				layout={this.state.figure.layout}
+				config={this.state.figure.layout}
+				onClick={(e: any) => this.sendClick(this.state.data[e.points[0].curveNumber][e.points[0].pointNumber])}
+				onRelayout={(e: any) => this.passCameraData(e)}
+				useResizeHandler = {true}
+    			style = {{width: "100%", height: 800}}
+				onRestyle={(e: any) => this.updateLegendSelection(e)}
+				revision={1}
+				onUpdate={(figure) => this.setState({figure: figure})}
+				/>
 				<Row>
                     <Col xs={1}>
                         <Form>
