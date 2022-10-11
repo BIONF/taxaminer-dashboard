@@ -1,18 +1,60 @@
-import React from "react";
+import React, { Component } from "react";
 import Card from 'react-bootstrap/Card';
-import Form from 'react-bootstrap/Form'
+import Form from 'react-bootstrap/Form';
+import Select, { createFilter } from 'react-select';
+import { FixedSizeList as List } from "react-window";
+import makeAnimated from 'react-select/animated';
+
+const animatedComponents = makeAnimated();
+const height = 35;
 
 interface Props {
     sendValuesUp: any
+    g_options: { label: string; value: string; }[]
 }
 
+interface State {
+    e_value: number
+    show_unassigned: boolean
+    g_searched: string[]
+}
+
+/**
+ * Custom component to speed up searchbar / autocomplete with large datasets
+ * Original idea by Tim Macdonald (https://github.com/tmacdonald)
+ * published via CodeSandbox (=> https://codesandbox.io/s/lxv7omv65l)
+ * as of 9th of October 2022
+ */
+class MenuList extends Component<any, any> {
+    render() {
+      const { options, children, maxHeight, getValue } = this.props;
+      const [value] = getValue();
+      const initialOffset = options.indexOf(value) * height;
+  
+      return (
+        <List
+          height={maxHeight}
+          width={500}
+          itemCount={children.length}
+          itemSize={height}
+          initialScrollOffset={initialOffset}
+        >
+          {({ index, style }: any) => <div style={style}>{children[index]}</div>}
+        </List>
+      );
+    }
+  }
+
+
 // Filter Tab
-class FilterUI extends React.Component<Props, any> {
+class FilterUI extends React.Component<Props, State> {
     constructor(props: any){
 		super(props);
 		this.state ={
             e_value: 1.0,
-            show_unassigned: true
+            show_unassigned: true,
+            g_searched: []
+
         }
 	}  
 
@@ -21,7 +63,7 @@ class FilterUI extends React.Component<Props, any> {
      */
     updateShowUnassigned(e: any) {
         this.setState({show_unassigned: e})
-        const values = {'show_unassinged': e, 'e_value': this.state.e_value}
+        const values = {'show_unassinged': e, 'e_value': this.state.e_value, 'g_searched': this.state.g_searched}
         this.props.sendValuesUp(values)
     }
 
@@ -35,12 +77,41 @@ class FilterUI extends React.Component<Props, any> {
         this.setState({e_value: new_value})
 
         // pass values up
-        const values = {'show_unassinged': this.state.show_unassigned, 'e_value': new_value}
+        const values = {'show_unassinged': this.state.show_unassigned, 'e_value': new_value, 'g_searched': this.state.g_searched}
         this.props.sendValuesUp(values)
     }
 
+    /**
+     * Pass searched IDs up
+     * @param e Edit event of the dropdown selector
+     */
+    passSearch(e: any) {
+        let new_keys: string[] = []
+        // extract IDs
+        e.forEach((element: any) => {
+          new_keys.push(element.value)
+        });
+        this.setState({g_searched: new_keys}, () => {
+            const values = {'show_unassinged': this.state.show_unassigned, 'e_value': this.state.e_value, 'g_searched': this.state.g_searched}
+            this.props.sendValuesUp(values)
+        })
+      }
+
+
     render() {
         return (
+            <>
+            <Card className="m-2">
+                <Card.Body>
+                    <Card.Title>Search genes</Card.Title>
+                    <Select 
+                    options={this.props.g_options}
+                    components={{MenuList}}
+                    filterOption={createFilter({ignoreAccents: false})}
+                    isMulti defaultValue={[]}
+                    onChange={(e: any) => this.passSearch(e)}/>
+                </Card.Body>
+            </Card>
             <Card className="m-2">
                 <Card.Body>
                     <Card.Title>Filter</Card.Title>
@@ -53,7 +124,6 @@ class FilterUI extends React.Component<Props, any> {
                     />
                     <Form.Label>e-value {"<"} {this.state.e_value}</Form.Label>
                     <Form.Range 
-                        value={this.state.e_value_slider}
                         min={0}
                         max={300}
                         step={1}
@@ -67,6 +137,7 @@ class FilterUI extends React.Component<Props, any> {
                     </Form.Select>
                 </Card.Body>
             </Card>
+            </>
         );
     } 
 }

@@ -33,6 +33,7 @@ interface State {
     filters: any
     scatter_data: any
     legend_only: string[]
+    g_options: any[]
 }
   
 
@@ -50,8 +51,9 @@ class TaxaminerDashboard extends React.Component<Props, State> {
             data: undefined,
             scatter_data: { colors: "rainbow", legendonly: []},
             e_value: 1.0,
-            filters: {e_value: 1.0, show_unassinged: true},
-            legend_only: []
+            filters: {e_value: 1.0, show_unassinged: true, g_searched: []},
+            legend_only: [],
+            g_options: []
         }
 
         // Bind functions passing data from child objects to local context
@@ -64,12 +66,21 @@ class TaxaminerDashboard extends React.Component<Props, State> {
      * @param id dataset ID
      */
     setDataset(id: number) {
+        console.log(id)
         this.setState( {dataset_id: id} );
         const endpoint = `http://${this.props.base_url}:5500/api/v1/data/main?id=${id}`;
 		fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {
 				this.setState( {data: data} );
+
+                // update searchbar options
+                const gene_options: { label: string; value: string; }[] = []
+                Object.keys(data).map((item: string) => (
+                    gene_options.push( { "label": item, "value": item } )
+                ))
+                console.log(gene_options)
+                this.setState({g_options: gene_options})
 			})
     }
 
@@ -82,9 +93,15 @@ class TaxaminerDashboard extends React.Component<Props, State> {
 			.then(response => response.json())
 			.then(data => {
 				this.setState( {data: data} );
-			})
+                const gene_options: { label: string; value: string; }[] = []
+                Object.keys(data).map((item: string) => (
+                    gene_options.push( { "label": item, "value": item } )
+                ))
+                this.setState({g_options: gene_options})
+		})
 	}
 
+    
     /**
      * Call this everytime a click event referring to a datapoint's key in the primary table occurs
      * @param newRow new data row
@@ -158,6 +175,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                     sendCameraData={this.callbackFunction}
                     e_value={this.state.filters.e_value}
                     show_unassigned={this.state.filters.show_unassinged}
+                    g_searched={this.state.filters.g_searched}
                     passScatterData={this.shareScatterData}/>
                 </Col>
                 <Col>
@@ -176,6 +194,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                         </Tab>
                         <Tab eventKey="Filter" title="Filters">
                             <FilterUI
+                            g_options={this.state.g_options}
                             sendValuesUp={this.setFilters}/>
                         </Tab>
                         <Tab eventKey="diamodn" title="Diamond Output">
