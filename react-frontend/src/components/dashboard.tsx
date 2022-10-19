@@ -32,7 +32,6 @@ interface State {
     e_value: any
     filters: any
     scatter_data: any
-    legend_only: string[]
     g_options: any[]
 }
   
@@ -52,7 +51,6 @@ class TaxaminerDashboard extends React.Component<Props, State> {
             scatter_data: { colors: "rainbow", legendonly: []},
             e_value: 1.0,
             filters: {e_value: 1.0, show_unassinged: true, g_searched: []},
-            legend_only: [],
             g_options: []
         }
 
@@ -88,7 +86,6 @@ class TaxaminerDashboard extends React.Component<Props, State> {
 	 * Call API on component mount to main table data
 	 */
 	componentDidMount() {
-        console.log(this.props.base_url);
         this.setState({dataset_id: -1})
 	}
 

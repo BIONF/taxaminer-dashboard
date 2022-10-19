@@ -43,7 +43,7 @@ class DataSetMeta extends React.Component<Props, State> {
      * @param prev previous state
      */
     componentDidUpdate(prev: any) {
-		if (prev.dataset_id != this.props.dataset_id) {
+		if (prev.dataset_id != this.props.dataset_id && this.props.dataset_id !== -1) {
 			this.fetchMetaData()
 		}
 	}
@@ -52,12 +52,14 @@ class DataSetMeta extends React.Component<Props, State> {
      * Fetch meta data from API
      */
     fetchMetaData() {
-        const endpoint = `http://${this.props.base_url}:5500/api/v1/data/summary?id=${this.props.dataset_id}`;
-		fetch(endpoint)
-			.then(response => response.text())
-			.then(data => {
-				this.setState( {metadata: data} )
-		})
+        if (this.props.dataset_id !== -1) {
+            const endpoint = `http://${this.props.base_url}:5500/api/v1/data/summary?id=${this.props.dataset_id}`;
+		        fetch(endpoint)
+			    .then(response => response.text())
+			    .then(data => {
+				    this.setState( {metadata: data} )
+		    })
+        }
     }
 
     render() {

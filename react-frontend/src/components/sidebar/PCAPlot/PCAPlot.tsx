@@ -42,7 +42,7 @@ class PCAPlot extends Component<Props, any> {
 	}
 
 	componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<any>, snapshot?: any): void {
-		if (prevProps.dataset_id !== this.state.dataset_id) {
+		if (prevProps.dataset_id !== this.props.dataset_id) {
 			if (this.props.dataset_id !== -1) {
 				const endpoint = `http://${this.props.base_url}:5500/api/v1/data/pca_contribution?id=${this.props.dataset_id}`;
 				fetch(endpoint)

@@ -114,9 +114,6 @@ class Scatter3D extends Component<Props, any> {
 		if (nextProps.dataset_id !== this.props.dataset_id) {
 			return true
 		}
-
-		
-
 		return false
 	}
 

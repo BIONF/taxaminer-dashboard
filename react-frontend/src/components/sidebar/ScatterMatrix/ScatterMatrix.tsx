@@ -27,7 +27,8 @@ class ScatterMatrix extends Component<Props, any> {
 			marker_size: 5, // actual dot size in the plot
 			manual_size: 5, // dot size selected by user
 			color_options: colors.options, // color palette options
-			camera_ratios: {xy: 1.0, xz: 1.0, yz: 1.0}
+			camera_ratios: {xy: 1.0, xz: 1.0, yz: 1.0},
+			my_plot: undefined
 		}
         this.sendClick = this.sendClick.bind(this);
 	}
@@ -36,13 +37,17 @@ class ScatterMatrix extends Component<Props, any> {
 	 * Call API on component mount to load plot data
 	 */
 	componentDidMount() {
-		const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
-		fetch(endpoint)
-			.then(response => response.json())
-			.then(data => {
-				this.setState( {data: data} );
-				this.set_auto_size(data);
+		if (this.props.dataset_id !== -1) {
+			const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
+				fetch(endpoint)
+				.then(response => response.json())
+				.then(data => {
+					this.setState( {data: data}, () => {
+						this.set_auto_size(data);
+						this.setState({my_plot: this.build_plot()})
+					} );
 			})
+		}
 	}
 
 	/**
@@ -53,14 +58,18 @@ class ScatterMatrix extends Component<Props, any> {
 	 */
 	componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<any>, snapshot?: any): void {
 		// fetch the new dataset if the ID has changed
-		if (prevProps.dataset_id !== this.props.dataset_id) {
+		if (prevProps.dataset_id !== this.props.dataset_id && this.props.dataset_id !== -1) {
 			const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
 			fetch(endpoint)
 				.then(response => response.json())
 				.then(data => {
-					this.setState( {data: data} );
-					this.set_auto_size(data);
+					this.setState( {data: data}, () => {
+						this.set_auto_size(data);
+						this.setState({my_plot: this.build_plot()})
+					});
 				})
+		} else if (prevProps.scatter_data !== this.props.scatter_data) {
+			this.setState({my_plot: this.build_plot()})
 		}
 	}
 
@@ -131,7 +140,7 @@ class ScatterMatrix extends Component<Props, any> {
 		let legendonly_names: string[] = []
 
 		legendonly.forEach((dot: any) => {
-			legendonly_names.push(dot.name)
+			legendonly_names.push(dot.text)
 		})
 
 		// Avoid NoneType Exceptions
@@ -257,7 +266,7 @@ class ScatterMatrix extends Component<Props, any> {
 	render() {
 		return (
 			<div>
-				{this.build_plot()}
+				{this.state.my_plot}
 			</div>
 		)
 	}

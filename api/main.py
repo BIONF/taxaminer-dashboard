@@ -173,7 +173,7 @@ def pca_contributions():
     my_id = int(my_id)
     my_dir = file_io.get_baseurl(int(my_id))
 
-    data = file_io.load_pca_coords(my_id)
+    data = file_io.load_pca_coords(my_dir)
 
     # return as json
     return jsonify(data)
