@@ -40,7 +40,7 @@ class Scatter3D extends Component<Props, any> {
 			camera_ratios: {xy: 1.0, xz: 1.0, yz: 1.0},
 			legendonly: [],
 			last_click : "",
-			figure: {data: [], layout: {}, frames: [], config: {}},
+			figure: {data: [], layout: {}, frames: [], config: {}, scene: {}},
 			is_loading: false,
 		}
         this.sendClick = this.sendClick.bind(this);
@@ -70,7 +70,7 @@ class Scatter3D extends Component<Props, any> {
 	 * @param prev previous state
 	 */
 	componentDidUpdate(prev: any) {
-		if (prev.dataset_id != this.props.dataset_id) {
+		if (prev.dataset_id !== this.props.dataset_id) {
 			// loading spinner
 			this.setState({is_loading: true})
 			const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
@@ -86,7 +86,7 @@ class Scatter3D extends Component<Props, any> {
 			.finally( () => {
 				this.setState({is_loading: false})
 			})
-		} else if (prev.e_value != this.props.e_value || prev.show_unassigned != this.props.show_unassigned || prev.g_searched != this.props.g_searched){
+		} else if (prev.e_value !== this.props.e_value || prev.show_unassigned !== this.props.show_unassigned || prev.g_searched !== this.props.g_searched){
 			this.build_plot()
 		}
 	}
@@ -100,17 +100,20 @@ class Scatter3D extends Component<Props, any> {
 	 */
 	 shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<any>, nextContext: any): boolean {
 		// external changes
-		if (nextProps.e_value != this.props.e_value || nextProps.show_unassigned != this.props.show_unassigned || nextProps.g_searched != this.props.g_searched) {
+		if (nextProps.e_value !== this.props.e_value || nextProps.show_unassigned !== this.props.show_unassigned || nextProps.g_searched !== this.props.g_searched) {
 			return true
 		}
 		// changes of the figure should always raise an update, otherwise user interaction is limited
-		if (nextState.figure != this.state.figure) {
+		if (nextState.figure !== this.state.figure) {
 			return true
 		}
 		// dataset changed
-		if (nextProps.dataset_id != this.props.dataset_id) {
+		if (nextProps.dataset_id !== this.props.dataset_id) {
 			return true
 		}
+
+		
+
 		return false
 	}
 
@@ -119,7 +122,7 @@ class Scatter3D extends Component<Props, any> {
 	 * @param e event data
 	 */
 	passCameraData(e: any) {
-		if(e['scene.camera'] == undefined) {
+		if(e['scene.camera'] === undefined) {
 			return
 		}
 		if(e['scene.camera'].up){
@@ -145,7 +148,7 @@ class Scatter3D extends Component<Props, any> {
 	 * @param g_name gene name
 	 */
 	 sendClick(g_name: string){
-		if (g_name != this.state.last_click) {
+		if (g_name !== this.state.last_click) {
 			this.setState({last_click: g_name})
 			this.props.sendClick([g_name]);
 		}
@@ -179,7 +182,7 @@ class Scatter3D extends Component<Props, any> {
 	 * Set automatic marker size
 	 */
 	set_auto_size(data: any){
-		if (data == undefined) {
+		if (data === undefined) {
 			data = this.state.data
 		}
 		let total_points = 0;
@@ -193,7 +196,7 @@ class Scatter3D extends Component<Props, any> {
 		if (new_size < 3) {
 			new_size = 3
 		}
-		if (this.state.auto_size == true) {
+		if (this.state.auto_size === true) {
 			// setting the marker size if auto sizing is enabled will update the plot
 			// with appropriate markers after change of dataset
 			this.setState( { auto_size_px: new_size, marker_size: new_size } )
@@ -226,11 +229,9 @@ class Scatter3D extends Component<Props, any> {
 	 * @param e restyle event
 	 */
 	updateLegendSelection(e: any, ) {
-		let visible: string[] = []
-
-		var plot: any = document.getElementById('scatterplot')
+		var plot: any = document.getElementById('scatter3d')
 		const legendonly = plot.data.filter((trace: any) => trace.visible === "legendonly")
-		if (legendonly != this.state.legend_only) {
+		if (legendonly !== this.state.legend_only) {
 			this.setState({legendonly: legendonly})
 			this.props.passScatterData({ colors: this.state.color_palette, legendonly: legendonly})
 		}
@@ -376,6 +377,18 @@ class Scatter3D extends Component<Props, any> {
 	}
 
 	/**
+	 * Save the plot before rendering component 
+	 * => impedes the plot from reseting on legend clicks
+	 */
+	legendClick(e: any) {
+		var plot: any = document.getElementById('scatter3d')
+		this.setState({figure: plot}, () => {
+			this.build_plot()
+		})
+		return true
+	}
+
+	/**
 	 * Render react component
 	 * @returns render react component
 	 */
@@ -387,6 +400,7 @@ class Scatter3D extends Component<Props, any> {
 				</div>
                 <br></br>
 				<Plot
+				divId='scatter3d'
 				data={this.state.figure.data}
 				layout={this.state.figure.layout}
 				config={this.state.figure.layout}
@@ -397,6 +411,7 @@ class Scatter3D extends Component<Props, any> {
 				onRestyle={(e: any) => this.updateLegendSelection(e)}
 				revision={1}
 				onUpdate={(figure) => this.setState({figure: figure})}
+				onLegendClick={(e) => this.legendClick(e)}
 				/>
 				<Row>
                     <Col xs={1}>

@@ -66,22 +66,23 @@ class TaxaminerDashboard extends React.Component<Props, State> {
      * @param id dataset ID
      */
     setDataset(id: number) {
-        console.log(id)
-        this.setState( {dataset_id: id} );
-        const endpoint = `http://${this.props.base_url}:5500/api/v1/data/main?id=${id}`;
-		fetch(endpoint)
-			.then(response => response.json())
-			.then(data => {
-				this.setState( {data: data} );
+        this.setState( {dataset_id: id}, () => {
+            const endpoint = `http://${this.props.base_url}:5500/api/v1/data/main?id=${id}`;
+		        fetch(endpoint)
+			    .then(response => response.json())
+			    .then(data => {
+				    this.setState( {data: data} );
 
-                // update searchbar options
-                const gene_options: { label: string; value: string; }[] = []
-                Object.keys(data).map((item: string) => (
-                    gene_options.push( { "label": item, "value": item } )
-                ))
-                console.log(gene_options)
-                this.setState({g_options: gene_options})
-			})
+                    // update searchbar options
+                    const gene_options: { label: string; value: string; }[] = []
+                    Object.keys(data).map((item: string) => (
+                        gene_options.push( { "label": item, "value": item } )
+                    ))
+                    this.setState({g_options: gene_options})
+                    this.setState({filters: {e_value: 1.0, show_unassinged: true, g_searched: []}})
+			    })
+            } 
+        );
     }
 
     /**
@@ -99,6 +100,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                 ))
                 this.setState({g_options: gene_options})
 		})
+        console.log('current URL 👉️', window.location.href);
 	}
 
     
@@ -110,7 +112,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
     handleDataClick(keys: string[]) {
         const new_row = this.state.data[keys[0]];
         console.log(keys)
-        if (new_row != undefined) {
+        if (new_row !== undefined) {
             this.setState({selected_row: this.state.data[keys[0]]});
         }
 
@@ -215,6 +217,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                                 e_value={this.state.filters.e_value}
                                 show_unassigned={this.state.filters.show_unassinged}
                                 scatter_data = {this.state.scatter_data}
+                                dataset_id={this.state.dataset_id}
                                 />
                         </Tab>
                         <Tab eventKey="PCA" title="PCA">

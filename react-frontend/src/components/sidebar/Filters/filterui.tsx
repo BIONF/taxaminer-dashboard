@@ -3,9 +3,7 @@ import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 import Select, { createFilter } from 'react-select';
 import { FixedSizeList as List } from "react-window";
-import makeAnimated from 'react-select/animated';
 
-const animatedComponents = makeAnimated();
 const height = 35;
 
 interface Props {
@@ -104,7 +102,8 @@ class FilterUI extends React.Component<Props, State> {
             <Card className="m-2">
                 <Card.Body>
                     <Card.Title>Search genes</Card.Title>
-                    <Select 
+                    <Select
+                    // @ts-ignore
                     options={this.props.g_options}
                     components={{MenuList}}
                     filterOption={createFilter({ignoreAccents: false})}

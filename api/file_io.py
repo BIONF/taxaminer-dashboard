@@ -1,12 +1,22 @@
 import csv
+from dataclasses import field
 import json
-
+import os
 from flask import jsonify
 
-def load_datasets():
-    with open('./datasets/datasets.json', 'r') as f:
-        data = json.load(f)
-    return data
+def get_baseurl(my_id):
+    my_id = int(my_id)
+    print(os.listdir("./datasets")[my_id - 1])
+    return os.listdir("./datasets")[my_id - 1]
+
+def load_dataset_folders():
+    datasets = []
+    for i, file in enumerate(os.listdir("./datasets")):
+        obj = os.path.join("./datasets", file)
+        if os.path.isdir(obj):
+            datasets.append({'id': i + 1, 'title': str(obj).replace("./datasets", "").replace("\\", "")})
+    return datasets
+
 
 def convert_csv_to_json(path):
     """Load the main scatterplot datafile and convert it to JSON"""
@@ -73,29 +83,29 @@ def taxonomic_hits_loader(fasta_id, path):
             row['ssciname'] = row['ssciname'][0:20] + "..."
     return match_rows
 
-def load_summary(dataset_id):
+def load_summary(dir):
     """Load a dataset summary"""
-    with open(f"./datasets/{dataset_id}/summary.txt", "r") as summary:
+    with open(f"./datasets/{dir}/summary.txt", "r") as summary:
         lines = summary.readlines()
     
     return "".join(lines)
 
 def load_user_config():
     """Load a user config"""
-    with open("./user/sample_config.json", "r") as file:
+    with open("./config/user.json", "r") as file:
         lines = file.readlines()
     
     return "".join(lines)
 
 def parse_user_config():
     """Parse user config to JSON"""
-    with open('./user/sample_config.json', 'r') as f:
+    with open('./config/user.json', 'r') as f:
         data = json.load(f)
     return data
 
 def write_user_config(json_data):
     """Write user config to disk"""
-    with open('./sample_data/sample_config.json', 'w') as json_file:
+    with open('./config/user.json', 'w') as json_file:
         json.dump(json_data, json_file)
 
 def load_pca_coords(dataset_id):

@@ -8,6 +8,7 @@ interface Props {
 	show_unassigned: boolean
     scatter_data: any
 	base_url: string
+	dataset_id: number
 }
 
 /**
@@ -35,13 +36,32 @@ class ScatterMatrix extends Component<Props, any> {
 	 * Call API on component mount to load plot data
 	 */
 	componentDidMount() {
-		const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=1`;
+		const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
 		fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {
 				this.setState( {data: data} );
 				this.set_auto_size(data);
 			})
+	}
+
+	/**
+	 * Act on Prop updates (=> mainly: load a different dataset)
+	 * @param prevProps previous props
+	 * @param prevState previous state
+	 * @param snapshot previous snapshot
+	 */
+	componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<any>, snapshot?: any): void {
+		// fetch the new dataset if the ID has changed
+		if (prevProps.dataset_id !== this.props.dataset_id) {
+			const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
+			fetch(endpoint)
+				.then(response => response.json())
+				.then(data => {
+					this.setState( {data: data} );
+					this.set_auto_size(data);
+				})
+		}
 	}
 
 	/**
@@ -66,7 +86,7 @@ class ScatterMatrix extends Component<Props, any> {
 	 * Set automatic marker size
 	 */
 	set_auto_size(data: any){
-		if (data == undefined) {
+		if (data === undefined) {
 			data = this.state.data
 		}
 		let total_points = 0;
@@ -119,8 +139,8 @@ class ScatterMatrix extends Component<Props, any> {
 			return []
 		}
 
-        const traces: any[] = []
-        data.map(each => {
+        let traces: any[] = []
+        traces = data.map(each => {
 		    const x : string[] = [];
 		    const y : string[] = [];
             const z : string[] = [];
@@ -175,7 +195,7 @@ class ScatterMatrix extends Component<Props, any> {
 				// track the unique gene name
 				customdata: gene_names
             }
-            traces.push(trace)
+			return trace
         })
 		return traces
 	}

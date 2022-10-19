@@ -1,3 +1,4 @@
+from os import abort
 import flask
 import file_io
 from flask import Response, request, jsonify, send_file
@@ -27,9 +28,7 @@ def page_not_found(e):
 @cross_origin()
 def datasets():
     query_parameters = request.args
-    my_id = query_parameters.get("id")
-
-    json_data = file_io.load_datasets()
+    json_data = file_io.load_dataset_folders()
 
     # return as json
     return jsonify(json_data)
@@ -44,8 +43,9 @@ def api_filter():
     """
     query_parameters = request.args
     my_id = query_parameters.get("id")
+    my_dir = file_io.get_baseurl(my_id)
 
-    json_data = file_io.convert_csv_to_json(f"./datasets/{my_id}/gene_table_taxon_assignment.csv")
+    json_data = file_io.convert_csv_to_json(f"./datasets/{my_dir}/gene_table_taxon_assignment.csv")
 
     # return as json
     return jsonify(json_data)
@@ -61,11 +61,13 @@ def main_data():
     query_parameters = request.args
 
     my_id = query_parameters.get("id")
-
-    json_data = file_io.indexed_data(f"./datasets/{my_id}/gene_table_taxon_assignment.csv")
-
-    # return as json
-    return jsonify(json_data)
+    if not my_id:
+        return abort(404)
+    else:
+        my_id = int(my_id)
+        my_dir = file_io.get_baseurl(int(my_id))
+        json_data = file_io.indexed_data(f"./datasets/{my_dir}/gene_table_taxon_assignment.csv")
+        return jsonify(json_data)
 
 
 @app.route('/api/v1/data/diamond', methods=['GET'])
@@ -79,8 +81,10 @@ def diamond_data():
 
     my_id = query_parameters.get("id")
     fasta_id = query_parameters.get("fasta_id")
+    my_id = int(my_id)
+    my_dir = file_io.get_baseurl(int(my_id))
 
-    json_data = file_io.taxonomic_hits_loader(fasta_id, f"./datasets/{my_id}/taxonomic_hits.txt")
+    json_data = file_io.taxonomic_hits_loader(fasta_id, f"./datasets/{my_dir}/taxonomic_hits.txt")
 
     # return as json
     return jsonify(json_data)
@@ -98,7 +102,11 @@ def amino_acid_seq():
     my_id = query_parameters.get("id")
     fasta_id = query_parameters.get("fasta_id")
 
-    seq = file_io.fast_fasta_loader(f"./datasets/{my_id}/proteins.faa", fasta_id)
+    # dataset directory
+    my_id = int(my_id)
+    my_dir = file_io.get_baseurl(int(my_id))
+
+    seq = file_io.fast_fasta_loader(f"./datasets/{my_dir}/proteins.faa", fasta_id)
 
     # add newlines for formatting, this should be replaced by React code later
     every = 40
@@ -116,8 +124,11 @@ def summary():
     """
     query_parameters = request.args
     my_id = query_parameters.get("id")
+    # dataset directory
+    my_id = int(my_id)
+    my_dir = file_io.get_baseurl(int(my_id))
 
-    data = file_io.load_summary(dataset_id=my_id)
+    data = file_io.load_summary(my_dir)
 
     # return as json
     return Response(data, mimetype="text")
@@ -158,6 +169,9 @@ def pca_contributions():
     query_parameters = request.args
 
     my_id = query_parameters.get("id")
+    # dataset directory
+    my_id = int(my_id)
+    my_dir = file_io.get_baseurl(int(my_id))
 
     data = file_io.load_pca_coords(my_id)
 
