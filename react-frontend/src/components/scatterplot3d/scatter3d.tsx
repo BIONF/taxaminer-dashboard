@@ -50,19 +50,22 @@ class Scatter3D extends Component<Props, any> {
 	 * Call API on component mount to load plot data
 	 */
 	componentDidMount() {
-		const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
-		this.setState({is_loading: true})
-		fetch(endpoint)
-			.then(response => response.json())
-			.then(data => {
-				this.setState( {data: data}, () => {
-					this.build_plot()
-				});
-				this.set_auto_size(data);
-			})
-			.finally( () => {
-				this.setState({is_loading: false})
-			})
+		if (this.props.dataset_id !== -1) {
+			const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
+			this.setState({is_loading: true})
+			fetch(endpoint)
+				.then(response => response.json())
+				.then(data => {
+					this.setState( {data: data}, () => {
+						this.build_plot()
+					});
+					this.set_auto_size(data);
+				})
+				.finally( () => {
+					this.setState({is_loading: false})
+				}
+			)
+		}
 	}
 
 	/**
@@ -70,7 +73,7 @@ class Scatter3D extends Component<Props, any> {
 	 * @param prev previous state
 	 */
 	componentDidUpdate(prev: any) {
-		if (prev.dataset_id !== this.props.dataset_id) {
+		if (prev.dataset_id !== this.props.dataset_id && this.props.dataset_id !== -1) {
 			// loading spinner
 			this.setState({is_loading: true})
 			const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.props.dataset_id}`;

@@ -6,7 +6,6 @@ from flask import jsonify
 
 def get_baseurl(my_id):
     my_id = int(my_id)
-    print(os.listdir("./datasets")[my_id - 1])
     return os.listdir("./datasets")[my_id - 1]
 
 def load_dataset_folders():

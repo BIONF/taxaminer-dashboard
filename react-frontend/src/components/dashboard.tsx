@@ -42,13 +42,13 @@ class TaxaminerDashboard extends React.Component<Props, State> {
 	constructor(props: any){
 		super(props);
 		this.state ={
-            dataset_id: 1,
+            dataset_id: -1,
             selected_row: {g_name: "Pick a gene", taxonomic_assignment: "Pick a gene", plot_label: "Pick a gene", best_hit: "Pick a gene", c_name: "Pick a gene", bh_evalue: 0, best_hitID: "None"}, 
             aa_seq: "Pick a gene",
             camera: null,
             select_mode: 'neutral',
             selected_data: new Set(),
-            data: undefined,
+            data: [],
             scatter_data: { colors: "rainbow", legendonly: []},
             e_value: 1.0,
             filters: {e_value: 1.0, show_unassinged: true, g_searched: []},
@@ -57,7 +57,6 @@ class TaxaminerDashboard extends React.Component<Props, State> {
         }
 
         // Bind functions passing data from child objects to local context
-        this.setDataset = this.setDataset.bind(this);
         this.handleDataClick = this.handleDataClick.bind(this);
 	}
 
@@ -66,41 +65,31 @@ class TaxaminerDashboard extends React.Component<Props, State> {
      * @param id dataset ID
      */
     setDataset(id: number) {
-        this.setState( {dataset_id: id}, () => {
-            const endpoint = `http://${this.props.base_url}:5500/api/v1/data/main?id=${id}`;
-		        fetch(endpoint)
-			    .then(response => response.json())
-			    .then(data => {
-				    this.setState( {data: data} );
+        const endpoint = `http://${this.props.base_url}:5500/api/v1/data/main?id=${id}`;
+            fetch(endpoint)
+            .then(response => response.json())
+            .then(data => {
+                this.setState( {data: data}, () => {
+                    this.setState( {dataset_id: id} )
+                } );
+    
+                // update searchbar options
+                const gene_options: { label: string; value: string; }[] = []
+                Object.keys(data).map((item: string) => (
+                    gene_options.push( { "label": item, "value": item } )
+                ))
+                this.setState({g_options: gene_options})
+                this.setState({filters: {e_value: 1.0, show_unassinged: true, g_searched: []}})
+            })
 
-                    // update searchbar options
-                    const gene_options: { label: string; value: string; }[] = []
-                    Object.keys(data).map((item: string) => (
-                        gene_options.push( { "label": item, "value": item } )
-                    ))
-                    this.setState({g_options: gene_options})
-                    this.setState({filters: {e_value: 1.0, show_unassinged: true, g_searched: []}})
-			    })
-            } 
-        );
     }
 
     /**
 	 * Call API on component mount to main table data
 	 */
 	componentDidMount() {
-		const endpoint = `http://${this.props.base_url}:5500/api/v1/data/main?id=${this.state.dataset_id}`;
-		fetch(endpoint)
-			.then(response => response.json())
-			.then(data => {
-				this.setState( {data: data} );
-                const gene_options: { label: string; value: string; }[] = []
-                Object.keys(data).map((item: string) => (
-                    gene_options.push( { "label": item, "value": item } )
-                ))
-                this.setState({g_options: gene_options})
-		})
-        console.log('current URL 👉️', window.location.href);
+        console.log(this.props.base_url);
+        this.setState({dataset_id: -1})
 	}
 
     
@@ -111,7 +100,6 @@ class TaxaminerDashboard extends React.Component<Props, State> {
      */
     handleDataClick(keys: string[]) {
         const new_row = this.state.data[keys[0]];
-        console.log(keys)
         if (new_row !== undefined) {
             this.setState({selected_row: this.state.data[keys[0]]});
         }
@@ -164,6 +152,14 @@ class TaxaminerDashboard extends React.Component<Props, State> {
         this.setState({scatter_data: values})
     }
 
+    updateDatasetID = (ID: number) => {
+        if (ID !== this.state.dataset_id) {
+            this.setState({dataset_id: ID}, () => {
+                this.setDataset(ID)
+            })
+        }
+    }
+
     render() {
         return (
             <Container fluid>
@@ -185,7 +181,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                         <Tab eventKey="Overview" title="Overview">
                             <DataSetSelector
                             base_url={this.props.base_url}
-                            dataset_changed={this.setDataset}/>
+                            dataset_changed={this.updateDatasetID}/>
                             <DataSetMeta
                             base_url={this.props.base_url}
                             dataset_id={this.state.dataset_id}/>

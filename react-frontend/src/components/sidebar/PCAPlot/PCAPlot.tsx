@@ -31,12 +31,27 @@ class PCAPlot extends Component<Props, any> {
 	 * Call API on component mount to load plot data
 	 */
 	componentDidMount() {
-		const endpoint = `http://${this.props.base_url}:5500/api/v1/data/pca_contribution?id=${this.props.dataset_id}`;
-		fetch(endpoint)
-			.then(response => response.json())
-			.then(data => {
-				this.setState( {data: data} );
-			})
+		if (this.props.dataset_id !== -1) {
+			const endpoint = `http://${this.props.base_url}:5500/api/v1/data/pca_contribution?id=${this.props.dataset_id}`;
+			fetch(endpoint)
+				.then(response => response.json())
+				.then(data => {
+					this.setState( {data: data} );
+				})
+		}
+	}
+
+	componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<any>, snapshot?: any): void {
+		if (prevProps.dataset_id !== this.state.dataset_id) {
+			if (this.props.dataset_id !== -1) {
+				const endpoint = `http://${this.props.base_url}:5500/api/v1/data/pca_contribution?id=${this.props.dataset_id}`;
+				fetch(endpoint)
+					.then(response => response.json())
+					.then(data => {
+						this.setState( {data: data} );
+					})
+			}
+		}
 	}
 
 	/**

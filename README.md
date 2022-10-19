@@ -23,8 +23,29 @@ To add a dataset, create a new subdirectoy with a name of your choice in the "da
 * summary.txt
 * taxonomic_hits.txt
 
-## Starting application
-The dashboard requires both a Node.js and python process to be running in the background. `start.sh` will auto-detect you conda installation options (see above) and launch the processes. Do not close the terminal. You may stop the aplication by using `Ctrl+C`
+## Starting the application
+The dashboard requires both a Node.js and python process to be running in the background. `start.sh` will auto-detect you conda installation options (see above) and launch the processes. Do not close the terminal the processes are running in. Please wait until you the terminal provides an output similar to this:
+```
+Compiled successfully!
+
+You can now view react-frontend in the browser.
+
+  Local:            http://localhost:3000
+  On Your Network:  http://172.17.102.12:3000
+
+Note that the development build is not optimized.
+To create a production build, use npm run build.
+
+webpack compiled successfully
+No issues found.
+```
+Then use one of the available links to open the dashboard in you browser. If you're running the dashboard on a remote system the "Local" address **will not** work. Depending one the size of your dataset I might take a few seconds to load all data.
+
+## Switching datasets
+The drowdown selector "Dataset Selection" at the top right will allow you to switch between datasets contained in subfolder of "datasets".
+
+## Stoppign the application
+You may use `Ctrl+C` in your original terminal to kill both processes and shutdown the application.
 
 # Compatibility
 
