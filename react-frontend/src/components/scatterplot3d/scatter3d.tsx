@@ -248,6 +248,7 @@ class Scatter3D extends Component<Props, any> {
 	 */
 	transformData (data: any[]) {
 		const searched = this.props.g_searched
+		const occurrences = {Unassigned: 0}
 		// Avoid NoneType Exceptions
 		if (data == null) {
 			return []
@@ -283,6 +284,15 @@ class Scatter3D extends Component<Props, any> {
 				} else {
 					//console.log(each['g_name'])
 				}
+				// increment counters
+				// @ts-ignore
+				if (occurrences[each['plot_label']] !== undefined) {
+					// @ts-ignore
+					occurrences[each['plot_label']] = occurrences[each['plot_label']] + 1
+				} else {
+					// @ts-ignore
+					occurrences[each['plot_label']] = 1
+				}
 		    })
 			// Setup the plot trace
 			let marker = {}
@@ -298,13 +308,16 @@ class Scatter3D extends Component<Props, any> {
 				}
 			}
 
+			// @ts-ignore
             const trace = {
                 type: 'scatter3d',
                 mode: 'markers',
                 x: x,
                 y: y,
                 z: z,
-                name: label,
+				// @ts-ignore
+                name: label + ` (${occurrences[label]})`,
+				// @ts-ignore
                 text: label,
 				marker: marker,
 				visible: true,
@@ -347,6 +360,7 @@ class Scatter3D extends Component<Props, any> {
 			x: x,
 			y: y,
 			z: z,
+			// @ts-ignore
 			name: label,
 			text: label,
 			marker: {
@@ -359,6 +373,10 @@ class Scatter3D extends Component<Props, any> {
 			hovertemplate: "%{customdata[0]} <br>%{customdata[1]} <br><extra>Best hit: %{customdata[2]} <br>Best hit e-value: %{customdata[3]} <br>Taxonomic assignment: %{customdata[4]} <br>Contig name: %{customdata[5]} <br> </extra>"
 		}
 		traces.push(trace)
+		
+		// @ts-ignore
+		// Custom sort function, sort by number of occurences, decreasing
+		traces.sort(function(a, b){return occurrences[b.text] - occurrences[a.text]})
 		return traces
 	}
 
