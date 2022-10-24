@@ -16,6 +16,14 @@ If you have already set up a taxaminer conda env, you may use `add_to_taxaminer.
 
 # Usage
 ## Adding Datasets
+### Using the import assistant
+Next to the dataset selector in the top right corner you'll find an "import" button. Clicking on it will open a dialogue asking you to choose a custom name for your new dataset, select a .zip file to import and decide whether you want to keep the original .zip after import or discard it. There are several conditions to be met here:
+
+1. The name chosen for you new dataset must be unique and cannot be empty (=> there is no subdirectoy of /datasets with this name)
+2. The selected .zip file must contain the taXaminer output directory at top level (=> you should see paths like foo.zip > proteins.faa)
+
+### Adding data manually
+
 To add a dataset, create a new subdirectoy with a name of your choice in the "datasets" directory. Each folder should include the follow files from the taXaminer output directory:
 * gene_table_taxon_assignment.csv
 * pca_loadings.csv

@@ -94,10 +94,18 @@ class UploadDialogue extends Component<Props, State> {
         this.uploadFile()
     }
 
+    /**
+     * Close the modal withou upload
+     * @returns 
+     */
+    cancel = () => {
+        return this.props.hide_modal_callback()
+    }
+
     render() {
         return (
             <Modal show={this.props.show_modal}>
-              <Modal.Header closeButton>
+              <Modal.Header>
                 <Modal.Title><span className='bi bi-file-zip m-2'/> Import new dataset</Modal.Title>
               </Modal.Header>
               <Modal.Body>
@@ -131,8 +139,8 @@ class UploadDialogue extends Component<Props, State> {
             </Container>
               </Modal.Body>
               <Modal.Footer>
-                <Button onClick={this.hideModal} variant="danger"><span className='bi bi-x-circle m-2'/>Cancel</Button>
-                <Button onClick={this.hideModal} disabled={!this.state.invalid_name}><span className='bi bi-upload m-2'/>Upload</Button>
+                <Button onClick={this.cancel} variant="danger"><span className='bi bi-x-circle m-2'/>Cancel</Button>
+                <Button onClick={this.hideModal} disabled={!(this.state.invalid_name && this.state.file.size != 0)}><span className='bi bi-upload m-2'/>Upload</Button>
               </Modal.Footer>
             </Modal>
         );
