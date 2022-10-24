@@ -1,0 +1,1 @@
+Please only remove files from this folder if they have not been removed automatically and the application is not running!

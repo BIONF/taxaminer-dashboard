@@ -1,7 +1,10 @@
-from os import abort
+import os
+import shutil
+import zipfile
 import flask
 import file_io
-from flask import Response, request, jsonify, send_file
+from flask import request, jsonify, send_file, abort
+from flask.wrappers import Response
 from flask_cors import CORS, cross_origin
 
 # flask server
@@ -33,6 +36,48 @@ def datasets():
     # return as json
     return jsonify(json_data)
 
+
+@app.route('/api/v1/data/upload', methods=['POST'])
+@cross_origin()
+def upload_file():
+    """Upload required input files"""
+
+    # file params
+    my_file = request.files['files']
+    file_name = request.form['name']
+    keep_zip = bool(int(request.form['keep_zip']))
+
+    temp_path = "./temp/" + file_name + ".zip"
+
+    # jump to the flask working dir and save with predefined filename
+    my_file.save(temp_path)
+
+    # unzip
+    with zipfile.ZipFile(temp_path, 'r') as zip_ref:
+        zip_ref.extractall("./temp/" + file_name + "/")
+    
+    # copy to dataset folder
+    try:
+        os.renames(f"./temp/{file_name}/taxonomic_hits.txt", f"./datasets/{file_name}/taxonomic_hits.txt")
+        os.renames(f"./temp/{file_name}/proteins.faa", f"./datasets/{file_name}/proteins.faa")
+        os.renames(f"./temp/{file_name}/taxonomic_assignment/gene_table_taxon_assignment.csv", f"./datasets/{file_name}/gene_table_taxon_assignment.csv")
+        os.renames(f"./temp/{file_name}/gene_info/summary.txt", f"./datasets/{file_name}/summary.txt")
+        os.renames(f"./temp/{file_name}/PCA_and_clustering/PCA_results/pca_loadings.csv", f"./datasets/{file_name}/pca_loadings.csv")
+
+        if keep_zip:
+            os.renames(f"./temp/{file_name}.zip", f"./datasets/{file_name}/{file_name}.zip")
+        else:
+            os.remove(f"./temp/{file_name}.zip")
+
+        # clean up
+        shutil.rmtree("./temp/" + file_name + "/")
+
+    except FileNotFoundError:
+        print("Invavlid file uploaded")
+        return abort(500)
+
+    # return as json
+    return "Finished"
 
 @app.route('/api/v1/data/scatterplot', methods=['GET'])
 @cross_origin()
@@ -177,6 +222,8 @@ def pca_contributions():
 
     # return as json
     return jsonify(data)
+
+
 
 @app.route("/download/fasta", methods=['POST'])
 @cross_origin()

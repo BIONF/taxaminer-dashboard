@@ -1,11 +1,14 @@
 import React from "react";
 import { Button, InputGroup } from "react-bootstrap";
 import Card from 'react-bootstrap/Card';
-import Form from 'react-bootstrap/Form'
+import Form from 'react-bootstrap/Form';
+import Modal from 'react-bootstrap/Modal';
+import UploadDialogue from "./UploadDialogue";
 
 interface State {
     datasets: any
     new_id: number
+    show_import_modal: boolean
 }
 
 interface Props {
@@ -19,7 +22,8 @@ class DataSetSelector extends React.Component<Props, State> {
         super(props)
         this.state = {  
             datasets: [{id: -1, title: "Select a dataset to get started",  text: "A sample dataset to test on small scale"}],
-            new_id: -1
+            new_id: -1,
+            show_import_modal: false
         }
         
     }
@@ -28,6 +32,27 @@ class DataSetSelector extends React.Component<Props, State> {
      * Load Inital datasets
      */
     componentDidMount() {
+        this.updateIndex()
+    }
+
+    /**
+     * Receive signal from child that import form has finished
+     */
+    hideModalCallback = () => {
+        if (this.state.show_import_modal) {
+            this.setState({ show_import_modal: false })
+            this.updateIndex()
+        }
+    }
+
+    showModal = () => {
+        this.setState({ show_import_modal: true })
+    }
+
+    /**
+     * Update indexed available datasets
+     */
+    updateIndex() {
         const endpoint = `http://${this.props.base_url}:5500/api/v1/data/datasets`;
         const default_values = [{id: -1, title: "Select a dataset",  text: "A sample dataset to test on small scale"}]
 		fetch(endpoint)
@@ -36,12 +61,13 @@ class DataSetSelector extends React.Component<Props, State> {
 				this.setState( {datasets: default_values.concat(data)}, () => {
                     this.setState({new_id: -1})
                 } );
-			})
+		})
     }
 
 
     render() {
         return (
+            <>
             <Card className="m-2">
                 <Card.Body>
                     <Card.Title>Dataset Selection</Card.Title>
@@ -57,10 +83,25 @@ class DataSetSelector extends React.Component<Props, State> {
                         type="submit" 
                         onClick={(e:any) => this.props.dataset_changed(this.state.new_id)}
                         disabled={(this.state.new_id === -1)}
-                        >Load dataset</Button>
+                        ><span className='bi bi-arrow-right-circle m-2'/>Load</Button>
+                        <Button onClick={this.showModal} variant="success">
+                            <span className='bi bi-upload m-2'/>Upload new
+                        </Button>
                     </InputGroup>
                 </Card.Body>
             </Card>
+           
+                <UploadDialogue
+                base_url={this.props.base_url}
+                show_modal={this.state.show_import_modal}
+                hide_modal_callback={this.hideModalCallback}
+                invalid_names={this.state.datasets.map((each: any) => {
+                    return each.title;
+                })}
+                />
+
+            
+            </>
         );
     } 
 }
