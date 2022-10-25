@@ -69,7 +69,6 @@ def taxonomic_hits_loader(fasta_id, path):
     fields = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send',
               'evalue', 'bitscore', 'staxids', 'ssciname']
     match_rows = []
-    start_index = -1
     with open(path, encoding='utf-8') as csvf:
         # load csv file data using csv library's dictionary reader
         csv_reader = csv.DictReader(csvf, delimiter='\t', fieldnames=fields)
