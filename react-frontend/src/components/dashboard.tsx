@@ -86,7 +86,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
 	 * Call API on component mount to main table data
 	 */
 	componentDidMount() {
-        this.setState({dataset_id: -1})
+        this.updateDatasetID(-1)
 	}
 
     

@@ -9,6 +9,7 @@ interface State {
     datasets: any
     new_id: number
     show_import_modal: boolean
+    show_remove: boolean
 }
 
 interface Props {
@@ -23,7 +24,8 @@ class DataSetSelector extends React.Component<Props, State> {
         this.state = {  
             datasets: [{id: -1, title: "Select a dataset to get started",  text: "A sample dataset to test on small scale"}],
             new_id: -1,
-            show_import_modal: false
+            show_import_modal: false,
+            show_remove: false
         }
         
     }
@@ -47,6 +49,25 @@ class DataSetSelector extends React.Component<Props, State> {
 
     showModal = () => {
         this.setState({ show_import_modal: true })
+    }
+
+    showRemoveModal = () => {
+        this.setState({ show_remove: true })
+    }
+
+    hideRemoveModal = () => {
+        this.setState({ show_remove: false })
+    }
+
+    removeDataset = () => {
+        const endpoint = `http://${this.props.base_url}:5500/api/v1/data/remove?id=${this.state.new_id}`;
+        fetch(endpoint)
+        .then(() => {
+            this.updateIndex()
+            this.setState({new_id: -1})
+            this.props.dataset_changed(-1)
+            this.setState({show_remove: false})
+        })
     }
 
     /**
@@ -85,8 +106,23 @@ class DataSetSelector extends React.Component<Props, State> {
                         disabled={(this.state.new_id === -1)}
                         ><span className='bi bi-arrow-right-circle m-2'/>Load</Button>
                         <Button onClick={this.showModal} variant="success">
-                            <span className='bi bi-upload m-2'/>Upload new
+                            <span className='bi bi-upload m-2'/>Upload
                         </Button>
+                        <Button onClick={this.showRemoveModal} variant="danger">
+                            <span className='bi bi-trash m-2'/>Remove
+                        </Button>
+                        <Modal show={this.state.show_remove}>
+                            <Modal.Header>
+                                <Modal.Title><span className='bi bi-trash m-2'/> Confirm delete</Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body>
+                                Remove dataset {this.state.new_id}?
+                            </Modal.Body>
+                            <Modal.Footer>
+                                <Button onClick={this.hideRemoveModal}><span className='bi bi-x-circle m-2'/>Cancel</Button>
+                                <Button variant="danger" onClick={this.removeDataset}><span className='bi bi-trash m-2'/>Remove</Button>
+                            </Modal.Footer>
+                        </Modal>
                     </InputGroup>
                 </Card.Body>
             </Card>

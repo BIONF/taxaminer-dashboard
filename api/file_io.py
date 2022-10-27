@@ -12,7 +12,7 @@ def load_dataset_folders():
     datasets = []
     for i, file in enumerate(os.listdir("./datasets")):
         obj = os.path.join("./datasets", file)
-        if os.path.isdir(obj):
+        if os.path.isdir(obj) and file != "README.md":
             datasets.append({'id': i + 1, 'title': str(obj).replace("./datasets", "").replace("\\", "")})
     return datasets
 
@@ -72,10 +72,13 @@ def taxonomic_hits_loader(fasta_id, path):
     with open(path, encoding='utf-8') as csvf:
         # load csv file data using csv library's dictionary reader
         csv_reader = csv.DictReader(csvf, delimiter='\t', fieldnames=fields)
-        for i, row in enumerate(csv_reader):
-            if row['qseqid'] == fasta_id:
-                match_rows.append(row)
 
+        try:
+            for i, row in enumerate(csv_reader):
+                if row['qseqid'] == fasta_id:
+                    match_rows.append(row)
+        except csv.Error as e:
+            print(e)
     for row in match_rows:
         if len(row['ssciname']) > 20:
             row['ssciname'] = row['ssciname'][0:20] + "..."

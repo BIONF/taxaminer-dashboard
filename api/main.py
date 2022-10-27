@@ -79,6 +79,19 @@ def upload_file():
     # return as json
     return "Finished"
 
+@app.route('/api/v1/data/remove', methods=['GET'])
+@cross_origin()
+def remove_datasets():
+    query_parameters = request.args
+    my_id = query_parameters.get("id")
+    my_dir = file_io.get_baseurl(my_id)
+
+    shutil.rmtree("./datasets/" + my_dir)
+
+    # return as json
+    return "Success"
+
+
 @app.route('/api/v1/data/scatterplot', methods=['GET'])
 @cross_origin()
 def api_filter():
