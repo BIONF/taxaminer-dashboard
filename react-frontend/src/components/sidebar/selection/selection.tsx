@@ -7,8 +7,11 @@ import Col from "react-bootstrap/esm/Col";
 import Accordion from 'react-bootstrap/Accordion';
 import Button from 'react-bootstrap/Button';
 import CustomOutput from './custom_output';
-import { Modal } from 'react-bootstrap';
+import { Badge, Modal } from 'react-bootstrap';
 import MultiSelectFields from './MultiSelectFields'
+
+// dictionary
+const fields_glossary: any[] = require("./field_options.json")
 
 interface Props {
   base_url: string
@@ -16,14 +19,19 @@ interface Props {
   aa_seq: string
 }
 
+interface State {
+    custom_fields: any[]
+    show_field_modal: boolean
+    options: any[]
+}
+
 /**
  * Customizable representation of table rows for a selected dot
  */
-class SelectionView extends React.Component<Props, any> {
+class SelectionView extends React.Component<Props, State> {
   constructor(props: any){
 		super(props);
-    const options = [{ value:'One', selected:true }, { value: 'Two' }, { value:'Three' }]
-    this.state = { custom_fields: [], show_field_modal: false, options: options}
+    this.state = { custom_fields: [], show_field_modal: false, options: []}
 	}
 
   /**
@@ -41,7 +49,47 @@ class SelectionView extends React.Component<Props, any> {
 				this.setState( {custom_fields: data.custom_fields} )
 			})
 	}
+
+  /**
+   * 
+   * @param prevProps previous Props
+   * @param prevState previous State
+   * @param snapshot Snapshot
+   */
+   componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<any>, snapshot?: any): void {
+    if (prevProps.row != this.props.row) {
+      this.convertFieldsOptions()
+    }
+  }
+
   
+
+  /*
+  * Update possible field options dynamically 
+  */
+  convertFieldsOptions() {
+    let options: { label: string; value: string; }[] = []
+    // available row features
+    const row_keys = Object.keys(this.props.row)
+    options = row_keys.map((each: string) => {
+        // match against glossary
+        for (const field of fields_glossary) {
+            // exact match
+            if (each === field.value) {
+                return { label: (field.label), value: each }
+            } else {
+                // match with suffix (c_cov_...)
+                const re = new RegExp(field.value + ".*");
+                if (re.test(each)) {
+                    return { label: (field.label + " (" + each + ")"), value: each }
+                }
+            }
+        }
+        return { label: each, value: each }
+    })
+    this.setState({options: options})
+  }
+
   /**
    * Toogle modal open
    */
@@ -80,7 +128,7 @@ class SelectionView extends React.Component<Props, any> {
       <Card className="m-2">
         <Card.Body>
           <Card.Title>
-              Selected Gene
+              Selected Gene { (this.props.row.plot_label === "Unassigned") && (<Badge bg="primary">Unassigned</Badge>)}
           </Card.Title>
           <Row>
             <Col className="md-2">
@@ -172,7 +220,8 @@ class SelectionView extends React.Component<Props, any> {
               <Modal.Body>
                 <MultiSelectFields
                 onFieldsChange={this.handleFieldsChange}
-                default_fields={this.state.custom_fields}/>  
+                default_fields={this.state.custom_fields}
+                options={this.state.options}/>  
               </Modal.Body>
               <Modal.Footer>
                 <Button onClick={this.hideModal}>Close</Button>

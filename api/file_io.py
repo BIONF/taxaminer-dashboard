@@ -69,19 +69,21 @@ def taxonomic_hits_loader(fasta_id, path):
     fields = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send',
               'evalue', 'bitscore', 'staxids', 'ssciname']
     match_rows = []
-    with open(path, encoding='utf-8') as csvf:
-        # load csv file data using csv library's dictionary reader
-        csv_reader = csv.DictReader(csvf, delimiter='\t', fieldnames=fields)
 
-        try:
-            for i, row in enumerate(csv_reader):
-                if row['qseqid'] == fasta_id:
-                    match_rows.append(row)
-        except csv.Error as e:
-            print(e)
-    for row in match_rows:
-        if len(row['ssciname']) > 20:
-            row['ssciname'] = row['ssciname'][0:20] + "..."
+    with open(path, encoding='utf-8') as csvf:
+        for line in csvf:
+            try: 
+                data = line.split('\t')
+                # find matching IDs
+                if data[0] == fasta_id:
+                    temp = dict()
+                    for i, data_field in enumerate(data):
+                        temp[fields[i]] = data_field
+                    match_rows.append(temp)
+            except Exception as e:
+                print(e)
+                continue
+    
     return match_rows
 
 def load_summary(dir):

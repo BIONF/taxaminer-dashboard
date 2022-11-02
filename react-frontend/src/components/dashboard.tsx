@@ -109,7 +109,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
             //this.state.selected_data.delete(key)
         }
 
-        const endpoint = `http://${this.props.base_url}:5500/api/v1/data/seq?id=${this.state.dataset_id}&fasta_id=${keys[0]}`;
+        const endpoint = `http://${this.props.base_url}:5500/api/v1/data/seq?id=${this.state.dataset_id}&fasta_id=${new_row.fasta_header}`;
 		fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {

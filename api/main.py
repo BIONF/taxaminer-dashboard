@@ -73,7 +73,7 @@ def upload_file():
         shutil.rmtree("./temp/" + file_name + "/")
 
     except FileNotFoundError:
-        print("Invavlid file uploaded")
+        print("Invalid file uploaded")
         return abort(500)
 
     # return as json
