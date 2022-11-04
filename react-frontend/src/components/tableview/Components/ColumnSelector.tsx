@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Component, useState } from 'react';
 import Select from 'react-select';
 import makeAnimated from 'react-select/animated';
 import Card from 'react-bootstrap/Card';
@@ -8,42 +8,34 @@ import { Row, Col } from 'react-bootstrap';
 const options = require("./main_cols.json")
 const animatedComponents = makeAnimated();
 
-/**
- * 
- * @param passMode bind function to pass mode up
- * @returns 
- */
-function ColumnSelector(props: any) {
-  const [mode, SetMode] = useState('neutral');
+interface Props {
+	passCols: Function
+	options: any[]
+}
 
-  function passCols(e: any) {
-    let new_keys: string[] = []
+class ColumnSelector extends Component<Props, any> {
 
-    // extract col IDs
-    e.forEach((element: any) => {
-      new_keys.push(element.value)
-    });
-    props.passColsUp(new_keys)
-  }
-
-  return (
-    <div>
-      <Row className='mt-2'>
-        <Col>
-          <Card>
-            <Card.Body>
-              <Card.Title>Select Columns</Card.Title>
-              <Select 
-              options={options} 
-              components={animatedComponents} 
-              isMulti defaultValue={options}
-              onChange={(e: any) => passCols(e)}/>
-            </Card.Body>
-          </Card>
-        </Col>
-    </Row>
-    </div>
-  );
+	render() {
+		return (
+			<div>
+			<Row className='mt-2'>
+				<Col>
+					<Card>
+						<Card.Body>
+							<Card.Title>Select Columns</Card.Title>
+							<Select 
+							options={this.props.options} 
+							components={animatedComponents} 
+							isMulti defaultValue={options}
+							onChange={(e: any) => this.props.passCols(e)}
+							isClearable={false}/>
+						</Card.Body>
+					</Card>
+				</Col>
+		</Row>
+		</div>
+		)
+	}
 }
 
 export default ColumnSelector

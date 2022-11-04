@@ -9,6 +9,8 @@ import SelectionModeSelector from './Components/SelectionModeSelector';
 import SelectionTable from './Components/SelectionTable';
 import ColumnSelector from './Components/ColumnSelector'
 
+const fields_glossary: any[] = require("./Components/field_options.json")
+
 interface Props {
     data: []
     keys: Set<string>
@@ -16,6 +18,7 @@ interface Props {
     passClick: any
     dataset_id: number
     base_url: string
+    row: any
 }
   
 interface State {
@@ -24,7 +27,8 @@ interface State {
     select_mode: string
     selected_data: Set<string>
     data: any
-    col_keys: string[]
+    col_keys: any[]
+    options: any[]
 }
   
 
@@ -33,13 +37,13 @@ class TableView extends React.Component<Props, State> {
 	constructor(props: any){
 		super(props);
 		this.state ={ 
-            // selected_row: {g_name: "Pick a gene", taxonomic_assignment: "Pick a gene", plot_label: "Pick a gene", best_hit: "Pick a gene", c_name: "Pick a gene", bh_evalue: 0, best_hitID: "None"}, 
             aa_seq: "Pick a gene",
             camera: null,
             select_mode: 'neutral',
             selected_data: new Set(),
             data: undefined,
-            col_keys: ["plot_label", "g_name", "bh_evalue"]
+            col_keys: [{ label: "ID", value: "g_name"}, { label: "Plot label", value: "plot_label" }, { label: "e-value", value: "bh_evalue" }],
+            options: [{ label: "ID", value: "g_name"}, { label: "Plot label", value: "plot_label" }, { label: "e-value", value: "bh_evalue" }]
         }
 	}
 
@@ -56,11 +60,56 @@ class TableView extends React.Component<Props, State> {
 	}
 
     /**
+     * Component did update
+     * @param prevProps previous Props
+     * @param prevState previous State
+     * @param snapshot previous snapshot
+     */
+    componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>, snapshot?: any): void {
+        if (prevProps.row != this.props.row) {
+            this.convertFieldsOptions()
+        }
+    }
+
+    /**
      * Update table columns
      * @param cols array of col names (keys)
      */
-    setTableCols = (cols: string[]) => {
-        this.setState({col_keys: cols})
+    setTableCols = (cols: any[]) => {
+        for (const col of cols) {
+            if (col.value == "g_name") {
+                return this.setState({col_keys: cols})
+            }
+        }
+        // always preserve g_name as it is the main identifier
+        cols.unshift({ label: "ID", value: "g_name"})
+        return this.setState({col_keys: cols})
+    }
+
+    /**
+     * Convert available fields into table colmunns
+     */
+    convertFieldsOptions() {
+        let options: { label: string; value: string; }[] = []
+        // available row features
+        const row_keys = Object.keys(this.props.row)
+        options = row_keys.map((each: string) => {
+            // match against glossary
+            for (const field of fields_glossary) {
+                // exact match
+                if (each === field.value) {
+                    return { label: (field.label), value: each }
+                } else {
+                    // match with suffix (c_cov_...)
+                    const re = new RegExp(field.value + ".*");
+                    if (re.test(each)) {
+                        return { label: (field.label + " (" + each + ")"), value: each }
+                    }
+                }
+            }
+            return { label: each, value: each }
+        })
+        this.setState({options: options})
     }
 
     render() {
@@ -89,7 +138,8 @@ class TableView extends React.Component<Props, State> {
                         </Row>
                         <Row>
                             <ColumnSelector
-                            passColsUp = {this.setTableCols}
+                            passCols = {this.setTableCols}
+                            options={this.state.options}
                             />
                         </Row>
                     </Col>

@@ -71,8 +71,8 @@ function SelectionModeSelector(props: Props) {
             <Card.Title>Export data</Card.Title>
             <ButtonGroup className='md-2' style={{width: "100%"}}>
               <Button variant="primary" className='btn-block' onClick={() => download_file("fasta")}>FASTA</Button>
-              <Button variant="primary" className='btn-block'>CSV</Button>
-              <Button variant="primary" className='btn-block'>JSON</Button>
+              <Button variant="primary" className='btn-block' disabled={true}>CSV</Button>
+              <Button variant="primary" className='btn-block' disabled={true}>JSON</Button>
             </ButtonGroup>
           </Card.Body>
           </Card>

@@ -62,7 +62,6 @@ class SelectionView extends React.Component<Props, State> {
     }
   }
 
-  
 
   /*
   * Update possible field options dynamically 

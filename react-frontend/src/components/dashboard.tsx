@@ -5,14 +5,14 @@ import Container from 'react-bootstrap/esm/Container';
 import { Tabs, Tab } from "react-bootstrap";
 import { TopBar } from './topbar';
 import { DataSetSelector } from './sidebar/DataSet/dataset_selector';
-import SelectionView from './sidebar/selection/selection';
+import SelectionView from './sidebar/selection';
 import { DataSetMeta } from './sidebar/DataSet/dataset_metadata';
-import Scatter3D from './scatterplot3d/scatter3d';
+import Scatter3D from './scatterplot3d';
 import PCAPlot from './sidebar/PCAPlot/PCAPlot';
 import { FilterUI } from './sidebar/Filters/filterui';
 import Table from './sidebar/DiamondTable/diamondtable';
-import { TableView } from './tableview/TableView';
-import ScatterMatrix from './sidebar/ScatterMatrix/ScatterMatrix';
+import { TableView } from './tableview';
+import ScatterMatrix from './sidebar/ScatterMatrix';
 
 // Stylesheet
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -233,6 +233,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                 setSelectMode={this.setSelectMode}
                 passClick={this.handleDataClick}
                 dataset_id={this.state.dataset_id}
+                row={this.state.selected_row}
                 />
         </Container>
         );
