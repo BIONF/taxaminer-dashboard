@@ -7,7 +7,7 @@ import Col from "react-bootstrap/esm/Col";
 import Accordion from 'react-bootstrap/Accordion';
 import Button from 'react-bootstrap/Button';
 import CustomOutput from './custom_output';
-import { Badge, Modal } from 'react-bootstrap';
+import { Badge, Modal, Tab, Tabs } from 'react-bootstrap';
 import MultiSelectFields from './MultiSelectFields'
 
 // dictionary
@@ -126,10 +126,15 @@ class SelectionView extends React.Component<Props, State> {
     return(
       <Card className="m-2">
         <Card.Body>
-          <Card.Title>
-              Selected Gene { (this.props.row.plot_label === "Unassigned") && (<Badge bg="primary">Unassigned</Badge>)}
+          <Card.Title className='d-flex justify-content-between align-items-center'>
+              Selected Gene { (this.props.row.plot_label === "Unassigned") && (<Badge bg="warning" className='me-auto sm'>Unassigned</Badge>)}
+              <Button className='m-2 mr-auto sm' onClick={this.showModal}>
+                  <span className='bi bi-list-ul m-2'/>Manage custom fields
+              </Button>
           </Card.Title>
-          <Row>
+          <Tabs defaultActiveKey="fields-tab">
+            <Tab title="Fields" eventKey="fields-tab">
+            <Row>
             <Col className="md-2">
               <InputGroup className="m-2">
                 <InputGroup.Text id="gene-info-name">Gene Name</InputGroup.Text>
@@ -142,32 +147,53 @@ class SelectionView extends React.Component<Props, State> {
               </InputGroup>
             </Col>
             <Col className="md-2">
-              <InputGroup className="m-2">
-                <InputGroup.Text id="gene-label">Label</InputGroup.Text>
+                <InputGroup className="m-2">
+                  <InputGroup.Text id="contig">Contig</InputGroup.Text>
                   <Form.Control
                     placeholder="Selected a Gene to get started"
                     contentEditable={false}
-                    value={this.props.row.plot_label}
-                    onChange={() => false}
-                    />
-                </InputGroup>
-            </Col>
-          </Row>
-          <Row>
-            <Col className="md-2" xs={8}>
-              <InputGroup className="m-2">
-                <InputGroup.Text id="best-hit">Best hit</InputGroup.Text>
-                  <Form.Control
-                    placeholder="Selected a Gene to get started"
-                    contentEditable={false}
-                    value={this.props.row.best_hit}
+                    value={this.props.row.c_name}
                     onChange={() => false}
                   />
                 </InputGroup>
+              </Col>
+          </Row>
+          <Row>
+            <Col className="md-2" xs={4}>
+                <InputGroup className="m-2">
+                  <InputGroup.Text id="gene-label">Label</InputGroup.Text>
+                    <Form.Control
+                      placeholder="Selected a Gene to get started"
+                      contentEditable={false}
+                      value={this.props.row.plot_label}
+                      onChange={() => false}
+                    />
+                  </InputGroup>
             </Col>
+            <Col className="md-2">
+                <InputGroup className="m-2">
+                  <InputGroup.Text id="assignment">Taxon assignment</InputGroup.Text>
+                    <Form.Control
+                      placeholder="Selected a Gene to get started"
+                      contentEditable={false}
+                      value={this.props.row.taxon_assignment}
+                      onChange={() => false}
+                    />
+                </InputGroup>
+              </Col>
+          </Row>
+          <Row>
             <Col className='md-2'>
               <InputGroup className="m-2">
-                  <InputGroup.Text id="ncbi-id">ID</InputGroup.Text>
+                  <InputGroup.Text id="ncbi-id">Best hit</InputGroup.Text>
+                    <Form.Control
+                      placeholder="None"
+                      contentEditable={false}
+                      value={this.props.row.best_hit}
+                      onChange={() => false}
+                      className="w-25"
+                    />
+                    <InputGroup.Text id="ncbi-id">NCBI ID</InputGroup.Text>
                     <Form.Control
                     placeholder="None"
                     contentEditable={false}
@@ -184,32 +210,8 @@ class SelectionView extends React.Component<Props, State> {
               </Col>
             </Row>
             <Row>
-              <Col className="md-2">
-                <InputGroup className="m-2">
-                  <InputGroup.Text id="contig">Contig</InputGroup.Text>
-                  <Form.Control
-                    placeholder="Selected a Gene to get started"
-                    contentEditable={false}
-                    value={this.props.row.c_name}
-                    onChange={() => false}
-                  />
-                </InputGroup>
-              </Col>
-              <Col className="md-2">
-                <InputGroup className="m-2">
-                  <InputGroup.Text id="e-value">e-value</InputGroup.Text>
-                    <Form.Control
-                      placeholder="Selected a Gene to get started"
-                      contentEditable={false}
-                      value={this.props.row.bh_evalue}
-                      onChange={() => false}
-                    />
-                </InputGroup>
-              </Col>
               <Col className='md-2' xs={3}> 
-                <Button className='m-2' onClick={this.showModal}>
-                  <span className='bi bi-list-ul m-2'/>Fields
-                </Button>
+                
               </Col>
             </Row>
             <Modal show={this.state.show_field_modal} handleClose={this.hideModal}>
@@ -232,40 +234,47 @@ class SelectionView extends React.Component<Props, State> {
                 <CustomOutput col={item.value} row={this.props.row} name={item.label}/>
               ))}
             </Row>
-            <Row>
-              <Col className="m-2">
-                <Accordion>
-                  <Accordion.Item eventKey="0">
-                    <Accordion.Header>Raw JSON</Accordion.Header>
-                    <Accordion.Body>
-                      <pre className='pre-scrollable'>
+              
+            </Tab>
+            <Tab title="Raw JSON" eventKey="json-tab">
+              <Row>
+                <Col className="m-2">
+                  <Accordion>
+                    <Accordion.Item eventKey="0">
+                      <Accordion.Header>Raw JSON</Accordion.Header>
+                      <Accordion.Body>
+                        <pre className='pre-scrollable'>
                         <code>
                           {JSON.stringify(this.props.row, null, 2)}
                         </code>
-                      </pre>
+                        </pre>
+                      </Accordion.Body>
+                    </Accordion.Item>   
+                  </Accordion>
+                </Col>
+              </Row>
+            </Tab>
+            <Tab title="Amino Acid Sequence" eventKey="as-tab">
+              <Row>
+                <Col className="m-2">
+                  <Accordion>
+                    <Accordion.Item eventKey="0">
+                      <Accordion.Header>Amino Acid Sequence</Accordion.Header>
+                        <Accordion.Body>
+                          <div className='md-2'>
+                          <pre className='pre-scrollable m-2'>
+                            <code>
+                            {this.props.aa_seq}
+                            </code>
+                          </pre>
+                        </div>
                     </Accordion.Body>
                   </Accordion.Item>   
                 </Accordion>
               </Col>
             </Row>
-            <Row>
-              <Col className="m-2">
-                <Accordion>
-                  <Accordion.Item eventKey="0">
-                    <Accordion.Header>Amino Acid Sequence</Accordion.Header>
-                    <Accordion.Body>
-                      <div className='md-2'>
-                      <pre className='pre-scrollable m-2'>
-                        <code>
-                          {this.props.aa_seq}
-                        </code>
-                      </pre>
-                      </div>
-                    </Accordion.Body>
-                  </Accordion.Item>   
-                </Accordion>
-              </Col>
-            </Row>
+            </Tab>
+          </Tabs>
           </Card.Body>
         </Card>
       )
