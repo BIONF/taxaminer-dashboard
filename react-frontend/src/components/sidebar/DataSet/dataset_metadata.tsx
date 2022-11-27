@@ -64,21 +64,15 @@ class DataSetMeta extends React.Component<Props, State> {
 
     render() {
         return (
-            <Card className="m-2">
-                <Card.Body>
-                    <Card.Title>Dataset Info</Card.Title>
-                    <Accordion>
-                        <Accordion.Item eventKey="0">
-                            <Accordion.Header>Metadata</Accordion.Header>
-                            <Accordion.Body>
-                                <div>{this.state.metadata}</div>
-                            </Accordion.Body>
-                        </Accordion.Item> 
-                    </Accordion>
-                </Card.Body>
-            </Card>
-        );
-    } 
+            <Accordion className="m-2">
+                <Accordion.Item eventKey="0">
+                    <Accordion.Header>Metadata</Accordion.Header>
+                        <Accordion.Body>
+                            <div>{this.state.metadata}</div>
+                        </Accordion.Body>
+                </Accordion.Item> 
+            </Accordion>
+    )} 
 }
 
 export { DataSetMeta }

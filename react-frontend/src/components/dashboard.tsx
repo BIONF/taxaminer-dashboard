@@ -9,7 +9,7 @@ import SelectionView from './sidebar/selection';
 import { DataSetMeta } from './sidebar/DataSet/dataset_metadata';
 import Scatter3D from './scatterplot3d';
 import PCAPlot from './sidebar/PCAPlot/PCAPlot';
-import { FilterUI } from './sidebar/Filters/filterui';
+import { FilterUI } from './sidebar/Filters';
 import Table from './sidebar/DiamondTable/diamondtable';
 import { TableView } from './tableview';
 import ScatterMatrix from './sidebar/ScatterMatrix';
@@ -17,12 +17,18 @@ import ScatterMatrix from './sidebar/ScatterMatrix';
 // Stylesheet
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+interface Option {
+    label: string
+    value: string
+}
+
 interface Props {
     base_url: string
 }
   
 interface State {
     dataset_id: number
+    contigs: Option[]
     selected_row: any
     aa_seq: string
     camera: any
@@ -33,6 +39,7 @@ interface State {
     filters: any
     scatter_data: any
     g_options: any[]
+    customFields: any[]
 }
   
 
@@ -50,8 +57,10 @@ class TaxaminerDashboard extends React.Component<Props, State> {
             data: [],
             scatter_data: { colors: "rainbow", legendonly: []},
             e_value: 1.0,
-            filters: {e_value: 1.0, show_unassinged: true, g_searched: []},
-            g_options: []
+            filters: {e_value: 1.0, show_unassinged: true, g_searched: [], c_searched: []},
+            g_options: [],
+            contigs: [],
+            customFields: []
         }
 
         // Bind functions passing data from child objects to local context
@@ -71,15 +80,32 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                     this.setState( {dataset_id: id} )
                 } );
     
-                // update searchbar options
-                const gene_options: { label: string; value: string; }[] = []
-                Object.keys(data).map((item: string) => (
+                /**
+                 * Extract gene names
+                 */
+                const gene_options: Option[] = []
+                Object.keys(data).map((item: any) => (
                     gene_options.push( { "label": item, "value": item } )
                 ))
+                
+                /**
+                 * Extract unique contig identifiers
+                 */
+                let contigs = new Set()
+                for (const key of Object.keys(data)) {
+                    const item = data[key]
+                    contigs.add(item['c_name'])
+                }
+                // convert set to list
+                const contig_options: Option[] = []
+                contigs.forEach((each: any) => contig_options.push({ "label": each, "value": each }))
+                this.setState({contigs: contig_options})
+                console.log(contig_options)
+
                 this.setState({g_options: gene_options})
                 this.setState({filters: {e_value: 1.0, show_unassinged: true, g_searched: []}})
-            })
-
+            }
+        )
     }
 
     /**
@@ -142,6 +168,14 @@ class TaxaminerDashboard extends React.Component<Props, State> {
     }
 
     /**
+     * Store custom fields of selection view globally
+     * @param values 
+     */
+    setCustomFields = (values: any) => {
+        this.setState({customFields: values})
+    }
+
+    /**
      * Uses the scatter data from the main plot to slave the scatter matrix
      * @param values 
      */
@@ -171,6 +205,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                     e_value={this.state.filters.e_value}
                     show_unassigned={this.state.filters.show_unassinged}
                     g_searched={this.state.filters.g_searched}
+                    c_searched={this.state.filters.c_searched}
                     passScatterData={this.shareScatterData}/>
                 </Col>
                 <Col>
@@ -178,19 +213,19 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                         <Tab eventKey="Overview" title="Overview">
                             <DataSetSelector
                             base_url={this.props.base_url}
+                            current_id={this.state.dataset_id}
                             dataset_changed={this.updateDatasetID}/>
-                            <DataSetMeta
-                            base_url={this.props.base_url}
-                            dataset_id={this.state.dataset_id}/>
                             <SelectionView
                             base_url={this.props.base_url}
                             row={this.state.selected_row}
-                            aa_seq={this.state.aa_seq}/>
+                            aa_seq={this.state.aa_seq}
+                            passCustomFields={this.setCustomFields}/>
                         </Tab>
                         <Tab eventKey="Filter" title="Filters">
                             <FilterUI
                             g_options={this.state.g_options}
-                            sendValuesUp={this.setFilters}/>
+                            sendValuesUp={this.setFilters}
+                            contig_options={this.state.contigs}/>
                         </Tab>
                         <Tab eventKey="diamodn" title="Diamond Output">
                             <Row>
@@ -234,6 +269,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                 passClick={this.handleDataClick}
                 dataset_id={this.state.dataset_id}
                 row={this.state.selected_row}
+                customFields={this.state.customFields}
                 />
         </Container>
         );

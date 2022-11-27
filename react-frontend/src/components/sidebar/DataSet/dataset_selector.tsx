@@ -1,8 +1,9 @@
 import React from "react";
-import { Button, InputGroup } from "react-bootstrap";
+import { Button, InputGroup, Row, Tab, Tabs } from "react-bootstrap";
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
+import { DataSetMeta } from "./dataset_metadata";
 import UploadDialogue from "./UploadDialogue";
 
 interface State {
@@ -15,6 +16,7 @@ interface State {
 interface Props {
     dataset_changed: Function
     base_url: string
+    current_id: number
 }
 
 // Allows the user to select a dataset
@@ -92,38 +94,50 @@ class DataSetSelector extends React.Component<Props, State> {
             <Card className="m-2">
                 <Card.Body>
                     <Card.Title>Dataset Selection</Card.Title>
-                    <InputGroup>
-                        <Form.Select 
-                        onChange={(e: any) => this.setState({new_id: parseInt(e.target.value)})}
-                        defaultValue={undefined}>
-                        {this.state.datasets && this.state.datasets.map((e: any, key: any) => {
-                            return <option key={key} value={e.id}>{e.title}</option>;
-                        })}
-                        </Form.Select>
-                        <Button 
-                        type="submit" 
-                        onClick={(e:any) => this.props.dataset_changed(this.state.new_id)}
-                        disabled={(this.state.new_id === -1)}
-                        ><span className='bi bi-arrow-right-circle m-2'/>Load</Button>
-                        <Button onClick={this.showModal} variant="success">
-                            <span className='bi bi-upload m-2'/>Upload
-                        </Button>
-                        <Button onClick={this.showRemoveModal} variant="danger">
-                            <span className='bi bi-trash m-2'/>Remove
-                        </Button>
-                        <Modal show={this.state.show_remove}>
-                            <Modal.Header>
-                                <Modal.Title><span className='bi bi-trash m-2'/> Confirm delete</Modal.Title>
-                            </Modal.Header>
-                            <Modal.Body>
-                                Remove dataset {this.state.new_id}?
-                            </Modal.Body>
-                            <Modal.Footer>
-                                <Button onClick={this.hideRemoveModal}><span className='bi bi-x-circle m-2'/>Cancel</Button>
-                                <Button variant="danger" onClick={this.removeDataset}><span className='bi bi-trash m-2'/>Remove</Button>
-                            </Modal.Footer>
-                        </Modal>
-                    </InputGroup>
+                        <Tabs>
+                            <Tab title="Dataset selection" eventKey="selection-tab">
+                                <InputGroup className="m-2">
+                                    <Form.Select 
+                                    onChange={(e: any) => this.setState({new_id: parseInt(e.target.value)})}
+                                    defaultValue={undefined}>
+                                    {this.state.datasets && this.state.datasets.map((e: any, key: any) => {
+                                        return <option key={key} value={e.id}>{e.title}</option>;
+                                    })}
+                                    </Form.Select>
+                                    <Button 
+                                    type="submit" 
+                                    onClick={(e:any) => this.props.dataset_changed(this.state.new_id)}
+                                    disabled={(this.state.new_id === -1)}
+                                    >
+                                        <span className='bi bi-arrow-right-circle m-2'/>Load
+                                    </Button>
+                                    <Button onClick={this.showModal} variant="success">
+                                        <span className='bi bi-upload m-2'/>Upload
+                                    </Button>
+                                    <Button onClick={this.showRemoveModal} variant="danger">
+                                        <span className='bi bi-trash m-2'/>Remove
+                                    </Button>
+                                    <Modal show={this.state.show_remove}>
+                                        <Modal.Header>
+                                            <Modal.Title><span className='bi bi-trash m-2'/> Confirm delete</Modal.Title>
+                                        </Modal.Header>
+                                        <Modal.Body>
+                                            Remove dataset {this.state.new_id}?
+                                        </Modal.Body>
+                                        <Modal.Footer>
+                                            <Button onClick={this.hideRemoveModal}><span className='bi bi-x-circle m-2'/>Cancel</Button>
+                                            <Button variant="danger" onClick={this.removeDataset}><span className='bi bi-trash m-2'/>Remove</Button>
+                                        </Modal.Footer>
+                                    </Modal>
+                                </InputGroup>
+                            </Tab>
+                            <Tab title="Dataset metadata" eventKey="metadata-tab">
+                                <DataSetMeta
+                                dataset_id={this.props.current_id}
+                                base_url={this.props.base_url}
+                                />
+                            </Tab>
+                        </Tabs>
                 </Card.Body>
             </Card>
            

@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { Button, Row } from "react-bootstrap";
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 import Select, { createFilter } from 'react-select';
@@ -9,12 +10,14 @@ const height = 35;
 interface Props {
     sendValuesUp: any
     g_options: { label: string; value: string; }[]
+    contig_options: { label: string; value: string; }[]
 }
 
 interface State {
     e_value: number
     show_unassigned: boolean
     g_searched: string[]
+    c_searched: string[]
 }
 
 /**
@@ -51,8 +54,8 @@ class FilterUI extends React.Component<Props, State> {
 		this.state ={
             e_value: 1.0,
             show_unassigned: true,
-            g_searched: []
-
+            g_searched: [],
+            c_searched: []
         }
 	}  
 
@@ -61,7 +64,7 @@ class FilterUI extends React.Component<Props, State> {
      */
     updateShowUnassigned(e: any) {
         this.setState({show_unassigned: e})
-        const values = {'show_unassinged': e, 'e_value': this.state.e_value, 'g_searched': this.state.g_searched}
+        const values = {'show_unassinged': e, 'e_value': this.state.e_value, 'g_searched': this.state.g_searched, 'c_searched': this.state.c_searched}
         this.props.sendValuesUp(values)
     }
 
@@ -75,7 +78,7 @@ class FilterUI extends React.Component<Props, State> {
         this.setState({e_value: new_value})
 
         // pass values up
-        const values = {'show_unassinged': this.state.show_unassigned, 'e_value': new_value, 'g_searched': this.state.g_searched}
+        const values = {'show_unassinged': this.state.show_unassigned, 'e_value': new_value, 'g_searched': this.state.g_searched, 'c_searched': this.state.c_searched}
         this.props.sendValuesUp(values)
     }
 
@@ -90,10 +93,27 @@ class FilterUI extends React.Component<Props, State> {
           new_keys.push(element.value)
         });
         this.setState({g_searched: new_keys}, () => {
-            const values = {'show_unassinged': this.state.show_unassigned, 'e_value': this.state.e_value, 'g_searched': this.state.g_searched}
+            const values = {'show_unassinged': this.state.show_unassigned, 'e_value': this.state.e_value, 'g_searched': this.state.g_searched, 'c_searched': this.state.c_searched}
             this.props.sendValuesUp(values)
         })
-      }
+    }
+
+    /**
+     * Pass filtered IDs up
+     * @param e Edit event of the dropdown selector
+     */
+     passContigs(e: any) {
+        let new_keys: string[] = []
+        // extract IDs
+        e.forEach((element: any) => {
+          new_keys.push(element.value)
+        });
+        console.log(new_keys)
+        this.setState({c_searched: new_keys}, () => {
+            const values = {'show_unassinged': this.state.show_unassigned, 'e_value': this.state.e_value, 'g_searched': this.state.g_searched, 'c_searched': this.state.c_searched}
+            this.props.sendValuesUp(values)
+        })
+    }
 
 
     render() {
@@ -129,11 +149,17 @@ class FilterUI extends React.Component<Props, State> {
                         defaultValue={0}
                         onChange={(e :any) => this.setEValue(e.target.value)}/>
                     <Form.Label>Contig Filter</Form.Label>
-                    <Form.Select>
-                        <option value="1">One</option>
-                        <option value="2">Two</option>
-                        <option value="3">Three</option>
-                    </Form.Select>
+                    <Row>
+                    <Select
+                    // @ts-ignore
+                    options={this.props.contig_options}
+                    components={{MenuList}}
+                    filterOption={createFilter({ignoreAccents: false})}
+                    isMulti defaultValue={[]}
+                    onChange={(e: any) => this.passContigs(e)}>
+                    </Select>
+                    
+                    </Row>
                 </Card.Body>
             </Card>
             </>

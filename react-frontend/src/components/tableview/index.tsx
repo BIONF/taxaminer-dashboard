@@ -19,6 +19,7 @@ interface Props {
     dataset_id: number
     base_url: string
     row: any
+    customFields: any[]
 }
   
 interface State {
@@ -140,6 +141,7 @@ class TableView extends React.Component<Props, State> {
                             <ColumnSelector
                             passCols = {this.setTableCols}
                             options={this.state.options}
+                            customFields={this.props.customFields}
                             />
                         </Row>
                     </Col>

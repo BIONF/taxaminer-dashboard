@@ -18,6 +18,7 @@ interface Props {
 	show_unassigned: boolean
 	base_url: string
 	g_searched: string[]
+	c_searched: string[]
 }
 
 /**
@@ -42,6 +43,7 @@ class Scatter3D extends Component<Props, any> {
 			last_click : "",
 			figure: {data: [], layout: {}, frames: [], config: {}, scene: {}},
 			is_loading: false,
+			show_hover: true
 		}
         this.sendClick = this.sendClick.bind(this);
 	}
@@ -89,7 +91,7 @@ class Scatter3D extends Component<Props, any> {
 			.finally( () => {
 				this.setState({is_loading: false})
 			})
-		} else if (prev.e_value !== this.props.e_value || prev.show_unassigned !== this.props.show_unassigned || prev.g_searched !== this.props.g_searched){
+		} else if (prev.e_value !== this.props.e_value || prev.show_unassigned !== this.props.show_unassigned || prev.g_searched !== this.props.g_searched || prev.c_searched !== this.props.c_searched){
 			this.build_plot()
 		}
 	}
@@ -103,7 +105,7 @@ class Scatter3D extends Component<Props, any> {
 	 */
 	 shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<any>, nextContext: any): boolean {
 		// external changes
-		if (nextProps.e_value !== this.props.e_value || nextProps.show_unassigned !== this.props.show_unassigned || nextProps.g_searched !== this.props.g_searched) {
+		if (nextProps.e_value !== this.props.e_value || nextProps.show_unassigned !== this.props.show_unassigned || nextProps.g_searched !== this.props.g_searched || nextProps.c_searched != this.props.c_searched) {
 			return true
 		}
 		// changes of the figure should always raise an update, otherwise user interaction is limited
@@ -224,6 +226,16 @@ class Scatter3D extends Component<Props, any> {
 	}
 
 	/**
+	 * En-/Dis-able hover data overlay
+	 * @param enabled true if enabled
+	 */
+	setHoverData(enabled: boolean) {
+		this.setState({show_hover: !this.state.show_hover}, () => {
+			this.build_plot()
+		})
+	}
+
+	/**
 	 * Track grouped de-/selection using the scatterplot legend
 	 * This is tied to onRestyle to avoid desync with onClick() events
 	 * @param e restyle event
@@ -251,6 +263,12 @@ class Scatter3D extends Component<Props, any> {
 			return []
 		}
 
+		// Hover enabled
+		let hover_template = " "
+		if (this.state.show_hover) {
+			hover_template = "%{customdata[0]} <br>%{customdata[1]} <br><extra>Best hit: %{customdata[2]} <br>Best hit e-value: %{customdata[3]} <br>Taxonomic assignment: %{customdata[4]} <br>Contig name: %{customdata[5]} <br> </extra>"
+		}
+
         const traces: any[] = []
         data.map(each => {
 		    const x : string[] = [];
@@ -260,11 +278,20 @@ class Scatter3D extends Component<Props, any> {
             const my_customdata : any = [];
             let chunk = each;
 
-			// push 3D coordinates in arrays accordingly
+			/**
+			 * Apply filters
+			 */
 		    chunk.map((each: { [x: string]: string; }) => {
+				// contig filter prequisited
+				let c_match = true
+				if (this.props.c_searched) {
+					if(this.props.c_searched.length > 0 && !this.props.c_searched.includes(each['c_name'])) {
+						c_match = false
+					}
+				}
 
 				// filter by e-value
-				if(parseFloat(each['bh_evalue']) < this.props.e_value) {
+				if(parseFloat(each['bh_evalue']) < this.props.e_value && c_match) {
 					x.push(each['Dim.1'])
 					y.push(each['Dim.2'])
 					z.push(each['Dim.3'])
@@ -272,14 +299,14 @@ class Scatter3D extends Component<Props, any> {
 					my_customdata.push([each['plot_label'], each['g_name'], each['best_hit'], each['bh_evalue'], each['taxon_assignment'], each['c_name']])
 				} 
 				// Include unassigned data points (which usually don't have an e-value)
-				else if(this.props.show_unassigned === true && each['plot_label'] === 'Unassigned') {
+				else if(this.props.show_unassigned === true && each['plot_label'] === 'Unassigned' && c_match) {
 					x.push(each['Dim.1'])
 					y.push(each['Dim.2'])
 					z.push(each['Dim.3'])
 					label = each['plot_label']
 					my_customdata.push([each['plot_label'], each['g_name'], each['best_hit'], each['bh_evalue'], each['taxon_assignment'], each['c_name']])
 				} else {
-					//console.log(each['g_name'])
+					// nada
 				}
 				// increment counters
 				// @ts-ignore
@@ -319,30 +346,28 @@ class Scatter3D extends Component<Props, any> {
 				marker: marker,
 				visible: true,
 				customdata: my_customdata,
-				hovertemplate: "%{customdata[0]} <br>%{customdata[1]} <br><extra>Best hit: %{customdata[2]} <br>Best hit e-value: %{customdata[3]} <br>Taxonomic assignment: %{customdata[4]} <br>Contig name: %{customdata[5]} <br> </extra>"
+				hovertemplate: hover_template
             }
             traces.push(trace)
         })
 
 		// setup traces for selected / searched dots
 		let searched_rows: any[] = []
-
-		data.map(each => {
-			const chunk = each
+		data.map(chunk => {
 			chunk.map((each: any) => {
 				if (searched.includes(each['g_name'])) {
 					searched_rows.push(each)
 				}
 			})
 		})
+
 		const x : string[] = [];
 		const y : string[] = [];
         const z : string[] = [];
         let label = "";
         const my_customdata : any = [];
 
-		searched_rows.map(each => {
-
+		searched_rows.forEach(each => {
 			// push 3D coordinates in arrays accordingly
 			x.push(each['Dim.1'])
 			y.push(each['Dim.2'])
@@ -350,6 +375,7 @@ class Scatter3D extends Component<Props, any> {
 			label = "Search results"
 			my_customdata.push([each['plot_label'], each['g_name'], each['best_hit'], each['bh_evalue'], each['taxon_assignment'], each['c_name']])
         })
+
 		// Setup the plot trace
 		const trace = {
 			type: 'scatter3d',
@@ -367,7 +393,8 @@ class Scatter3D extends Component<Props, any> {
 			},
 			visible: true,
 			customdata: my_customdata,
-			hovertemplate: "%{customdata[0]} <br>%{customdata[1]} <br><extra>Best hit: %{customdata[2]} <br>Best hit e-value: %{customdata[3]} <br>Taxonomic assignment: %{customdata[4]} <br>Contig name: %{customdata[5]} <br> </extra>"
+			hovermode: this.state.show_hover,
+			hovertemplate: hover_template
 		}
 		traces.push(trace)
 		
@@ -388,7 +415,7 @@ class Scatter3D extends Component<Props, any> {
 			// @ts-ignore
 			// overrides are incomplete here, ignore for now
 			legend: {itemsizing: 'constant'},
-			colorway : colors.palettes[this.state.color_palette]
+			colorway : colors.palettes[this.state.color_palette],
 		}
 		const new_config = {scrollZoom: true}
 		this.setState({figure: {data: new_data, layout: new_layout, config: new_config}})
@@ -425,21 +452,28 @@ class Scatter3D extends Component<Props, any> {
 				onClick={(e: any) => this.sendClick(e.points[0].customdata[1])}
 				onRelayout={(e: any) => this.passCameraData(e)}
 				useResizeHandler = {true}
-    			style = {{width: "100%", height: 800}}
+    			style = {{width: "100%", minHeight: 600}}
 				onRestyle={(e: any) => this.updateLegendSelection(e)}
 				revision={1}
 				onUpdate={(figure) => this.setState({figure: figure})}
 				onLegendClick={(e) => this.legendClick(e)}
 				/>
 				<Row>
-                    <Col xs={1}>
+                    <Col xs={3}>
                         <Form>
                             <Form.Check 
                                 type="switch"
                                 id="custom-switch"
-                                label="Auto-size"
+                                label="Auto-size dots"
 								checked={this.state.auto_size}
 								onChange={(e: any) => this.toggle_auto_size(e)}
+                            />
+							<Form.Check 
+                                type="switch"
+                                id="custom-switch"
+                                label="Verbose Hoverdata"
+								checked={this.state.show_hover}
+								onChange={(e: any) => this.setHoverData(e)}
                             />
                         </Form>
                     </Col>
@@ -451,6 +485,7 @@ class Scatter3D extends Component<Props, any> {
 								max={10}
 								step={1}
 								defaultValue={5}
+								
 								onChange={(e :any) => this.set_manual_size(e.target.value)}
 								className="m-2"
 							/>

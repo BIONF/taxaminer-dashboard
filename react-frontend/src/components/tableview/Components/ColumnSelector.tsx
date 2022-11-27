@@ -1,8 +1,8 @@
-import { Component, useState } from 'react';
+import { Component } from 'react';
 import Select from 'react-select';
 import makeAnimated from 'react-select/animated';
 import Card from 'react-bootstrap/Card';
-import { Row, Col } from 'react-bootstrap';
+import { Row, Col, Form } from 'react-bootstrap';
 
 // possible options
 const options = require("./main_cols.json")
@@ -10,10 +10,67 @@ const animatedComponents = makeAnimated();
 
 interface Props {
 	passCols: Function
+	customFields: any[]
 	options: any[]
 }
 
-class ColumnSelector extends Component<Props, any> {
+interface State {
+	synced: boolean
+	selection: any
+}
+
+class ColumnSelector extends Component<Props, State> {
+	/**
+	 * Init
+	 * @param props Props passed
+	 */
+	constructor(props: any){
+		super(props);
+		this.state = {
+			synced: false,
+			selection: options
+        }
+	}
+
+	/**
+	 * Catch component updates
+	 * @param prevProps previous Props
+	 * @param prevState previous State
+	 * @param snapshot previous snapshot
+	 */
+	componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>, snapshot?: any): void {
+		if (prevProps.customFields != this.props.customFields) {
+			if (this.state.synced) {
+				this.props.passCols(this.props.customFields)
+			}
+		}
+	}
+
+	/**
+	 * Toggle sync of table cols with custom fields
+	 * @param e value of select
+	 */
+	setSync(e: boolean) {
+		this.setState({synced: e})
+
+		// if sync is enabled, set the globally shared custom fields
+		if (e) {
+			this.props.passCols(this.props.customFields)
+		// if sync is disabled, use the selection from the dropdown instead
+		} else {
+			this.props.passCols(this.state.selection)
+		}
+	}
+
+	/**
+	 * Update state and pass selection up
+	 * @param selection event emitted by <Select>
+	 */
+	updateSelection(selection: any) {
+		this.props.passCols(selection)
+		this.setState({selection: selection})
+	}
+
 
 	render() {
 		return (
@@ -22,13 +79,23 @@ class ColumnSelector extends Component<Props, any> {
 				<Col>
 					<Card>
 						<Card.Body>
-							<Card.Title>Select Columns</Card.Title>
+							<Card.Title className='d-flex justify-content-between align-items-center'>Select Columns
+								<Form.Check 
+                        		type="switch"
+                        		id="sync_custom_fields"
+                        		label="Sync with custom fields"
+                        		defaultChecked={false}
+								onChange={(e) => this.setSync(e.target.checked)}
+                    			/>
+							</Card.Title>
 							<Select 
 							options={this.props.options} 
 							components={animatedComponents} 
 							isMulti defaultValue={options}
-							onChange={(e: any) => this.props.passCols(e)}
-							isClearable={false}/>
+							value={this.state.selection}
+							onChange={(e: any) => this.updateSelection(e)}
+							isClearable={false}
+							isDisabled={this.state.synced}/>
 						</Card.Body>
 					</Card>
 				</Col>
