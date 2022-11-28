@@ -19,6 +19,7 @@ interface Props {
 	base_url: string
 	g_searched: string[]
 	c_searched: string[]
+	scatterPoints: any[]
 }
 
 /**
@@ -47,50 +48,16 @@ class Scatter3D extends Component<Props, any> {
 		}
         this.sendClick = this.sendClick.bind(this);
 	}
-
-	/**
-	 * Call API on component mount to load plot data
-	 */
-	componentDidMount() {
-		if (this.props.dataset_id !== -1) {
-			const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
-			this.setState({is_loading: true})
-			fetch(endpoint)
-				.then(response => response.json())
-				.then(data => {
-					this.setState( {data: data}, () => {
-						this.build_plot()
-					});
-					this.set_auto_size(data);
-				})
-				.finally( () => {
-					this.setState({is_loading: false})
-				}
-			)
-		}
-	}
-
+	
 	/**
 	 * Reload plot if dataset has changed
 	 * @param prev previous state
 	 */
 	componentDidUpdate(prev: any) {
-		if (prev.dataset_id !== this.props.dataset_id && this.props.dataset_id !== -1) {
-			// loading spinner
-			this.setState({is_loading: true})
-			const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
-			fetch(endpoint)
-			.then(response => response.json())
-			.then(data => {
-				this.setState( {data: data}, () => {
-					// build_plot() consume state.data ==> await State update
-					this.build_plot()
-				});
-				this.set_auto_size(data);
-			})
-			.finally( () => {
-				this.setState({is_loading: false})
-			})
+		if (prev.scatterPoints != this.props.scatterPoints) {
+			this.set_auto_size(this.props.scatterPoints);
+			this.setState( { marker_size: this.state.auto_size_px, auto_size: true})
+			return this.build_plot()
 		} else if (prev.e_value !== this.props.e_value || prev.show_unassigned !== this.props.show_unassigned || prev.g_searched !== this.props.g_searched || prev.c_searched !== this.props.c_searched){
 			this.build_plot()
 		}
@@ -104,6 +71,11 @@ class Scatter3D extends Component<Props, any> {
 	 * @returns boolean
 	 */
 	 shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<any>, nextContext: any): boolean {
+
+		// New dataset
+		if (nextProps.scatterPoints !== this.props.scatterPoints) {
+			return true
+		}
 		// external changes
 		if (nextProps.e_value !== this.props.e_value || nextProps.show_unassigned !== this.props.show_unassigned || nextProps.g_searched !== this.props.g_searched || nextProps.c_searched != this.props.c_searched) {
 			return true
@@ -185,7 +157,7 @@ class Scatter3D extends Component<Props, any> {
 	 */
 	set_auto_size(data: any){
 		if (data === undefined) {
-			data = this.state.data
+			data = this.props.scatterPoints
 		}
 		let total_points = 0;
 		// overall size of all trace arrays
@@ -212,14 +184,16 @@ class Scatter3D extends Component<Props, any> {
 	 */
 	toggle_auto_size(e: any){
 		// toggle
-		const now = e.nativeEvent.originalTarget.checked
+		const now = !this.state.auto_size
 		// update markers if automatic sizing was enabled
 		if (now === true) {
 			this.setState( { marker_size: this.state.auto_size_px, auto_size: now}, () => {
+				this.setState({ ui_revision: "false"})
 				this.build_plot()
 			})
 		} else {
 			this.setState({ marker_size: this.state.manual_size, auto_size: now}, () => {
+				this.setState({ ui_revision: "false"})
 				this.build_plot()
 			})
 		}
@@ -410,7 +384,7 @@ class Scatter3D extends Component<Props, any> {
 	 */
 	 build_plot() {
 		// store figure components
-		const new_data = this.transformData(this.state.data)
+		const new_data = this.transformData(this.props.scatterPoints)
 		const new_layout = {autosize: true, showlegend: true, uirevision: 1,
 			// @ts-ignore
 			// overrides are incomplete here, ignore for now
@@ -470,7 +444,7 @@ class Scatter3D extends Component<Props, any> {
                             />
 							<Form.Check 
                                 type="switch"
-                                id="custom-switch"
+                                id="hoverdata-switch"
                                 label="Verbose Hoverdata"
 								checked={this.state.show_hover}
 								onChange={(e: any) => this.setHoverData(e)}

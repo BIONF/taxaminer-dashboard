@@ -9,6 +9,7 @@ interface Props {
     scatter_data: any
 	base_url: string
 	dataset_id: number
+	scatterPoints: any[]
 }
 
 /**
@@ -34,23 +35,6 @@ class ScatterMatrix extends Component<Props, any> {
 	}
 
 	/**
-	 * Call API on component mount to load plot data
-	 */
-	componentDidMount() {
-		if (this.props.dataset_id !== -1) {
-			const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
-				fetch(endpoint)
-				.then(response => response.json())
-				.then(data => {
-					this.setState( {data: data}, () => {
-						this.set_auto_size(data);
-						this.setState({my_plot: this.build_plot()})
-					} );
-			})
-		}
-	}
-
-	/**
 	 * Act on Prop updates (=> mainly: load a different dataset)
 	 * @param prevProps previous props
 	 * @param prevState previous state
@@ -58,17 +42,14 @@ class ScatterMatrix extends Component<Props, any> {
 	 */
 	componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<any>, snapshot?: any): void {
 		// fetch the new dataset if the ID has changed
-		if (prevProps.dataset_id !== this.props.dataset_id && this.props.dataset_id !== -1) {
-			const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.props.dataset_id}`;
-			fetch(endpoint)
-				.then(response => response.json())
-				.then(data => {
-					this.setState( {data: data}, () => {
-						this.set_auto_size(data);
-						this.setState({my_plot: this.build_plot()})
-					});
-				})
-		} else if (prevProps.scatter_data !== this.props.scatter_data) {
+		if (prevProps.scatterPoints != this.props.scatterPoints) {
+			this.set_auto_size(this.props.scatterPoints);
+			this.setState({data: this.props.scatterPoints}, () => {
+				this.setState( { marker_size: this.state.auto_size_px, auto_size: true})
+				this.setState({my_plot: this.build_plot()})
+			})
+			
+		} else if (prevProps.scatter_data != this.props.scatter_data){
 			this.setState({my_plot: this.build_plot()})
 		}
 	}

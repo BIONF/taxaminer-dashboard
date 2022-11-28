@@ -40,6 +40,8 @@ interface State {
     scatter_data: any
     g_options: any[]
     customFields: any[]
+    scatterPoints: any[]
+    fields: any[]
 }
   
 
@@ -60,7 +62,9 @@ class TaxaminerDashboard extends React.Component<Props, State> {
             filters: {e_value: 1.0, show_unassinged: true, g_searched: [], c_searched: []},
             g_options: [],
             contigs: [],
-            customFields: []
+            customFields: [],
+            scatterPoints: [],
+            fields: []
         }
 
         // Bind functions passing data from child objects to local context
@@ -72,38 +76,50 @@ class TaxaminerDashboard extends React.Component<Props, State> {
      * @param id dataset ID
      */
     setDataset(id: number) {
-        const endpoint = `http://${this.props.base_url}:5500/api/v1/data/main?id=${id}`;
+        const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.state.dataset_id}`;
             fetch(endpoint)
             .then(response => response.json())
             .then(data => {
-                this.setState( {data: data}, () => {
-                    this.setState( {dataset_id: id} )
-                } );
-    
-                /**
-                 * Extract gene names
-                 */
-                const gene_options: Option[] = []
-                Object.keys(data).map((item: any) => (
-                    gene_options.push( { "label": item, "value": item } )
-                ))
-                
-                /**
-                 * Extract unique contig identifiers
-                 */
-                let contigs = new Set()
-                for (const key of Object.keys(data)) {
-                    const item = data[key]
-                    contigs.add(item['c_name'])
-                }
-                // convert set to list
-                const contig_options: Option[] = []
-                contigs.forEach((each: any) => contig_options.push({ "label": each, "value": each }))
-                this.setState({contigs: contig_options})
-                console.log(contig_options)
+                const main_data = {}
+			    this.setState( {scatterPoints: data}, () => {
+                    for (const chunk of data) {
+                        for (const row of chunk) {
+                            const key = row.g_name as string
+                            // @ts-ignore
+                            main_data[key] = row
+                        }
+                    }
+                    this.setState({data: main_data})
 
-                this.setState({g_options: gene_options})
-                this.setState({filters: {e_value: 1.0, show_unassinged: true, g_searched: []}})
+                    // Infer fields from first row
+                    if (main_data) {
+                        // @ts-ignore
+                        const proto_row = main_data[Object.keys(main_data)[0]]
+                        this.setState( { fields: Object.keys(proto_row) })
+                    }
+
+                    const gene_options: { label: string; value: string; }[] = []
+                    Object.keys(main_data).map((item: string) => (
+                        gene_options.push( { "label": item, "value": item } )
+                    ))
+
+                    /**
+                    * Extract unique contig identifiers
+                    */
+                    let contigs = new Set()
+                    for (const key of Object.keys(main_data)) {
+                        // @ts-ignore
+                        const item = main_data[key]
+                        contigs.add(item['c_name'])
+                    }
+                    // convert set to list
+                    const contig_options: Option[] = []
+                    contigs.forEach((each: any) => contig_options.push({ "label": each, "value": each }))
+
+                    this.setState({contigs: contig_options})
+                    this.setState({g_options: gene_options})
+                    this.setState({filters: {e_value: 1.0, show_unassinged: true, g_searched: []}})
+                });
             }
         )
     }
@@ -198,6 +214,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                 <Row>
                 <Col xs={7}>
                     <Scatter3D
+                    scatterPoints={this.state.scatterPoints}
                     base_url={this.props.base_url}
                     dataset_id={this.state.dataset_id}
                     sendClick={this.handleDataClick}
@@ -240,6 +257,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                         </Tab>
                         <Tab eventKey="scatter_matrix" title="Scatter Matrix">
                             <ScatterMatrix
+                                scatterPoints={this.state.scatterPoints}
                                 base_url={this.props.base_url}
                                 sendClick={this.handleDataClick}
                                 e_value={this.state.filters.e_value}
