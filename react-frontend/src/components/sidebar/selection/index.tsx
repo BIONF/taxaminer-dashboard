@@ -18,12 +18,16 @@ interface Props {
   row: any
   aa_seq: string
   passCustomFields: Function
+  is_loading: boolean
+  dataset_id: number
 }
 
 interface State {
     custom_fields: any[]
     show_field_modal: boolean
     options: any[]
+    grouped_fields: any
+    has_loaded: boolean
 }
 
 /**
@@ -32,14 +36,14 @@ interface State {
 class SelectionView extends React.Component<Props, State> {
   constructor(props: any){
 		super(props);
-    this.state = { custom_fields: [], show_field_modal: false, options: []}
+    this.state = { custom_fields: [], show_field_modal: false, options: [], grouped_fields: {}, has_loaded: false}
 	}
 
   /**
    * Fetch user configs on componenMount
    */
 	componentDidMount() {
-		const endpoint = `http://${this.props.base_url}:5500/api/v1/data/userconfig`;
+		const endpoint = `http://${this.props.base_url}:5500/api/v1/data/userconfig?dataset_id=${this.props.dataset_id}`;
 		fetch(endpoint)
 			.then(response => response.json())
 			.then(data => {
@@ -47,7 +51,7 @@ class SelectionView extends React.Component<Props, State> {
         if (data === undefined) {
           data = []
         }
-				this.setState( {custom_fields: data.custom_fields} )
+				this.setState( {custom_fields: data.custom_fields, has_loaded: true} )
 			})
 	}
 
@@ -61,6 +65,20 @@ class SelectionView extends React.Component<Props, State> {
     if (prevProps.row != this.props.row) {
       this.convertFieldsOptions()
     }
+
+    if (prevProps.dataset_id != this.props.dataset_id) {
+      const endpoint = `http://${this.props.base_url}:5500/api/v1/data/userconfig?dataset_id=${this.props.dataset_id}`;
+		  fetch(endpoint)
+			  .then(response => response.json())
+			  .then(data => {
+          // catch networking errors
+          if (data === undefined) {
+            data = []
+          }
+				  this.setState( {custom_fields: data.custom_fields} )
+			  }
+      )
+    }
   }
 
 
@@ -69,25 +87,46 @@ class SelectionView extends React.Component<Props, State> {
   */
   convertFieldsOptions() {
     let options: { label: string; value: string; }[] = []
+    let ids = new Set()
+    const grouped_fields: any = {}
     // available row features
     const row_keys = Object.keys(this.props.row)
     options = row_keys.map((each: string) => {
         // match against glossary
         for (const field of fields_glossary) {
             // exact match
-            if (each === field.value) {
-                return { label: (field.label), value: each }
+            if (each as string == field.value) {
+              return { label: (field.label), value: each, tooltip: field.tooltip }
             } else {
-                // match with suffix (c_cov_...)
-                const re = new RegExp(field.value + ".*");
-                if (re.test(each)) {
-                    return { label: (field.label + " (" + each + ")"), value: each }
-                }
+              // match with suffix (c_cov_...)
+              const re = new RegExp(field.value + ".*");
+              if (re.test(each)) {
+                  ids.add(each.charAt(each.length - 1))
+                  const new_id = each.charAt(each.length - 1)
+
+                  // add new ID
+                  if (!grouped_fields.hasOwnProperty(new_id)) {
+                    const prev = grouped_fields
+                    prev[new_id] = [{ label: (field.label + " (" + each + ")"), value: each, tooltip: field.tooltip }]
+                    this.setState({ grouped_fields: prev})
+                  // or append
+                  } else {
+                    const prev = grouped_fields
+                    const prev_list = prev[new_id]
+                    prev_list.push({ label: (field.label + " (" + each + ")"), value: each, tooltip: field.tooltip })
+                  }
+                  return { label: (field.label + " (" + each + ")"), value: each, tooltip: field.tooltip }
+              }
             }
         }
         return { label: each, value: each }
     })
-    this.setState({options: options})
+
+    // shuffle categories
+    for (const my_id of Array.from(ids)) {
+      options.unshift({ label: "(Group) ⇒ " + my_id as string, value: my_id as string })
+    }
+    this.setState({options: options, grouped_fields: grouped_fields})
   }
 
   /**
@@ -111,7 +150,7 @@ class SelectionView extends React.Component<Props, State> {
       body: JSON.stringify({ custom_fields: this.state.custom_fields })
     };
 
-    fetch(`http://${this.props.base_url}:5500/api/v1/data/userconfig`, request)
+    fetch(`http://${this.props.base_url}:5500/api/v1/data/userconfig?dataset_id=${this.props.dataset_id}`, request)
     .then(response => console.log(response))
   };
 
@@ -120,8 +159,22 @@ class SelectionView extends React.Component<Props, State> {
    * @param fields JSON
    */
   handleFieldsChange = (fields: any) => {
-    this.setState({ custom_fields: fields})
-    this.props.passCustomFields(fields)
+    const my_fields = new Set()
+    for (const field of fields) {
+      // filter groups
+      if ((field.label as string).startsWith("(Group)")){
+        for (const candidate_field of this.state.options) {
+          if ((candidate_field.value as string).endsWith(field.value) && !(candidate_field.label as string).startsWith("(Group)")) {
+            my_fields.add(candidate_field)
+          }
+        }
+      } else {
+        // append new field
+        my_fields.add(field)
+      }
+    }
+    this.setState({ custom_fields: Array.from(my_fields)})
+    this.props.passCustomFields(my_fields)
   }
 
   render() {
@@ -136,7 +189,7 @@ class SelectionView extends React.Component<Props, State> {
                   Select additional columns generated by taXaminer to be displayed below
                 </Tooltip>
               }>
-                <Button className='m-2 mr-auto sm' onClick={this.showModal}>
+                <Button className='m-2 mr-auto sm' onClick={this.showModal} type="submit">
                   <span className='bi bi-list-ul m-2'/>Manage custom fields
                 </Button>
               </OverlayTrigger>
@@ -144,7 +197,7 @@ class SelectionView extends React.Component<Props, State> {
           <Tabs defaultActiveKey="fields-tab">
             <Tab title="Fields" eventKey="fields-tab">
             <Row>
-            <Col className="md-2">
+            <Col md="auto">
               <InputGroup className="m-2">
                 <InputGroup.Text id="gene-info-name">Gene Name</InputGroup.Text>
                   <Form.Control
@@ -155,7 +208,7 @@ class SelectionView extends React.Component<Props, State> {
                   />
               </InputGroup>
             </Col>
-            <Col className="md-2">
+            <Col md="auto">
                 <InputGroup className="m-2">
                   <InputGroup.Text id="contig">Contig</InputGroup.Text>
                   <Form.Control
@@ -168,7 +221,7 @@ class SelectionView extends React.Component<Props, State> {
               </Col>
           </Row>
           <Row>
-            <Col className="md-2" xs={4}>
+            <Col md="auto" xs={4}>
                 <InputGroup className="m-2">
                   <InputGroup.Text id="gene-label">Label</InputGroup.Text>
                     <Form.Control
@@ -179,7 +232,7 @@ class SelectionView extends React.Component<Props, State> {
                     />
                   </InputGroup>
             </Col>
-            <Col className="md-2">
+            <Col md="auto">
                 <InputGroup className="m-2">
                   <InputGroup.Text id="assignment">Taxon assignment</InputGroup.Text>
                     <Form.Control
@@ -192,7 +245,7 @@ class SelectionView extends React.Component<Props, State> {
               </Col>
           </Row>
           <Row>
-            <Col className='md-2'>
+            <Col md="auto">
               <InputGroup className="m-2">
                   <InputGroup.Text id="ncbi-id">Best hit</InputGroup.Text>
                     <Form.Control
@@ -240,7 +293,7 @@ class SelectionView extends React.Component<Props, State> {
             <Row>
               { // Load custom fields from prop and render additional UI elements
               this.state.custom_fields.map((item: any) => (
-                <CustomOutput col={item.value} row={this.props.row} name={item.label}/>
+                <CustomOutput col={item.value} row={this.props.row} name={item.label} tooltip={item.tooltip}/>
               ))}
             </Row>
               

@@ -1,8 +1,7 @@
 import React from "react";
-import { Col } from "react-bootstrap";
+import { Col, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { InputGroup } from "react-bootstrap";
 import Form from 'react-bootstrap/Form'
-import { Z_TEXT } from "zlib";
 
 class CustomOutput extends React.Component<any, any> {
     constructor(props: any){
@@ -13,7 +12,25 @@ class CustomOutput extends React.Component<any, any> {
     render() {
         return (
             <>
-            <Col className="md-2" xs={6}>
+            <Col md="auto" xs={6}>
+                {this.props.tooltip != undefined && (
+                    <OverlayTrigger
+                    overlay={
+                        <Tooltip>
+                            {this.props.tooltip}
+                        </Tooltip>
+                    }>
+                    <InputGroup className="m-2">
+                        <InputGroup.Text id={this.props.id}>{this.props.name}</InputGroup.Text>
+                        <Form.Control
+                        placeholder="Selected a Gene to get started"
+                        contentEditable={false}
+                        value={this.props.row[this.props.col]}
+                        />
+                    </InputGroup>
+                    </OverlayTrigger>
+                )}
+                {this.props.tooltip === undefined && (
                     <InputGroup className="m-2">
                         <InputGroup.Text id={this.props.id}>{this.props.name}</InputGroup.Text>
                         <Form.Control
@@ -22,8 +39,9 @@ class CustomOutput extends React.Component<any, any> {
                         aria-describedby="basic-addon1"
                         contentEditable={false}
                         value={this.props.row[this.props.col]}
-                    />
-                </InputGroup>
+                        />
+                    </InputGroup>
+                )}
             </Col>
             </>
         );

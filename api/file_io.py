@@ -93,22 +93,26 @@ def load_summary(dir):
     
     return "".join(lines)
 
-def load_user_config():
+def load_user_config(dataset_id):
     """Load a user config"""
-    with open("./config/user.json", "r") as file:
+    base_path = get_baseurl(dataset_id)
+    with open(f"./datasets/{base_path}/user.json", "r") as file:
         lines = file.readlines()
     
     return "".join(lines)
 
-def parse_user_config():
+def parse_user_config(dataset_id):
     """Parse user config to JSON"""
-    with open('./config/user.json', 'r') as f:
-        data = json.load(f)
+    base_path = get_baseurl(dataset_id)
+    with open(f"./datasets/{base_path}/user.json", "r") as file:
+        data = json.load(file)
     return data
 
-def write_user_config(json_data):
+def write_user_config(json_data, dataset_id):
     """Write user config to disk"""
-    with open('./config/user.json', 'w') as json_file:
+    base_path = get_baseurl(dataset_id)
+    print(base_path)
+    with open(f"./datasets/{base_path}/user.json", 'w') as json_file:
         json.dump(json_data, json_file)
 
 def load_pca_coords(base_path):

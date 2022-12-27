@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, InputGroup, Row, Tab, Tabs } from "react-bootstrap";
+import { Button, InputGroup, Row, Spinner, Tab, Tabs } from "react-bootstrap";
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
@@ -17,6 +17,7 @@ interface Props {
     dataset_changed: Function
     base_url: string
     current_id: number
+    is_loading: boolean
 }
 
 // Allows the user to select a dataset
@@ -107,9 +108,14 @@ class DataSetSelector extends React.Component<Props, State> {
                                     <Button 
                                     type="submit" 
                                     onClick={(e:any) => this.props.dataset_changed(this.state.new_id)}
-                                    disabled={(this.state.new_id === -1)}
-                                    >
-                                        <span className='bi bi-arrow-right-circle m-2'/>Load
+                                    disabled={(this.state.new_id === -1)}>
+                                        {
+                                            this.props.is_loading && <Spinner className="mr-2" as="span" animation="border" size="sm" role="status" aria-hidden="true"/>
+                                        }
+                                        {
+                                            !this.props.is_loading && <span className='bi bi-arrow-right-circle m-2'/>
+                                        }
+                                        Load
                                     </Button>
                                     <Button onClick={this.showModal} variant="success">
                                         <span className='bi bi-upload m-2'/>Upload

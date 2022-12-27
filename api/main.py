@@ -200,20 +200,22 @@ def get_config():
     :return:
     """
     query_parameters = request.args
+    print(query_parameters)
+    dataset_id = query_parameters.get("dataset_id")
 
     # get user settings
     if request.method == "GET":
-        data = file_io.load_user_config()
+        data = file_io.load_user_config(dataset_id)
         # return as json
         return data
     
     # set user settings
     elif request.method == "PUT":
-        settings = file_io.parse_user_config()
+        settings = file_io.parse_user_config(dataset_id)
         # apply changes
         for key in request.json.keys():
             settings[key] = request.json[key]
-        file_io.write_user_config(settings)
+        file_io.write_user_config(settings, dataset_id=dataset_id)
         return "OK"
 
 
@@ -235,7 +237,6 @@ def pca_contributions():
 
     # return as json
     return jsonify(data)
-
 
 
 @app.route("/download/fasta", methods=['POST'])

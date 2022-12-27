@@ -28,6 +28,7 @@ interface Props {
   
 interface State {
     dataset_id: number
+    is_loading: boolean
     contigs: Option[]
     selected_row: any
     aa_seq: string
@@ -51,6 +52,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
 		super(props);
 		this.state ={
             dataset_id: -1,
+            is_loading: false,
             selected_row: {g_name: "Pick a gene", taxonomic_assignment: "Pick a gene", plot_label: "Pick a gene", best_hit: "Pick a gene", c_name: "Pick a gene", bh_evalue: 0, best_hitID: "None"}, 
             aa_seq: "Pick a gene",
             camera: null,
@@ -76,7 +78,9 @@ class TaxaminerDashboard extends React.Component<Props, State> {
      * @param id dataset ID
      */
     setDataset(id: number) {
-        const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.state.dataset_id}`;
+        this.setState({is_loading: true}, () => {
+            this.setState({customFields: []})
+            const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.state.dataset_id}`;
             fetch(endpoint)
             .then(response => response.json())
             .then(data => {
@@ -119,9 +123,11 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                     this.setState({contigs: contig_options})
                     this.setState({g_options: gene_options})
                     this.setState({filters: {e_value: 1.0, show_unassinged: true, g_searched: []}})
+                    this.setState({is_loading: false})
                 });
             }
         )
+        })
     }
 
     /**
@@ -188,6 +194,8 @@ class TaxaminerDashboard extends React.Component<Props, State> {
      * @param values 
      */
     setCustomFields = (values: any) => {
+        console.log(values)
+        values = Array.from(values)
         this.setState({customFields: values})
     }
 
@@ -231,12 +239,15 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                             <DataSetSelector
                             base_url={this.props.base_url}
                             current_id={this.state.dataset_id}
-                            dataset_changed={this.updateDatasetID}/>
+                            dataset_changed={this.updateDatasetID}
+                            is_loading={this.state.is_loading}/>
                             <SelectionView
+                            dataset_id={this.state.dataset_id}
                             base_url={this.props.base_url}
                             row={this.state.selected_row}
                             aa_seq={this.state.aa_seq}
-                            passCustomFields={this.setCustomFields}/>
+                            passCustomFields={this.setCustomFields}
+                            is_loading={this.state.is_loading}/>
                         </Tab>
                         <Tab eventKey="Filter" title="Filters">
                             <FilterUI
