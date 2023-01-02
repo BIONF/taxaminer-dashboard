@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import zipfile
@@ -14,6 +15,9 @@ app = flask.Flask(__name__)
 cors = CORS(app)
 app.config["DEBUG"] = True
 app.config['CORS_HEADERS'] = 'Content-Type'
+
+
+DEFAULT_CONFIG = '{"custom_fields": [], "selection": []}'
 
 
 @app.route('/', methods=['GET'])
@@ -72,12 +76,58 @@ def upload_file():
         # clean up
         shutil.rmtree("./temp/" + file_name + "/")
 
-    except FileNotFoundError:
-        print("Invalid file uploaded")
+    except FileNotFoundError as e:
+        print(e)
         return abort(500)
+
+    # create default config file
+    with open(f"./datasets/{file_name}/user.json", 'w') as file:
+        file.write(DEFAULT_CONFIG)
 
     # return as json
     return "Finished"
+
+
+@app.route('/data/path', methods=['PUT'])
+@cross_origin()
+def add_path():
+    query_parameters = request.args
+    payload = request.get_json()
+    path = payload['path']
+    name = payload['name']
+    if not file_io.validate_path(path):
+        return abort(404)
+
+    # create directory
+    os.mkdir(f"./datasets/{name}")
+    # link files
+    file_io.symlink_taxaminer(src_path=path, dataset_name=name)
+
+    with open(f"./datasets/{name}/user.json", 'w') as file:
+        file.write(DEFAULT_CONFIG)
+    
+    return "OK"
+
+
+@app.route('/data/verify_path', methods=['GET'])
+@cross_origin()
+def verify_path():
+    query_parameters = request.args
+    my_path = query_parameters.get("path")
+
+    files = [
+        "/proteins.faa", 
+        "/taxonomic_assignment/gene_table_taxon_assignment.csv", 
+        "/gene_info/summary.txt",
+        "/PCA_and_clustering/PCA_results/pca_loadings.csv"]
+
+    my_path = str(my_path)
+    for file in files:
+        print(my_path + file)
+        if not os.path.isfile(my_path + file):
+            return jsonify({"valid": False})
+    
+    return jsonify({"valid": True})
 
 @app.route('/api/v1/data/remove', methods=['GET'])
 @cross_origin()
@@ -200,7 +250,6 @@ def get_config():
     :return:
     """
     query_parameters = request.args
-    print(query_parameters)
     dataset_id = query_parameters.get("dataset_id")
 
     # get user settings

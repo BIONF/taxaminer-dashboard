@@ -16,6 +16,7 @@ import ScatterMatrix from './sidebar/ScatterMatrix';
 
 // Stylesheet
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { fetchFasta, getUserSelection, setSelection } from '../api';
 
 interface Option {
     label: string
@@ -95,6 +96,10 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                     }
                     this.setState({data: main_data})
 
+                    // Load user selection
+                    getUserSelection(this.props.base_url, id)
+                    .then(data => this.setState({selected_data: data}))
+
                     // Infer fields from first row
                     if (main_data) {
                         // @ts-ignore
@@ -157,12 +162,15 @@ class TaxaminerDashboard extends React.Component<Props, State> {
             //this.state.selected_data.delete(key)
         }
 
-        const endpoint = `http://${this.props.base_url}:5500/api/v1/data/seq?id=${this.state.dataset_id}&fasta_id=${new_row.fasta_header}`;
-		fetch(endpoint)
-			.then(response => response.json())
-			.then(data => {
-				this.setState( {aa_seq: data} )
-			})
+        // update fasta data
+        fetchFasta(this.props.base_url, this.state.dataset_id, new_row.fasta_header)
+        .then(data => {
+            this.setState( {aa_seq: data} )
+        })
+
+        // save selection
+        setSelection(this.props.base_url, this.state.dataset_id, this.state.selected_data)
+
     }
 
     /**

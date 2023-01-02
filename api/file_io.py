@@ -4,6 +4,12 @@ import json
 import os
 from flask import jsonify
 
+FILES = [("taxonomic_hits.txt", "/taxonomic_hits.txt"),
+        ("proteins.faa", "/proteins.faa"), 
+        ("gene_table_taxon_assignment.csv","/taxonomic_assignment/gene_table_taxon_assignment.csv"), 
+        ("summary.txt", "/gene_info/summary.txt"),
+        ("pca_loadings.csv", "/PCA_and_clustering/PCA_results/pca_loadings.csv")]
+
 def get_baseurl(my_id):
     my_id = int(my_id)
     return os.listdir("./datasets")[my_id - 1]
@@ -15,6 +21,27 @@ def load_dataset_folders():
         if os.path.isdir(obj) and file != "README.md":
             datasets.append({'id': i + 1, 'title': str(obj).replace("./datasets", "").replace("\\", "")})
     return datasets
+
+def validate_path(my_path):
+    files = [
+        "/taxonomic_hits.txt"
+        "/proteins.faa", 
+        "/taxonomic_assignment/gene_table_taxon_assignment.csv", 
+        "/gene_info/summary.txt",
+        "/PCA_and_clustering/PCA_results/pca_loadings.csv"]
+
+    my_path = str(my_path)
+    for file in files:
+        if not os.path.isfile(my_path + file):
+            return False
+    return True
+
+def symlink_taxaminer(src_path, dataset_name):
+    if not src_path[-1] in ["/", "\\"]:
+        src_path += "/"
+
+    for file in FILES:
+        os.symlink(src_path + file[1], f"./datasets/{dataset_name}/{file[0]}")
 
 
 def convert_csv_to_json(path):
