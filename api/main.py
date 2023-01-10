@@ -298,10 +298,11 @@ def download_fasta():
 
     query_parameters = request.args
     my_id = query_parameters.get("id")
+    my_dir = file_io.get_baseurl(my_id)
 
     # load requested sequences
     for gene in genes:
-        sequences.append(">" + gene + '\n' + file_io.fast_fasta_loader(f"./datasets/{my_id}/proteins.faa", gene))
+        sequences.append(">" + gene + '\n' + file_io.fast_fasta_loader(f"./datasets/{my_dir}/proteins.faa", gene))
 
     response_text = "\n".join(sequences)
 

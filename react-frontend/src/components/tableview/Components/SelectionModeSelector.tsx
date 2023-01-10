@@ -2,11 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Button, ButtonGroup } from 'react-bootstrap';
 import Card from 'react-bootstrap/Card';
 import { Row, Col } from 'react-bootstrap';
+import { getFastaDownload } from '../../../api';
 
 interface Props {
   passMode: Function
   selection: Set<string>
   dataset_id: number
+  base_url: string
+  main_data: any
 }
 
 /**
@@ -27,20 +30,11 @@ function SelectionModeSelector(props: Props) {
    * @param type file format
    */
   function download_file(type: string) {
-    // pas the selection
     const my_body = {
-      'genes': Array.from(props.selection)
+      'genes': Array.from(props.selection).map((each: any) => {return props.main_data[each].fasta_header})
     }
 
-    // API call
-    fetch(`http://localhost:5000/download/${type}?id=${props.dataset_id}`, {
-      method: 'POST',
-      body: JSON.stringify(my_body),
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-    .then((res) => { return res.blob(); })
+    getFastaDownload(props.base_url, props.dataset_id, my_body)
     // create a temporary link & click to download blob as file
     .then((data) => {
       var a = document.createElement("a");

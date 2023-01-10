@@ -80,7 +80,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
      */
     setDataset(id: number) {
         this.setState({is_loading: true}, () => {
-            this.setState({customFields: []})
+            this.setState({customFields: [], selected_data: new Set()})
             const endpoint = `http://${this.props.base_url}:5500/api/v1/data/scatterplot?id=${this.state.dataset_id}`;
             fetch(endpoint)
             .then(response => response.json())

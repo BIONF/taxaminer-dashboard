@@ -135,6 +135,8 @@ class TableView extends React.Component<Props, State> {
                             passMode = {this.props.setSelectMode}
                             selection = {this.props.keys}
                             dataset_id = {this.props.dataset_id}
+                            base_url = {this.props.base_url}
+                            main_data = {this.props.data}
                             />
                         </Row>
                         <Row>

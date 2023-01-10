@@ -6,6 +6,7 @@ import Form from 'react-bootstrap/Form';
 import { InputGroup } from 'react-bootstrap';
 import Select from 'react-select';
 import { Spinner } from "react-bootstrap";
+import { FetchPCA } from '../../api';
 
 const colors = require("./colors.json")
 
@@ -44,7 +45,8 @@ class Scatter3D extends Component<Props, any> {
 			last_click : "",
 			figure: {data: [], layout: {}, frames: [], config: {}, scene: {}},
 			is_loading: false,
-			show_hover: true
+			show_hover: true,
+			revision: 1
 		}
         this.sendClick = this.sendClick.bind(this);
 	}
@@ -122,7 +124,7 @@ class Scatter3D extends Component<Props, any> {
 	 * @param g_name gene name
 	 */
 	 sendClick(g_name: string){
-		if (g_name !== this.state.last_click) {
+		if (g_name !== this.state.last_click && g_name !== "PCA") {
 			this.setState({last_click: g_name})
 			this.props.sendClick([g_name]);
 		}
@@ -242,8 +244,8 @@ class Scatter3D extends Component<Props, any> {
 		if (this.state.show_hover) {
 			hover_template = "%{customdata[0]} <br>%{customdata[1]} <br><extra>Best hit: %{customdata[2]} <br>Best hit e-value: %{customdata[3]} <br>Taxonomic assignment: %{customdata[4]} <br>Contig name: %{customdata[5]} <br> </extra>"
 		}
-
-        const traces: any[] = []
+      
+		const traces: any[] = []
         data.map(each => {
 		    const x : string[] = [];
 		    const y : string[] = [];
@@ -310,6 +312,7 @@ class Scatter3D extends Component<Props, any> {
             const trace = {
                 type: 'scatter3d',
                 mode: 'markers',
+				// legendgroup: "Genes",
                 x: x,
                 y: y,
                 z: z,
@@ -320,7 +323,7 @@ class Scatter3D extends Component<Props, any> {
 				marker: marker,
 				visible: true,
 				customdata: my_customdata,
-				hovertemplate: hover_template
+				hovertemplate: hover_template,
             }
             traces.push(trace)
         })
@@ -382,14 +385,17 @@ class Scatter3D extends Component<Props, any> {
 	 * Build the 3D scatterplot
 	 * @returns Plotly Plot as React component
 	 */
-	 build_plot() {
+	build_plot() {
 		// store figure components
 		const new_data = this.transformData(this.props.scatterPoints)
 		const new_layout = {autosize: true, showlegend: true, uirevision: 1,
 			// @ts-ignore
 			// overrides are incomplete here, ignore for now
-			legend: {itemsizing: 'constant'},
-			colorway : colors.palettes[this.state.color_palette],
+			legend: {
+				itemsizing: 'constant', 
+				tracegroupgap: 1,
+			},
+			colorway : colors.palettes[this.state.color_palette],	
 		}
 		const new_config = {scrollZoom: true}
 		this.setState({figure: {data: new_data, layout: new_layout, config: new_config}})
@@ -428,7 +434,7 @@ class Scatter3D extends Component<Props, any> {
 				useResizeHandler = {true}
     			style = {{width: "100%", minHeight: 600}}
 				onRestyle={(e: any) => this.updateLegendSelection(e)}
-				revision={1}
+				revision={this.state.revision}
 				onUpdate={(figure) => this.setState({figure: figure})}
 				onLegendClick={(e) => this.legendClick(e)}
 				/>

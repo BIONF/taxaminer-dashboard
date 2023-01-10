@@ -32,6 +32,18 @@ export function addPath(base_url: string, name: string, path: string) {
 
 }
 
+/**
+ * Fetch PCA data
+ * @param base_url API base URL 
+ * @param dataset_id dataset ID
+ * @returns fetch() promise
+ */
+export function FetchPCA(base_url: string, dataset_id: number) {
+    const endpoint = `http://${base_url}:5500/api/v1/data/pca_contribution?id=${dataset_id}`;
+	return fetch(endpoint)
+		    .then(response => response.json())
+			.then(data => data)
+}
 
 /**
  * Fetch the amino acid sequence of a given ID of a given dataset
@@ -83,4 +95,23 @@ export function getUserSelection(base_url: string, dataset_id: number) {
 	return fetch(`http://${base_url}:5500/api/v1/data/userconfig?dataset_id=${dataset_id}`)
 	.then(response => response.json())
     .then(data => new Set<string>(data.selection))
+}
+
+
+/**
+ * Fetch a .fasta file blob
+ * @param base_url API base URL
+ * @param dataset_id dataset id
+ * @param body request body
+ * @returns Promise
+ */
+export function getFastaDownload(base_url: string, dataset_id: number, body: any) {
+    return fetch(`http://${base_url}:5500/download/fasta?id=${dataset_id}`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then((res) => { return res.blob(); })
 }

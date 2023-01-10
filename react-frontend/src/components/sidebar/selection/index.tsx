@@ -43,16 +43,22 @@ class SelectionView extends React.Component<Props, State> {
    * Fetch user configs on componenMount
    */
 	componentDidMount() {
-		const endpoint = `http://${this.props.base_url}:5500/api/v1/data/userconfig?dataset_id=${this.props.dataset_id}`;
-		fetch(endpoint)
-			.then(response => response.json())
-			.then(data => {
-        // catch networking errors
-        if (data === undefined) {
-          data = []
-        }
-				this.setState( {custom_fields: data.custom_fields, has_loaded: true} )
-			})
+    if (this.props.dataset_id != -1) {
+      const endpoint = `http://${this.props.base_url}:5500/api/v1/data/userconfig?dataset_id=${this.props.dataset_id}`;
+		  fetch(endpoint)
+			  .then(response => response.json())
+			  .then(data => {
+          // catch networking errors
+          if (data === undefined) {
+            data = []
+          }
+				  this.setState( {custom_fields: data.custom_fields, has_loaded: true} )
+
+          // Update globally
+          this.props.passCustomFields(data.custom_fields)
+			  }
+      )
+    }
 	}
 
   /**
@@ -76,6 +82,8 @@ class SelectionView extends React.Component<Props, State> {
             data = []
           }
 				  this.setState( {custom_fields: data.custom_fields} )
+          // Update globally
+          this.props.passCustomFields(data.custom_fields)
 			  }
       )
     }

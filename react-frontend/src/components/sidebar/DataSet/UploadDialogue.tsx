@@ -183,7 +183,7 @@ class UploadDialogue extends Component<Props, State> {
               </Modal.Body>
               <Modal.Footer>
                 <Button onClick={this.cancel} variant="danger"><span className='bi bi-x-circle m-2'/>Cancel</Button>
-                <Button onClick={this.hideModal} disabled={!(this.state.invalid_name && (this.state.file.size != 0 || this.state.valid_path))}><span className='bi bi-upload m-2'/>Upload</Button>
+                <Button onClick={this.hideModal} disabled={!(this.state.invalid_name && (this.state.file.size != 0 || this.state.valid_path))}><span className='bi bi-upload m-2'/>Submit</Button>
               </Modal.Footer>
             </Modal>
         );
