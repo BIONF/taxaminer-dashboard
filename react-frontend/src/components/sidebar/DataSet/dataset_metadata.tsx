@@ -1,5 +1,4 @@
 import React from "react";
-import Card from 'react-bootstrap/Card';
 import { Accordion } from "react-bootstrap";
 
 import "./style.css";
@@ -11,16 +10,6 @@ interface Props {
 
 interface State {
     metadata: string
-}
-
-/**
- * Properly format text from \n newlines
- * @param props Component props
- * @returns list of <p></p> to insert into html
- */
-function NewlineText(props: any) {
-    const text = props.text;
-    return text.split('\n').map((str: any) => <p>{str}</p>);
 }
 
 class DataSetMeta extends React.Component<Props, State> {
@@ -43,7 +32,7 @@ class DataSetMeta extends React.Component<Props, State> {
      * @param prev previous state
      */
     componentDidUpdate(prev: any) {
-		if (prev.dataset_id != this.props.dataset_id && this.props.dataset_id !== -1) {
+		if (prev.dataset_id !== this.props.dataset_id && this.props.dataset_id !== -1) {
 			this.fetchMetaData()
 		}
 	}

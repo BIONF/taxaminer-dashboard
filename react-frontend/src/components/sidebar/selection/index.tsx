@@ -43,7 +43,7 @@ class SelectionView extends React.Component<Props, State> {
    * Fetch user configs on componenMount
    */
 	componentDidMount() {
-    if (this.props.dataset_id != -1) {
+    if (this.props.dataset_id !== -1) {
       const endpoint = `http://${this.props.base_url}:5500/api/v1/data/userconfig?dataset_id=${this.props.dataset_id}`;
 		  fetch(endpoint)
 			  .then(response => response.json())
@@ -68,11 +68,11 @@ class SelectionView extends React.Component<Props, State> {
    * @param snapshot Snapshot
    */
    componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<any>, snapshot?: any): void {
-    if (prevProps.row != this.props.row) {
+    if (prevProps.row !== this.props.row) {
       this.convertFieldsOptions()
     }
 
-    if (prevProps.dataset_id != this.props.dataset_id) {
+    if (prevProps.dataset_id !== this.props.dataset_id) {
       const endpoint = `http://${this.props.base_url}:5500/api/v1/data/userconfig?dataset_id=${this.props.dataset_id}`;
 		  fetch(endpoint)
 			  .then(response => response.json())
@@ -103,7 +103,7 @@ class SelectionView extends React.Component<Props, State> {
         // match against glossary
         for (const field of fields_glossary) {
             // exact match
-            if (each as string == field.value) {
+            if (each as string === field.value) {
               return { label: (field.label), value: each, tooltip: field.tooltip }
             } else {
               // match with suffix (c_cov_...)

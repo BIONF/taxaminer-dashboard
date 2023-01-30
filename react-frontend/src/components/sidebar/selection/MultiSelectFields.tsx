@@ -5,7 +5,6 @@ import { Container } from 'react-bootstrap';
 import Row from "react-bootstrap/esm/Row";
 
 // possible options
-const options = require("./field_options.json")
 const animatedComponents = makeAnimated();
 
 interface Props {

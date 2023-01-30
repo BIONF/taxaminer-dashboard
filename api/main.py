@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import zipfile
+import tarfile
 import flask
 import file_io
 from flask import request, jsonify, send_file, abort
@@ -49,16 +50,21 @@ def upload_file():
     # file params
     my_file = request.files['files']
     file_name = request.form['name']
+    file_type = request.form['type']
     keep_zip = bool(int(request.form['keep_zip']))
 
-    temp_path = "./temp/" + file_name + ".zip"
+    temp_path = "./temp/" + file_name + file_type
 
     # jump to the flask working dir and save with predefined filename
     my_file.save(temp_path)
 
     # unzip
-    with zipfile.ZipFile(temp_path, 'r') as zip_ref:
-        zip_ref.extractall("./temp/" + file_name + "/")
+    if temp_path.endswith(".zip"):
+        with zipfile.ZipFile(temp_path, 'r') as zip_ref:
+            zip_ref.extractall("./temp/" + file_name + "/")
+    elif temp_path.endswith(".tar.gz"):
+        with tarfile.TarFile(temp_path, 'r') as tar_ref:
+            tar_ref.extractall("./temp/" + file_name + "/")
     
     # copy to dataset folder
     try:
@@ -115,19 +121,10 @@ def verify_path():
     query_parameters = request.args
     my_path = query_parameters.get("path")
 
-    files = [
-        "/proteins.faa", 
-        "/taxonomic_assignment/gene_table_taxon_assignment.csv", 
-        "/gene_info/summary.txt",
-        "/PCA_and_clustering/PCA_results/pca_loadings.csv"]
-
-    my_path = str(my_path)
-    for file in files:
-        print(my_path + file)
-        if not os.path.isfile(my_path + file):
-            return jsonify({"valid": False})
-    
-    return jsonify({"valid": True})
+    if file_io.validate_path(my_path):
+        return jsonify({"valid": True})
+    else:
+        return jsonify({"valid": False})
 
 @app.route('/api/v1/data/remove', methods=['GET'])
 @cross_origin()
@@ -136,10 +133,21 @@ def remove_datasets():
     my_id = query_parameters.get("id")
     my_dir = file_io.get_baseurl(my_id)
 
-    shutil.rmtree("./datasets/" + my_dir)
+    data_dir = "./datasets/" + my_dir + "/"
+    candidates = os.listdir(data_dir)
 
-    # return as json
-    return "Success"
+    # remove symlinks safely
+    for candidate in candidates:
+        if os.path.islink(data_dir + candidate):
+            os.unlink(data_dir + candidate)
+
+    # remove file tree
+    try:
+        shutil.rmtree("./datasets/" + my_dir)
+        # return as json
+        return "Success"
+    except Exception as e:
+        return e
 
 
 @app.route('/api/v1/data/scatterplot', methods=['GET'])

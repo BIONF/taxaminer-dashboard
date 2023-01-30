@@ -1,4 +1,4 @@
-import { TaxaminerDashboard } from './components/dashboard';
+import { TaxaminerDashboard } from './components';
 
 // Stylesheet
 import 'bootstrap/dist/css/bootstrap.min.css';

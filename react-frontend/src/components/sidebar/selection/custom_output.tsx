@@ -13,7 +13,7 @@ class CustomOutput extends React.Component<any, any> {
         return (
             <>
             <Col md="auto" xs={6}>
-                {this.props.tooltip != undefined && (
+                {this.props.tooltip !== undefined && (
                     <OverlayTrigger
                     overlay={
                         <Tooltip>

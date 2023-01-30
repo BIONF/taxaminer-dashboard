@@ -42,14 +42,14 @@ class ScatterMatrix extends Component<Props, any> {
 	 */
 	componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<any>, snapshot?: any): void {
 		// fetch the new dataset if the ID has changed
-		if (prevProps.scatterPoints != this.props.scatterPoints) {
+		if (prevProps.scatterPoints !== this.props.scatterPoints) {
 			this.set_auto_size(this.props.scatterPoints);
 			this.setState({data: this.props.scatterPoints}, () => {
 				this.setState( { marker_size: this.state.auto_size_px, auto_size: true})
 				this.setState({my_plot: this.build_plot()})
 			})
 			
-		} else if (prevProps.scatter_data != this.props.scatter_data){
+		} else if (prevProps.scatter_data !== this.props.scatter_data){
 			this.setState({my_plot: this.build_plot()})
 		}
 	}
@@ -135,19 +135,17 @@ class ScatterMatrix extends Component<Props, any> {
 		    const y : string[] = [];
             const z : string[] = [];
             let label = "";
-			let gene_name = "";
             const gene_names : string[] = [];
             let chunk = each;
 
 			// push 3D coordinates in arrays accordingly
-		    chunk.map((each: { [x: string]: string; }) => {
+		    for(const each of chunk) {
                 // filter by e-value
 				if(parseFloat(each['bh_evalue']) < this.props.e_value) {
 					x.push(each['Dim.1'])
 					y.push(each['Dim.2'])
 					z.push(each['Dim.3'])
 					label = each['plot_label']
-					gene_name = each['g_name']
 					gene_names.push(each['g_name'])
 				} 
 				// Include unassigned data points (which usually don't have a e-value)
@@ -160,7 +158,7 @@ class ScatterMatrix extends Component<Props, any> {
 				} else {
 					//console.log(each['g_name'])
 				}
-		    })
+		    }
 
 			// Setup the plot trace
 			let visible = undefined
@@ -197,9 +195,9 @@ class ScatterMatrix extends Component<Props, any> {
 	handleSelection(points: any) {
 		let selected_ids: string[] = []
 
-		points.map((each: any) => {
-			selected_ids.push(each.customdata)
-		})
+		for (const point of points) {
+			selected_ids.push(point.customdata)
+		}
 
 		// pass data up
 		this.props.sendClick(selected_ids)

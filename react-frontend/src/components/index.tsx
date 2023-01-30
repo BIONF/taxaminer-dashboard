@@ -3,14 +3,13 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col'
 import Container from 'react-bootstrap/esm/Container';
 import { Tabs, Tab } from "react-bootstrap";
-import { TopBar } from './topbar';
-import { DataSetSelector } from './sidebar/DataSet/dataset_selector';
+import { TopBar } from './navbar/topbar';
+import { DataSetSelector } from './sidebar/DataSet';
 import SelectionView from './sidebar/selection';
-import { DataSetMeta } from './sidebar/DataSet/dataset_metadata';
 import Scatter3D from './scatterplot3d';
-import PCAPlot from './sidebar/PCAPlot/PCAPlot';
+import PCAPlot from './sidebar/PCAPlot';
 import { FilterUI } from './sidebar/Filters';
-import Table from './sidebar/DiamondTable/diamondtable';
+import Table from './sidebar/DiamondTable';
 import { TableView } from './tableview';
 import ScatterMatrix from './sidebar/ScatterMatrix';
 
@@ -72,6 +71,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
 
         // Bind functions passing data from child objects to local context
         this.handleDataClick = this.handleDataClick.bind(this);
+        this.resetSelection = this.resetSelection.bind(this);
 	}
 
     /**
@@ -107,10 +107,10 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                         this.setState( { fields: Object.keys(proto_row) })
                     }
 
-                    const gene_options: { label: string; value: string; }[] = []
-                    Object.keys(main_data).map((item: string) => (
-                        gene_options.push( { "label": item, "value": item } )
-                    ))
+                    //const gene_options: { label: string; value: string; }[] = []
+                    const gene_options: string[] = Object.keys(main_data).map((item: string) => {
+                        return item
+                    })
 
                     /**
                     * Extract unique contig identifiers
@@ -138,9 +138,18 @@ class TaxaminerDashboard extends React.Component<Props, State> {
     /**
 	 * Call API on component mount to main table data
 	 */
-	componentDidMount() {
+	componentDidMount(): void {
         this.updateDatasetID(-1)
 	}
+
+    /**
+     * Reset the global selection and save
+     */
+    resetSelection(): void {
+        this.setState({selected_data: new Set()}, () => {
+            setSelection(this.props.base_url, this.state.dataset_id, this.state.selected_data)
+        })
+    }
 
     
     /**
@@ -202,7 +211,6 @@ class TaxaminerDashboard extends React.Component<Props, State> {
      * @param values 
      */
     setCustomFields = (values: any) => {
-        console.log(values)
         values = Array.from(values)
         this.setState({customFields: values})
     }
@@ -239,7 +247,8 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                     show_unassigned={this.state.filters.show_unassinged}
                     g_searched={this.state.filters.g_searched}
                     c_searched={this.state.filters.c_searched}
-                    passScatterData={this.shareScatterData}/>
+                    passScatterData={this.shareScatterData}
+                    filters={this.state.filters}/>
                 </Col>
                 <Col>
                      <Tabs>
@@ -307,6 +316,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                 dataset_id={this.state.dataset_id}
                 row={this.state.selected_row}
                 customFields={this.state.customFields}
+                resetSelection={this.resetSelection}
                 />
         </Container>
         );

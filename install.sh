@@ -13,3 +13,8 @@ pip install flask flask-cors
 conda install nodejs -y
 cd react-frontend
 npm install --legacy-peer-deps
+
+# setup directories
+cd ..
+mkdir ./api/datasets
+chmod +x start.sh

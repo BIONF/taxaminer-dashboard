@@ -24,19 +24,26 @@ def load_dataset_folders():
 
 def validate_path(my_path):
     files = [
-        "/taxonomic_hits.txt"
+        "/taxonomic_hits.txt",
         "/proteins.faa", 
         "/taxonomic_assignment/gene_table_taxon_assignment.csv", 
         "/gene_info/summary.txt",
         "/PCA_and_clustering/PCA_results/pca_loadings.csv"]
 
-    my_path = str(my_path)
     for file in files:
-        if not os.path.isfile(my_path + file):
+        if not os.path.isfile(my_path + file) and not os.path.islink(my_path + file):
             return False
     return True
 
+
 def symlink_taxaminer(src_path, dataset_name):
+    """Symlink a taXaminer output folder to a new dataset fodler
+
+    :param src_path: taXaminer output location
+    :type src_path: string
+    :param dataset_name: name of the dataset
+    :type dataset_name: string
+    """
     if not src_path[-1] in ["/", "\\"]:
         src_path += "/"
 

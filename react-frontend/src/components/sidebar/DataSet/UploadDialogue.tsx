@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Container, InputGroup, Form, Button, Modal } from 'react-bootstrap';
+import { Container, Form, Button, Modal } from 'react-bootstrap';
 import { addPath, verifyPath } from '../../../api';
 
 
@@ -53,6 +53,12 @@ class UploadDialogue extends Component<Props, State> {
             data.append('name', this.state.file_name)
             data.append('keep_zip', String(this.state.keep_zip ? 1 : 0))
 
+            if (this.state.file.name.endsWith(".zip")) {
+                data.append('type', ".zip")
+            } else if (this.state.file.name.endsWith(".tar.gz")) {
+                data.append('type', ".tar.gz")
+            }
+
             // POST data
             fetch(endpoint, {
                 method: 'POST',
@@ -75,6 +81,7 @@ class UploadDialogue extends Component<Props, State> {
      * @param e Form.Control input change event
      */
     setFile(e: any) {
+        console.log(e.target.files)
         this.setState({file: e.target.files[0]})
     }
 
@@ -166,7 +173,7 @@ class UploadDialogue extends Component<Props, State> {
                 <h5>Or add from disk using filepath</h5>
                 <Form noValidate validated={false}>
                     <Form.Group>
-                        <Form.Text>Enter filepath pointing to a taXaminer output directory. On Windows systems this requires <a href="https://blogs.windows.com/windowsdeveloper/2016/12/02/symlinks-windows-10/" target="_blank">additional symlink privileges.</a></Form.Text>
+                        <Form.Text>Enter filepath pointing to a taXaminer output directory. On Windows systems this requires <a href="https://blogs.windows.com/windowsdeveloper/2016/12/02/symlinks-windows-10/" target="_blank" rel="noreferrer">additional symlink privileges.</a></Form.Text>
                         <Form.Control
                             required
                             type="text"
@@ -183,7 +190,7 @@ class UploadDialogue extends Component<Props, State> {
               </Modal.Body>
               <Modal.Footer>
                 <Button onClick={this.cancel} variant="danger"><span className='bi bi-x-circle m-2'/>Cancel</Button>
-                <Button onClick={this.hideModal} disabled={!(this.state.invalid_name && (this.state.file.size != 0 || this.state.valid_path))}><span className='bi bi-upload m-2'/>Submit</Button>
+                <Button onClick={this.hideModal} disabled={!(this.state.invalid_name && (this.state.file.size !== 0 || this.state.valid_path))}><span className='bi bi-upload m-2'/>Submit</Button>
               </Modal.Footer>
             </Modal>
         );

@@ -1,16 +1,29 @@
 import "react-bootstrap-table-next/dist/react-bootstrap-table2.min.css";
 // eslint-disable @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import BootstrapTable from "react-bootstrap-table-next";
-// @ts-ignore
 import paginationFactory from 'react-bootstrap-table2-paginator';
-// @ts-ignore
 import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
-import React, { Component } from 'react';
-import { Row, Col } from 'react-bootstrap';
+import { Component } from 'react';
+import { Row } from 'react-bootstrap';
 
 // local imports
 import "./customstyle.css"
+
+interface Props {
+    col_keys: string[]
+    keys: Set<string>
+    master_data:  { [key: string]: any }
+    passClick: any
+}
+
+interface State {
+    table_data: any[]
+    key: string
+    loading: boolean
+    custom_fields: any[]
+    show_field_modal: boolean
+    cols: any[]
+}
 
 
 /**
@@ -30,9 +43,6 @@ import "./customstyle.css"
     return Number(a) - Number(b); // desc
 }
 
-interface Props {
-    col_keys: string
-}
 
 const rich_cols = {
     g_name:  {dataField: "g_name", text: "ID", sort: true, filter: textFilter()},
@@ -40,10 +50,16 @@ const rich_cols = {
     bh_evalue: { dataField: "bh_evalue", text: "Best hit e-value", sort: true, sortFunc: numberSort}
 }
 
-class SelectionTable extends Component<any, any> {
+class SelectionTable extends Component<Props, State> {
     constructor(props: any){
 		super(props);
-		this.state ={ table_data: [], key: "", loading: false, custom_fields: [], show_field_modal: false, cols: Object.values(rich_cols)}
+		this.state ={ 
+            table_data: [],
+            key: "", 
+            loading: false, 
+            custom_fields: [], 
+            show_field_modal: false,
+            cols: Object.values(rich_cols)}
 	}
 
     /**
@@ -75,7 +91,8 @@ class SelectionTable extends Component<any, any> {
         const text_cols = ["c_name", "fasta_header", "corrected_lca", "best_hit"]
 
         if (prev_props !== this.props) {
-            for (let key of this.props.keys) {
+            const my_keys = Array.from(this.props.keys)
+            for (const key of my_keys) {
                 new_rows.push(this.props.master_data[key])
             }
             this.setState({table_data: new_rows})
@@ -96,6 +113,7 @@ class SelectionTable extends Component<any, any> {
                     }
                     // either allow sorting by value or searching by string
                     if (text_cols.includes(element.value)) {
+                        // @ts-ignore
                        constructed_col.filter = textFilter()
                     } else {
                         // @ts-ignore
@@ -130,11 +148,13 @@ class SelectionTable extends Component<any, any> {
             <Row className='mt-2'>
                 <div style={{ overflow: "auto" }}>
                 <BootstrapTable
+                // @ts-ignore
                 className="md-2"
                 keyField="id" 
                 data={this.state.table_data} 
                 columns={this.state.cols}
                 rowEvents={this.rowEvents}
+                // @ts-ignore
                 pagination={ paginationFactory() }
                 filter={ filterFactory() }
                 />

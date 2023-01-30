@@ -1,15 +1,16 @@
 import React, { Component } from "react";
-import { Button, Row } from "react-bootstrap";
+import { Row } from "react-bootstrap";
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 import Select, { createFilter } from 'react-select';
 import { FixedSizeList as List } from "react-window";
+import { Search } from "./Search";
 
 const height = 35;
 
 interface Props {
     sendValuesUp: any
-    g_options: { label: string; value: string; }[]
+    g_options: string[]
     contig_options: { label: string; value: string; }[]
 }
 
@@ -57,6 +58,7 @@ class FilterUI extends React.Component<Props, State> {
             g_searched: [],
             c_searched: []
         }
+        this.passSearch = this.passSearch.bind(this);
 	}  
 
     /**
@@ -73,7 +75,6 @@ class FilterUI extends React.Component<Props, State> {
      * @param slider_value Value of UI slider
      */
     setEValue(slider_value: any) {
-        console.log(this.state)
         const new_value = Math.E ** (-slider_value)
         this.setState({e_value: new_value})
 
@@ -86,14 +87,10 @@ class FilterUI extends React.Component<Props, State> {
      * Pass searched IDs up
      * @param e Edit event of the dropdown selector
      */
-    passSearch(e: any) {
-        let new_keys: string[] = []
-        // extract IDs
-        e.forEach((element: any) => {
-          new_keys.push(element.value)
-        });
-        this.setState({g_searched: new_keys}, () => {
-            const values = {'show_unassinged': this.state.show_unassigned, 'e_value': this.state.e_value, 'g_searched': this.state.g_searched, 'c_searched': this.state.c_searched}
+    passSearch(e: string[]) {
+        console.log(e)
+        this.setState({g_searched: e}, () => {
+            const values = {'show_unassinged': this.state.show_unassigned, 'e_value': this.state.e_value, 'g_searched': e, 'c_searched': this.state.c_searched}
             this.props.sendValuesUp(values)
         })
     }
@@ -108,7 +105,6 @@ class FilterUI extends React.Component<Props, State> {
         e.forEach((element: any) => {
           new_keys.push(element.value)
         });
-        console.log(new_keys)
         this.setState({c_searched: new_keys}, () => {
             const values = {'show_unassinged': this.state.show_unassigned, 'e_value': this.state.e_value, 'g_searched': this.state.g_searched, 'c_searched': this.state.c_searched}
             this.props.sendValuesUp(values)
@@ -119,18 +115,10 @@ class FilterUI extends React.Component<Props, State> {
     render() {
         return (
             <>
-            <Card className="m-2">
-                <Card.Body>
-                    <Card.Title>Search genes</Card.Title>
-                    <Select
-                    // @ts-ignore
-                    options={this.props.g_options}
-                    components={{MenuList}}
-                    filterOption={createFilter({ignoreAccents: false})}
-                    isMulti defaultValue={[]}
-                    onChange={(e: any) => this.passSearch(e)}/>
-                </Card.Body>
-            </Card>
+            <Search
+            sendValuesUp={this.passSearch}
+            g_options={this.props.g_options}
+            />
             <Card className="m-2">
                 <Card.Body>
                     <Card.Title>Filter</Card.Title>

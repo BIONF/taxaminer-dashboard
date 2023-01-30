@@ -1,4 +1,4 @@
-import React, { createContext } from 'react';
+import React from 'react';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col'
 import Container from 'react-bootstrap/esm/Container';
@@ -20,6 +20,7 @@ interface Props {
     base_url: string
     row: any
     customFields: any[]
+    resetSelection: Function
 }
   
 interface State {
@@ -49,25 +50,13 @@ class TableView extends React.Component<Props, State> {
 	}
 
     /**
-	 * Call API on component mount to load plot data
-	 */
-	componentDidMount() {
-		const endpoint = `http://${this.props.base_url}:5500/api/v1/data/main?id=1`;
-		fetch(endpoint)
-			.then(response => response.json())
-			.then(data => {
-				this.setState( {data: data} );
-			})
-	}
-
-    /**
      * Component did update
      * @param prevProps previous Props
      * @param prevState previous State
      * @param snapshot previous snapshot
      */
     componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>, snapshot?: any): void {
-        if (prevProps.row != this.props.row) {
+        if (prevProps.row !== this.props.row) {
             this.convertFieldsOptions()
         }
     }
@@ -78,7 +67,7 @@ class TableView extends React.Component<Props, State> {
      */
     setTableCols = (cols: any[]) => {
         for (const col of cols) {
-            if (col.value == "g_name") {
+            if (col.value === "g_name") {
                 return this.setState({col_keys: cols})
             }
         }
@@ -137,6 +126,7 @@ class TableView extends React.Component<Props, State> {
                             dataset_id = {this.props.dataset_id}
                             base_url = {this.props.base_url}
                             main_data = {this.props.data}
+                            resetSelection = {this.props.resetSelection}
                             />
                         </Row>
                         <Row>

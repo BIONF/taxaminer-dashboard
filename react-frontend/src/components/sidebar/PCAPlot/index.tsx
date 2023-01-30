@@ -87,7 +87,7 @@ class PCAPlot extends Component<Props, State> {
 	setVar(var_id: string){
 		for (const variable of variables) {
 			const re = new RegExp(variable.value + ".*");
-			if (variable.value == var_id || re.test(var_id)) {
+			if (variable.value === var_id || re.test(var_id)) {
 				return this.setState({selected_var: var_id, selected_label: variable.label, selected_verbose: variable.tooltip})
 			}
 		}

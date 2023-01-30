@@ -6,7 +6,7 @@ import Form from 'react-bootstrap/Form';
 import { InputGroup } from 'react-bootstrap';
 import Select from 'react-select';
 import { Spinner } from "react-bootstrap";
-import { FetchPCA } from '../../api';
+
 
 const colors = require("./colors.json")
 
@@ -21,19 +21,40 @@ interface Props {
 	g_searched: string[]
 	c_searched: string[]
 	scatterPoints: any[]
+	filters: any
+}
+
+interface State {
+	data: any[]
+	traces: any[]
+	selected_gene: string
+	ui_revision: any
+	auto_size: boolean
+	marker_size: number
+	manual_size: number
+	color_palette: string
+	color_options: any
+	camera_ratios: {xy: number, xz: number, yz: number}
+	legendonly: any[]
+	figure: any
+	is_loading: boolean
+	show_hover: boolean
+	revision: number
+	g_search_len: number
+	last_click: string
+	auto_size_px: number
 }
 
 /**
  * Main Scatterplot Component
  */
-class Scatter3D extends Component<Props, any> {
+class Scatter3D extends Component<Props, State> {
 	constructor(props: any){
 		super(props);
 		this.state ={ 
 			data: [] , // raw JSON data
 			traces: [], // traces dicts for plotly
 			selected_gene: "", // g_name
-			aa_seq: "", // inherited
 			ui_revision: "true", // bound to plot to preserve camera position
 			auto_size: true, // automatically size dots in scatterplot
 			marker_size: 5, // actual dot size in the plot
@@ -42,11 +63,13 @@ class Scatter3D extends Component<Props, any> {
 			color_options: colors.options, // color palette options
 			camera_ratios: {xy: 1.0, xz: 1.0, yz: 1.0},
 			legendonly: [],
-			last_click : "",
 			figure: {data: [], layout: {}, frames: [], config: {}, scene: {}},
 			is_loading: false,
 			show_hover: true,
-			revision: 1
+			revision: 1,
+			g_search_len: 0,
+			last_click: "",
+			auto_size_px: 0
 		}
         this.sendClick = this.sendClick.bind(this);
 	}
@@ -56,11 +79,11 @@ class Scatter3D extends Component<Props, any> {
 	 * @param prev previous state
 	 */
 	componentDidUpdate(prev: any) {
-		if (prev.scatterPoints != this.props.scatterPoints) {
-			this.set_auto_size(this.props.scatterPoints);
-			this.setState( { marker_size: this.state.auto_size_px, auto_size: true})
+		if (prev.scatterPoints !== this.props.scatterPoints) {
+			const new_size = this.set_auto_size(this.props.scatterPoints);
+			this.setState( { marker_size: new_size, auto_size: true})
 			return this.build_plot()
-		} else if (prev.e_value !== this.props.e_value || prev.show_unassigned !== this.props.show_unassigned || prev.g_searched !== this.props.g_searched || prev.c_searched !== this.props.c_searched){
+		} else if (prev.e_value !== this.props.e_value || prev.show_unassigned !== this.props.show_unassigned || this.state.g_search_len !== this.props.g_searched.length || prev.c_searched !== this.props.c_searched){
 			this.build_plot()
 		}
 	}
@@ -73,13 +96,12 @@ class Scatter3D extends Component<Props, any> {
 	 * @returns boolean
 	 */
 	 shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<any>, nextContext: any): boolean {
-
 		// New dataset
 		if (nextProps.scatterPoints !== this.props.scatterPoints) {
 			return true
 		}
 		// external changes
-		if (nextProps.e_value !== this.props.e_value || nextProps.show_unassigned !== this.props.show_unassigned || nextProps.g_searched !== this.props.g_searched || nextProps.c_searched != this.props.c_searched) {
+		if (nextProps.e_value !== this.props.e_value || nextProps.show_unassigned !== this.props.show_unassigned || nextProps.g_searched !== this.props.g_searched || nextProps.c_searched !== this.props.c_searched) {
 			return true
 		}
 		// changes of the figure should always raise an update, otherwise user interaction is limited
@@ -88,6 +110,10 @@ class Scatter3D extends Component<Props, any> {
 		}
 		// dataset changed
 		if (nextProps.dataset_id !== this.props.dataset_id) {
+			return true
+		}
+
+		if (nextProps.g_searched.length !== this.state.g_search_len) {
 			return true
 		}
 		return false
@@ -157,7 +183,7 @@ class Scatter3D extends Component<Props, any> {
 	/**
 	 * Set automatic marker size
 	 */
-	set_auto_size(data: any){
+	set_auto_size(data: any): number{
 		if (data === undefined) {
 			data = this.props.scatterPoints
 		}
@@ -167,10 +193,12 @@ class Scatter3D extends Component<Props, any> {
 			total_points = total_points + trace.length
 		}
 		// this was chosen arbitrarily
-		let new_size = 65 - Math.round(total_points / 10)
+		let new_size = 40 - Math.round(total_points / 15)
 		// set a minimum size arbitrarily
 		if (new_size < 3) {
 			new_size = 3
+		} else if(new_size > 10) {
+			new_size = 10
 		}
 		if (this.state.auto_size === true) {
 			// setting the marker size if auto sizing is enabled will update the plot
@@ -179,6 +207,8 @@ class Scatter3D extends Component<Props, any> {
 		} else {
 			this.setState( { auto_size_px: new_size } )
 		}
+
+		return new_size
 	}
 
 	/**
@@ -219,7 +249,7 @@ class Scatter3D extends Component<Props, any> {
 	updateLegendSelection(e: any, ) {
 		var plot: any = document.getElementById('scatter3d')
 		const legendonly = plot.data.filter((trace: any) => trace.visible === "legendonly")
-		if (legendonly !== this.state.legend_only) {
+		if (legendonly !== this.state.legendonly) {
 			this.setState({legendonly: legendonly})
 			this.props.passScatterData({ colors: this.state.color_palette, legendonly: legendonly})
 		}
@@ -246,18 +276,18 @@ class Scatter3D extends Component<Props, any> {
 		}
       
 		const traces: any[] = []
-        data.map(each => {
+       	for (const chunk of data) {
 		    const x : string[] = [];
 		    const y : string[] = [];
             const z : string[] = [];
             let label = "";
             const my_customdata : any = [];
-            let chunk = each;
+			let visible = true
 
 			/**
 			 * Apply filters
 			 */
-		    chunk.map((each: { [x: string]: string; }) => {
+		   	for (const each of chunk) {
 				// contig filter prequisited
 				let c_match = true
 				if (this.props.c_searched) {
@@ -275,7 +305,10 @@ class Scatter3D extends Component<Props, any> {
 					my_customdata.push([each['plot_label'], each['g_name'], each['best_hit'], each['bh_evalue'], each['taxon_assignment'], each['c_name']])
 				} 
 				// Include unassigned data points (which usually don't have an e-value)
-				else if(this.props.show_unassigned === true && each['plot_label'] === 'Unassigned' && c_match) {
+				else if(each['plot_label'] === 'Unassigned' && c_match) {
+					if (!this.props.show_unassigned) {
+						visible = false
+					}
 					x.push(each['Dim.1'])
 					y.push(each['Dim.2'])
 					z.push(each['Dim.3'])
@@ -293,7 +326,8 @@ class Scatter3D extends Component<Props, any> {
 					// @ts-ignore
 					occurrences[each['plot_label']] = 1
 				}
-		    })
+		    }
+
 			// Setup the plot trace
 			let marker = {}
 			if (searched.length > 0) {
@@ -321,22 +355,22 @@ class Scatter3D extends Component<Props, any> {
 				// @ts-ignore
                 text: label,
 				marker: marker,
-				visible: true,
+				visible: visible,
 				customdata: my_customdata,
 				hovertemplate: hover_template,
             }
             traces.push(trace)
-        })
+        }
 
 		// setup traces for selected / searched dots
 		let searched_rows: any[] = []
-		data.map(chunk => {
-			chunk.map((each: any) => {
-				if (searched.includes(each['g_name'])) {
-					searched_rows.push(each)
+		for (const chunk of data) {
+			for (const row of chunk) {
+				if (searched.includes(row['g_name'])) {
+					searched_rows.push(row)
 				}
-			})
-		})
+			}
+		}
 
 		const x : string[] = [];
 		const y : string[] = [];
@@ -398,7 +432,7 @@ class Scatter3D extends Component<Props, any> {
 			colorway : colors.palettes[this.state.color_palette],	
 		}
 		const new_config = {scrollZoom: true}
-		this.setState({figure: {data: new_data, layout: new_layout, config: new_config}})
+		this.setState({figure: {data: new_data, layout: new_layout, config: new_config}, g_search_len: this.props.g_searched.length})
 	}
 
 	/**

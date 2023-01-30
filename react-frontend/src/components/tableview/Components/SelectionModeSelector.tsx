@@ -6,6 +6,7 @@ import { getFastaDownload } from '../../../api';
 
 interface Props {
   passMode: Function
+  resetSelection: Function
   selection: Set<string>
   dataset_id: number
   base_url: string
@@ -51,11 +52,16 @@ function SelectionModeSelector(props: Props) {
           <Card>
             <Card.Body>
               <Card.Title>Edit Mode</Card.Title>
-              <ButtonGroup className='md-2' style={{width: "100%"}}>
-                <Button variant="success" onClick={() => SetMode('add')} disabled={mode == 'add'} className='btn-block'>+</Button>
-                <Button variant="secondary" onClick={() => SetMode('neutral')} disabled={mode == 'neutral' } className='btn-block'>o</Button>
-                <Button variant="danger" onClick={() => SetMode('remove')} disabled={mode == 'remove'} className='btn-block'>-</Button>
+              <Row className="m-2">
+              <ButtonGroup style={{width: "100%"}}>
+                <Button variant="success" onClick={() => SetMode('add')} disabled={mode === 'add'} className='btn-block'>+</Button>
+                <Button variant="secondary" onClick={() => SetMode('neutral')} disabled={mode === 'neutral' } className='btn-block'>o</Button>
+                <Button variant="danger" onClick={() => SetMode('remove')} disabled={mode === 'remove'} className='btn-block'>-</Button>
               </ButtonGroup>
+              </Row>
+              <Row className='m-2'>
+                <Button className='md-2' variant="danger" onClick={() => props.resetSelection()}>Reset</Button>
+              </Row>
             </Card.Body>
           </Card>
         </Col>

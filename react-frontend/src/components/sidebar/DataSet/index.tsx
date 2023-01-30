@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, InputGroup, Row, Spinner, Tab, Tabs } from "react-bootstrap";
+import { Button, InputGroup, Spinner, Tab, Tabs } from "react-bootstrap";
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
@@ -118,7 +118,7 @@ class DataSetSelector extends React.Component<Props, State> {
                                         Load
                                     </Button>
                                     <Button onClick={this.showModal} variant="success">
-                                        <span className='bi bi-upload m-2'/>Upload
+                                        <span className='bi bi-upload m-2'/>Add new
                                     </Button>
                                     <Button onClick={this.showRemoveModal} variant="danger">
                                         <span className='bi bi-trash m-2'/>Remove

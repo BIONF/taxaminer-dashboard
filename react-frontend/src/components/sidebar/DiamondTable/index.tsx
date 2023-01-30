@@ -1,10 +1,6 @@
 import "react-bootstrap-table-next/dist/react-bootstrap-table2.min.css";
-// eslint-disable @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import BootstrapTable from "react-bootstrap-table-next";
-// @ts-ignore
 import paginationFactory from 'react-bootstrap-table2-paginator';
-// @ts-ignore
 import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
 
 import { Modal } from 'react-bootstrap';
@@ -129,6 +125,7 @@ class Table extends Component<Props, State> {
             }
             // either allow sorting by value or searching by string
             if (text_cols.includes(col.value)) {
+                // @ts-ignore
                 new_col.filter = textFilter()
             } else {
                 // @ts-ignore
@@ -240,6 +237,7 @@ class Table extends Component<Props, State> {
                 keyField="id" 
                 data={this.state.table_data} 
                 columns={this.state.active_cols}
+                // @ts-ignore
                 pagination={ paginationFactory() }
                 filter={ filterFactory() }
                 />
