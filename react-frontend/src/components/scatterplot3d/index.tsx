@@ -318,13 +318,10 @@ class Scatter3D extends Component<Props, State> {
 					// nada
 				}
 				// increment counters
-				// @ts-ignore
-				if (occurrences[each['plot_label']] !== undefined) {
-					// @ts-ignore
-					occurrences[each['plot_label']] = occurrences[each['plot_label']] + 1
+				if (occurrences[each['plot_label'] as keyof typeof occurrences] !== undefined) {
+					occurrences[each['plot_label'] as keyof typeof occurrences] = occurrences[each['plot_label'] as keyof typeof occurrences] + 1
 				} else {
-					// @ts-ignore
-					occurrences[each['plot_label']] = 1
+					occurrences[each['plot_label'] as keyof typeof occurrences] = 1
 				}
 		    }
 
@@ -423,7 +420,6 @@ class Scatter3D extends Component<Props, State> {
 		// store figure components
 		const new_data = this.transformData(this.props.scatterPoints)
 		const new_layout = {autosize: true, showlegend: true, uirevision: 1,
-			// @ts-ignore
 			// overrides are incomplete here, ignore for now
 			legend: {
 				itemsizing: 'constant', 

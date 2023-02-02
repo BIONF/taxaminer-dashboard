@@ -1,6 +1,4 @@
 # taXaminer Dashboard
-``v1.0``
-
 The program contained in this repository provides a interactive representation of the output of [taXaminer](https://github.com/BIONF/taXaminer).
 
 # Installation
@@ -21,6 +19,8 @@ Next to the dataset selector in the top right corner you'll find an "import" but
 
 1. The name chosen for you new dataset must be unique and cannot be empty (=> there is no subdirectoy of /datasets with this name)
 2. The selected .zip file must contain the taXaminer output directory at top level (=> you should see paths like foo.zip > proteins.faa)
+
+Alternatively you may enter a path to a taXaminer output directory into the designated textbox. The dashboard will validate the existence of all relevant files and will allow you to add the datasets accordingly.
 
 ### Adding data manually
 
@@ -58,7 +58,7 @@ You may use `Ctrl+C` in your original terminal to kill both processes and shutdo
 # Compatibility
 
 ## taXaminer datasets
-The current version incorporates the changes of commit [a424195](https://github.com/BIONF/taXaminer/commit/a424195509a2bc425ed7012c26ce056b565e7254). If any problems arise please open a new issue using the label [(taXaminer compatibility)](https://github.com/BIONF/taXaminer-dashboard/labels/taXanimer%20compatibility).
+The current version incorporates the changes of commit [a424195](https://github.com/BIONF/taXaminer/commit/a424195509a2bc425ed7012c26ce056b565e7254). If any problems arise please open a new issue using the label [compatibitlity](https://github.com/lukekoch/taxaminer-dashboard-react/labels/compatibility).
 
 ## Browser compatibility
 This tool is developed and tested on the following browsers:
@@ -67,4 +67,4 @@ This tool is developed and tested on the following browsers:
  
 
 # LICENSE
-This software is released under [MIT license](https://github.com/BIONF/taXaminer-dashboard/blob/prototyping/LICENSE).
+This software is released under MIT license.

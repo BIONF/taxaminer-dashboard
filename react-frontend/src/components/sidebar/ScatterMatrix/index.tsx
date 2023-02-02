@@ -219,6 +219,7 @@ class ScatterMatrix extends Component<Props, any> {
 						// @ts-ignore
 						// overrides are incomplete here, ignore for now
 						legend: {itemsizing: 'constant', orientation: "h", y: -0.25,
+						// @ts-ignore
                         xaxis:this.set_axis(),
                         yaxis:this.set_axis(),
                         xaxis2:this.set_axis(),

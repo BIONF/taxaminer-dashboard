@@ -39,7 +39,7 @@ class ColumnSelector extends Component<Props, State> {
 	 * @param snapshot previous snapshot
 	 */
 	componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>, snapshot?: any): void {
-		if (prevProps.customFields != this.props.customFields) {
+		if (prevProps.customFields !== this.props.customFields) {
 			if (this.state.synced) {
 				const new_fields = Array.from(this.props.customFields)
 				this.props.passCols(new_fields)
