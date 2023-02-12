@@ -214,6 +214,7 @@ class SelectionView extends React.Component<Props, State> {
                     value={this.props.row.g_name}
                     onChange={() => false}
                   />
+                  <Button onClick={() => {navigator.clipboard.writeText(this.props.row.g_name)}}><span className='bi bi-clipboard2'/></Button>
               </InputGroup>
             </Col>
             <Col md="auto">
@@ -225,6 +226,7 @@ class SelectionView extends React.Component<Props, State> {
                     value={this.props.row.c_name}
                     onChange={() => false}
                   />
+                  <Button onClick={() => {navigator.clipboard.writeText(this.props.row.c_name)}}><span className='bi bi-clipboard2'/></Button>
                 </InputGroup>
               </Col>
           </Row>
@@ -311,7 +313,7 @@ class SelectionView extends React.Component<Props, State> {
                 <Col className="m-2">
                   <Accordion>
                     <Accordion.Item eventKey="0">
-                      <Accordion.Header>Raw JSON</Accordion.Header>
+                      <Accordion.Header>Raw JSON <span className='bi bi-braces'/></Accordion.Header>
                       <Accordion.Body>
                         <pre className='pre-scrollable'>
                         <code>
@@ -331,6 +333,7 @@ class SelectionView extends React.Component<Props, State> {
                     <Accordion.Item eventKey="0">
                       <Accordion.Header>Amino Acid Sequence</Accordion.Header>
                         <Accordion.Body>
+                          
                           <div className='md-2'>
                           <pre className='pre-scrollable m-2'>
                             <code>
@@ -341,6 +344,7 @@ class SelectionView extends React.Component<Props, State> {
                     </Accordion.Body>
                   </Accordion.Item>   
                 </Accordion>
+                <Button className='mt-2' onClick={() => {navigator.clipboard.writeText(this.props.aa_seq)}}><span className='bi bi-clipboard2'/> Copy sequence to clipboard</Button>
               </Col>
             </Row>
             </Tab>

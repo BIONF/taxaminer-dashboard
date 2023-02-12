@@ -198,7 +198,7 @@ class PCAPlot extends Component<Props, State> {
 					showscale: false,
 					sizemode: "absolute",
 					// scale size based on shortest vector
-					sizeref: Math.min(...real_pca_x.concat(real_pca_y).concat(real_pca_z)) * 25,
+					sizeref: 0.1,
 					customdata: [pca_point.label]
 				}
 				traces.push(pca_trace)

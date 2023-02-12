@@ -3,6 +3,9 @@
 # This script expands the default conda env. of a taXaminer installation #
 # and adds necessary packages to run the dashboard locally               #
 ##########################################################################
+CONDA=$(conda info --base)
+echo "Your conda path is $CONDA"
+source $CONDA/etc/profile.d/conda.sh
 
 echo "Activating conda environment"
 conda activate taxaminer

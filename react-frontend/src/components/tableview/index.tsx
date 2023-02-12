@@ -31,6 +31,8 @@ interface State {
     data: any
     col_keys: any[]
     options: any[]
+    child_cols: any[]
+    child_data: any
 }
   
 
@@ -45,8 +47,12 @@ class TableView extends React.Component<Props, State> {
             selected_data: new Set(),
             data: undefined,
             col_keys: [{ label: "ID", value: "g_name"}, { label: "Plot label", value: "plot_label" }, { label: "e-value", value: "bh_evalue" }],
-            options: [{ label: "ID", value: "g_name"}, { label: "Plot label", value: "plot_label" }, { label: "e-value", value: "bh_evalue" }]
+            options: [{ label: "ID", value: "g_name"}, { label: "Plot label", value: "plot_label" }, { label: "e-value", value: "bh_evalue" }],
+            child_cols: [],
+            child_data: []
         }
+        this.csvExport = this.csvExport.bind(this);
+        this.trackTable = this.trackTable.bind(this);
 	}
 
     /**
@@ -102,6 +108,54 @@ class TableView extends React.Component<Props, State> {
         this.setState({options: options})
     }
 
+    /**
+     * Export to .csv file
+     */
+    csvExport() {
+        const fields = this.state.child_cols.map((col: any) => {
+            return col.dataField
+        })
+        const names = this.state.child_cols.map((col: any) => {
+            return col.text
+        })
+        let file_content: string = ""
+
+        // Table header row
+        for (const name of names) {
+            file_content = file_content.concat(name + ",")
+        }
+        file_content = file_content.concat("\n")
+
+        // print rows
+        for (const row of this.state.child_data) {
+            for (const field of fields) {
+                file_content = file_content.concat(row[field] + ",")
+            }
+            file_content = file_content.concat("\n")
+        }
+
+        var a = document.createElement("a");
+        // create file
+        a.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(file_content));
+        // set as download
+        a.setAttribute('download', "selection.csv");
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+      
+        // clean up
+        document.body.removeChild(a);
+    }
+
+    /**
+     * Track tabl edits
+     * @param cols table columns
+     * @param data table data
+     */
+    trackTable(cols: any, data: any) {
+        this.setState({child_cols: cols, child_data: data})
+    }
+
     render() {
         return (
             <Container fluid>
@@ -113,6 +167,7 @@ class TableView extends React.Component<Props, State> {
                         // pass table click events up
                         passClick={this.props.passClick}
                         col_keys = {this.state.col_keys}
+                        trackTable = {this.trackTable}
                         />
                     </Col>
                     <Col>
@@ -127,6 +182,7 @@ class TableView extends React.Component<Props, State> {
                             base_url = {this.props.base_url}
                             main_data = {this.props.data}
                             resetSelection = {this.props.resetSelection}
+                            passCsvExport = {this.csvExport}
                             />
                         </Row>
                         <Row>

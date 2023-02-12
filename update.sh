@@ -1,6 +1,8 @@
 #!/bin/bash
+CONDA=$(conda info --base)
+echo "Your conda path is $CONDA"
+source $CONDA/etc/profile.d/conda.sh
 echo "Removing old conda env"
-source ~/anaconda3/etc/profile.d/conda.sh
 if { conda env list | grep 'taxaminer-dash'; } >/dev/null 2>&1; then
     echo "Removing 'taxaminer-dash'"
     conda env remove -n taxaminer-dash

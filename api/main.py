@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import threading
 import zipfile
 import tarfile
 import flask
@@ -11,6 +12,9 @@ from flask_cors import CORS, cross_origin
 
 # flask server
 app = flask.Flask(__name__)
+
+# lock files
+lock = threading.Lock()
 
 # absence of CORS headers might interfere with the webkit server
 cors = CORS(app)
@@ -225,7 +229,7 @@ def amino_acid_seq():
     seq = file_io.fast_fasta_loader(f"./datasets/{my_dir}/proteins.faa", fasta_id)
 
     # add newlines for formatting, this should be replaced by React code later
-    every = 40
+    every = 60
     seq = '\n'.join(seq[i:i + every] for i in range(0, len(seq), every))
 
     # return as json
@@ -262,17 +266,21 @@ def get_config():
 
     # get user settings
     if request.method == "GET":
+        lock.acquire()
         data = file_io.load_user_config(dataset_id)
+        lock.release()
         # return as json
         return data
     
     # set user settings
     elif request.method == "PUT":
+        lock.acquire()
         settings = file_io.parse_user_config(dataset_id)
         # apply changes
         for key in request.json.keys():
             settings[key] = request.json[key]
         file_io.write_user_config(settings, dataset_id=dataset_id)
+        lock.release()
         return "OK"
 
 

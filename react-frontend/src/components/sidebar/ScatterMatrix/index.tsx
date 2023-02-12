@@ -10,6 +10,8 @@ interface Props {
 	base_url: string
 	dataset_id: number
 	scatterPoints: any[]
+	g_searched: string[]
+	c_searched: string[]
 }
 
 /**
@@ -50,6 +52,8 @@ class ScatterMatrix extends Component<Props, any> {
 			})
 			
 		} else if (prevProps.scatter_data !== this.props.scatter_data){
+			this.setState({my_plot: this.build_plot()})
+		} else if (prevProps.c_searched !== this.props.c_searched || prevProps.show_unassigned !== this.props.show_unassigned) {
 			this.setState({my_plot: this.build_plot()})
 		}
 	}
@@ -140,6 +144,18 @@ class ScatterMatrix extends Component<Props, any> {
 
 			// push 3D coordinates in arrays accordingly
 		    for(const each of chunk) {
+				// filter by contigs
+				if (this.props.c_searched !== undefined) {
+					if (this.props.c_searched.length !== 0 && !this.props.c_searched.includes(each['c_name'])) {
+						continue
+					}
+				}
+
+				// exclude unassigned
+				if (!this.props.show_unassigned && each['plot_label'] === "Unassigned"){
+					continue
+				}
+				
                 // filter by e-value
 				if(parseFloat(each['bh_evalue']) < this.props.e_value) {
 					x.push(each['Dim.1'])
@@ -194,11 +210,9 @@ class ScatterMatrix extends Component<Props, any> {
 	 */
 	handleSelection(points: any) {
 		let selected_ids: string[] = []
-
 		for (const point of points) {
 			selected_ids.push(point.customdata)
 		}
-
 		// pass data up
 		this.props.sendClick(selected_ids)
 	}
@@ -229,7 +243,7 @@ class ScatterMatrix extends Component<Props, any> {
                         yaxis4:this.set_axis()},
 						colorway : colors.palettes[this.props.scatter_data.colors]
 						}}
-                    style = {{width: "100%", height: 700}}
+                    style = {{width: "95%", height: "100%", minHeight: 600}}
 
 					// disable legend trace selection (=> slave to main plot)
 					onLegendClick={() => false}

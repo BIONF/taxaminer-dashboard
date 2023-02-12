@@ -11,6 +11,7 @@ interface Props {
   dataset_id: number
   base_url: string
   main_data: any
+  passCsvExport: Function
 }
 
 /**
@@ -32,9 +33,9 @@ function SelectionModeSelector(props: Props) {
    */
   function download_file(type: string) {
     const my_body = {
-      'genes': Array.from(props.selection).map((each: any) => {return props.main_data[each].fasta_header})
+      'genes': Array.from(props.selection).map((each: any) => {return props.main_data[each]})
     }
-
+    console.log(my_body)
     getFastaDownload(props.base_url, props.dataset_id, my_body)
     // create a temporary link & click to download blob as file
     .then((data) => {
@@ -43,6 +44,27 @@ function SelectionModeSelector(props: Props) {
       a.download = "selection." + type;
       a.click();
     }); 
+  }
+
+  /**
+   * JSON download
+   */
+  function download_json() {
+    const all_json = Array.from(props.selection).map((each: string) => {
+      return props.main_data[each]
+    })
+    var a = document.createElement("a");
+    // pretty print
+    a.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(all_json, null, 2)));
+    // set as download
+    a.setAttribute('download', "selection.json");
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+
+    // clean up
+    document.body.removeChild(a);
+
   }
 
   return (
@@ -71,8 +93,8 @@ function SelectionModeSelector(props: Props) {
             <Card.Title>Export data</Card.Title>
             <ButtonGroup className='md-2' style={{width: "100%"}}>
               <Button variant="primary" className='btn-block' onClick={() => download_file("fasta")}>FASTA</Button>
-              <Button variant="primary" className='btn-block' disabled={true}>CSV</Button>
-              <Button variant="primary" className='btn-block' disabled={true}>JSON</Button>
+              <Button variant="primary" className='btn-block' onClick={() => props.passCsvExport()}>CSV</Button>
+              <Button variant="primary" className='btn-block' onClick={() => download_json()}>JSON</Button>
             </ButtonGroup>
           </Card.Body>
           </Card>
