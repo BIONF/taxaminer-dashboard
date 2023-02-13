@@ -102,7 +102,7 @@ class DataSetSelector extends React.Component<Props, State> {
                                     onChange={(e: any) => this.setState({new_id: parseInt(e.target.value)})}
                                     defaultValue={undefined}>
                                     {this.state.datasets && this.state.datasets.map((e: any, key: any) => {
-                                        return <option key={key} value={e.id}>{e.title}</option>;
+                                        return <option key={key} value={e.id}>{e.title.replace("/", "")}</option>;
                                     })}
                                     </Form.Select>
                                     <Button 

@@ -3,12 +3,28 @@ import Plot from 'react-plotly.js';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Form from 'react-bootstrap/Form';
-import { InputGroup } from 'react-bootstrap';
+import { Button, ButtonGroup, InputGroup } from 'react-bootstrap';
 import Select from 'react-select';
 import { Spinner } from "react-bootstrap";
 
 
 const colors = require("./colors.json")
+const default_layout = {
+	xaxis: {autorange: false, visible: false}, 
+	yaxis: {autorange: false, visible: false}, 
+	zaxis: {autorange: false, visible: false},
+	annotations: [
+		{
+			text: "Start by selecting and loading a dataset →",
+			xref: "paper",
+			yref: "paper",
+			showarrow: false,
+			font: {
+				"size": 28
+			}
+		}
+	]
+}
 
 interface Props {
 	dataset_id: any
@@ -43,6 +59,9 @@ interface State {
 	g_search_len: number
 	last_click: string
 	auto_size_px: number
+	last_click_time: any
+	hover_buttons: string[]
+	hoverTemplate: string
 }
 
 /**
@@ -63,13 +82,16 @@ class Scatter3D extends Component<Props, State> {
 			color_options: colors.options, // color palette options
 			camera_ratios: {xy: 1.0, xz: 1.0, yz: 1.0},
 			legendonly: [],
-			figure: {data: [], layout: {}, frames: [], config: {}, scene: {}},
+			figure: {data: [], layout: default_layout, frames: [], config: {}, scene: {}},
 			is_loading: false,
 			show_hover: true,
 			revision: 1,
 			g_search_len: 0,
 			last_click: "",
-			auto_size_px: 0
+			auto_size_px: 0,
+			last_click_time: Date.now(), 
+			hover_buttons: ["primary", "secondary", "secondary"],
+			hoverTemplate: "%{customdata[0]} <br>%{customdata[1]} <br><extra>Best hit: %{customdata[2]} <br>Best hit e-value: %{customdata[3]} <br>Taxonomic assignment: %{customdata[4]} <br>Contig name: %{customdata[5]} <br> </extra>" 
 		}
         this.sendClick = this.sendClick.bind(this);
 	}
@@ -101,7 +123,7 @@ class Scatter3D extends Component<Props, State> {
 			return true
 		}
 		// external changes
-		if (nextProps.e_value !== this.props.e_value || nextProps.show_unassigned !== this.props.show_unassigned || nextProps.g_searched !== this.props.g_searched || nextProps.c_searched !== this.props.c_searched) {
+		if (nextProps.e_value !== this.props.e_value || nextProps.show_unassigned !== this.props.show_unassigned || nextProps.c_searched !== this.props.c_searched) {
 			return true
 		}
 		// changes of the figure should always raise an update, otherwise user interaction is limited
@@ -113,7 +135,11 @@ class Scatter3D extends Component<Props, State> {
 			return true
 		}
 
-		if (nextProps.g_searched.length !== this.state.g_search_len) {
+		if (nextProps.g_searched.length !== this.state.g_search_len || nextProps.g_searched !== this.props.g_searched) {
+			/** 
+			 * When the global g_searched is updated this plot will re-render!
+			 * This can cause issues with a click event beeing sent multiple times when the dashboard is in highlight mode.
+			*/
 			return true
 		}
 		return false
@@ -149,18 +175,19 @@ class Scatter3D extends Component<Props, State> {
 	 * A dot in the plot was clicked => pass to parent
 	 * @param g_name gene name
 	 */
-	 sendClick(g_name: string){
-		if (g_name !== this.state.last_click && g_name !== "PCA") {
-			this.setState({last_click: g_name})
-			this.props.sendClick([g_name]);
+	sendClick(g_name: string){
+		if (this.state.last_click_time >= (Date.now() - 500)) {
+			return;
 		}
+		this.props.sendClick([g_name]);
+		this.setState({last_click_time: Date.now()})
     }
 
 	/**
 	 * Set colors
 	 * @param key pallete's name 
 	 */
-	 set_color_palette(key: string){
+	set_color_palette(key: string){
 		this.setState({color_palette: key}, () => {
 			this.build_plot()
 		})
@@ -240,6 +267,27 @@ class Scatter3D extends Component<Props, State> {
 			this.build_plot()
 		})
 	}
+	
+	/**
+	 * Switch between different verbosity levels
+	 * @param key 'full', 'reduced' or 'none'
+	 */
+	switchHoverData(key: string) {
+		if (key === "full") {
+			this.setState({ hoverTemplate: "%{customdata[0]} <br>%{customdata[1]} <br><extra>Best hit: %{customdata[2]} <br>Best hit e-value: %{customdata[3]} <br>Taxonomic assignment: %{customdata[4]} <br>Contig name: %{customdata[5]} <br> </extra>", hover_buttons: ["primary", "secondary", "secondary"] }, () => {
+				this.build_plot()
+			})
+		} else if(key === "reduced") {
+			this.setState({hoverTemplate: "%{customdata[4]}<extra></extra>", hover_buttons: ["secondary", "primary", "secondary"]}, () => {
+				this.build_plot()
+			})
+		} else if(key === "none") {
+			this.setState({hoverTemplate: "", hover_buttons: ["secondary", "secondary", "primary"]}, () => {
+				this.build_plot()
+			})
+		}
+		
+	}
 
 	/**
 	 * Track grouped de-/selection using the scatterplot legend
@@ -270,11 +318,8 @@ class Scatter3D extends Component<Props, State> {
 		}
 
 		// Hover enabled
-		let hover_template = " "
-		if (this.state.show_hover) {
-			hover_template = "%{customdata[0]} <br>%{customdata[1]} <br><extra>Best hit: %{customdata[2]} <br>Best hit e-value: %{customdata[3]} <br>Taxonomic assignment: %{customdata[4]} <br>Contig name: %{customdata[5]} <br> </extra>"
-		}
-      
+		const hover_template = this.state.hoverTemplate
+		
 		const traces: any[] = []
        	for (const chunk of data) {
 		    const x : string[] = [];
@@ -355,7 +400,11 @@ class Scatter3D extends Component<Props, State> {
 				visible: visible,
 				customdata: my_customdata,
 				hovertemplate: hover_template,
+				hoverinfo: "all"
             }
+			if (hover_template === "") {
+				trace.hoverinfo = "none"
+			}
             traces.push(trace)
         }
 
@@ -384,27 +433,37 @@ class Scatter3D extends Component<Props, State> {
 			my_customdata.push([each['plot_label'], each['g_name'], each['best_hit'], each['bh_evalue'], each['taxon_assignment'], each['c_name']])
         })
 
-		// Setup the plot trace
-		const trace = {
-			type: 'scatter3d',
-			mode: 'markers',
-			x: x,
-			y: y,
-			z: z,
-			// @ts-ignore
-			name: label,
-			text: label,
-			marker: {
-				size: this.state.marker_size,
-				symbol: "diamond",
-				color: 'rgb(255,102,0)'
-			},
-			visible: true,
-			customdata: my_customdata,
-			hovermode: this.state.show_hover,
-			hovertemplate: hover_template
+		if (searched_rows.length > 0) {
+			// Setup the plot trace
+			const trace = {
+				type: 'scatter3d',
+				mode: 'markers',
+				x: x,
+				y: y,
+				z: z,
+				// @ts-ignore
+				name: label,
+				text: label,
+				marker: {
+					size: this.state.marker_size,
+					symbol: "diamond",
+					color: 'rgb(255,102,0)'
+				},
+				visible: true,
+				customdata: my_customdata,
+				hovermode: this.state.show_hover,
+				hovertemplate: hover_template,
+				hoverinfo: "all"
+			}
+
+			// Hide all hover infos per user settings
+			if (hover_template === "") {
+				trace.hoverinfo = "none"
+			}
+			
+			traces.push(trace)
 		}
-		traces.push(trace)
+		
 		
 		// @ts-ignore
 		// Custom sort function, sort by number of occurences, decreasing
@@ -419,16 +478,22 @@ class Scatter3D extends Component<Props, State> {
 	build_plot() {
 		// store figure components
 		const new_data = this.transformData(this.props.scatterPoints)
-		const new_layout = {autosize: true, showlegend: true, uirevision: 1,
-			// overrides are incomplete here, ignore for now
+		const new_layout = {
+			autosize: true, 
+			showlegend: true, 
+			uirevision: 1,
 			legend: {
 				itemsizing: 'constant', 
 				tracegroupgap: 1,
+				hovermode: 'closest'
 			},
-			colorway : colors.palettes[this.state.color_palette],	
+			colorway : colors.palettes[this.state.color_palette],
+			
 		}
 		const new_config = {scrollZoom: true}
-		this.setState({figure: {data: new_data, layout: new_layout, config: new_config}, g_search_len: this.props.g_searched.length})
+		const my_scene = this.state.figure.scene
+		// @ts-ignore
+		this.setState({figure: {data: new_data, layout: new_layout, config: new_config}, g_search_len: this.props.g_searched.length, scene: my_scene})
 	}
 
 	/**
@@ -441,6 +506,21 @@ class Scatter3D extends Component<Props, State> {
 			this.build_plot()
 		})
 		return true
+	}
+
+	/**
+	 * Export all visible points as click event
+	 */
+	exportVisible(): void {
+		const final_selection = new Set<string>()
+		for (const chunk of this.state.figure.data) {
+			if (!this.state.legendonly.includes(chunk)) {
+				for (const custom_data of chunk['customdata']) {
+					final_selection.add(custom_data[1])
+				}
+			}
+		}
+		this.props.sendClick(Array.from(final_selection))
 	}
 
 	/**
@@ -469,25 +549,25 @@ class Scatter3D extends Component<Props, State> {
 				onLegendClick={(e) => this.legendClick(e)}
 				/>
 				<Row>
-                    <Col xs={3}>
-                        <Form>
+                    <Col xs={5}>
+						<InputGroup>
                             <Form.Check 
+								inline
                                 type="switch"
                                 id="custom-switch"
                                 label="Auto-size dots"
 								checked={this.state.auto_size}
 								onChange={(e: any) => this.toggle_auto_size(e)}
                             />
-							<Form.Check 
-                                type="switch"
-                                id="hoverdata-switch"
-                                label="Verbose Hoverdata"
-								checked={this.state.show_hover}
-								onChange={(e: any) => this.setHoverData(e)}
-                            />
-                        </Form>
+						</InputGroup>
+                        <ButtonGroup>
+								<Button variant={this.state.hover_buttons[0]} onClick={() => this.switchHoverData("full")}><span className='bi bi-eye-fill'/></Button>
+								<Button variant={this.state.hover_buttons[1]} onClick={() => this.switchHoverData("reduced")}><span className='bi bi-eye'/></Button>
+								<Button variant={this.state.hover_buttons[2]} onClick={() => this.switchHoverData("none")}><span className='bi bi-eye-slash'/></Button>
+						</ButtonGroup>
+						<Button className='m-2' onClick={() => this.exportVisible()}>Export all visible genes <span className='bi bi-box-arrow-in-right'/></Button>
                     </Col>
-                    <Col xs={5}>
+                    <Col>
 						<InputGroup>
 							<Form.Label>Dot size</Form.Label>
 							<Form.Range 
@@ -501,7 +581,7 @@ class Scatter3D extends Component<Props, State> {
 							/>
 						</InputGroup>
                     </Col>
-					<Col>
+					<Col xs={3}>
 						<Form.Label>Color Palette</Form.Label>
 						<Select
 						defaultInputValue='Rainbow'

@@ -14,6 +14,7 @@ interface Props {
     keys: Set<string>
     master_data:  { [key: string]: any }
     passClick: any
+    trackTable: Function
 }
 
 interface State {
@@ -86,17 +87,23 @@ class SelectionTable extends Component<Props, State> {
      * Props of parent element changed (=> selected row)
      * @param prev_props previous selection
      */
-    componentDidUpdate(prev_props: any) {
+    componentDidUpdate(prevProps: Props, prevState: State, snapshot: any) {
         const new_rows = []
         const text_cols = ["c_name", "fasta_header", "corrected_lca", "best_hit"]
 
-        if (prev_props !== this.props) {
+
+        // Table data has changed
+        if (this.state.table_data.length !== this.props.keys.size) {
             const my_keys = Array.from(this.props.keys)
             for (const key of my_keys) {
                 new_rows.push(this.props.master_data[key])
             }
-            this.setState({table_data: new_rows})
+            this.setState({table_data: new_rows});
+            this.props.trackTable(this.state.cols, new_rows)
+        }
 
+        // Table cols have changed
+        if (prevProps.col_keys !== this.props.col_keys) {
             // also update table cols
             let new_cols: any[] = []
             this.props.col_keys.forEach((element: any) => {
@@ -122,9 +129,8 @@ class SelectionTable extends Component<Props, State> {
                     new_cols.push(constructed_col)
                 }
             });
-
-            this.setState({cols: new_cols})
-            // console.log(this.state.cols)
+            this.setState({cols: new_cols});
+            this.props.trackTable(new_cols, this.state.table_data)
         }
     }
 
@@ -139,7 +145,7 @@ class SelectionTable extends Component<Props, State> {
         onClick: (e: any, row: any, rowIndex:any) => {
             this.props.passClick([row.g_name])
         }
-      };
+    };
     
 
   render() {

@@ -90,6 +90,9 @@ class UploadDialogue extends Component<Props, State> {
      * @param new_name user input
      */
     checkDatasetName(new_name: string) {
+        if (new_name.includes("/")) {
+            return this.setState({invalid_name: false})
+        }
         this.setState({invalid_name: !this.props.invalid_names.includes(new_name)})
         this.setState({file_name: new_name})
     }

@@ -13,8 +13,7 @@ import Table from './sidebar/DiamondTable';
 import { TableView } from './tableview';
 import ScatterMatrix from './sidebar/ScatterMatrix';
 
-// Stylesheet
-import 'bootstrap/dist/css/bootstrap.min.css';
+
 import { fetchFasta, getUserSelection, setSelection } from '../api';
 
 interface Option {
@@ -43,6 +42,10 @@ interface State {
     customFields: any[]
     scatterPoints: any[]
     fields: any[]
+    highlightedGenes: Set<string>
+    highlightMode: boolean
+    cooldown: boolean
+    brightness: string
 }
   
 
@@ -66,12 +69,19 @@ class TaxaminerDashboard extends React.Component<Props, State> {
             contigs: [],
             customFields: [],
             scatterPoints: [],
-            fields: []
+            fields: [],
+            highlightedGenes: new Set<string>(),
+            highlightMode: false,
+            cooldown: false,
+            brightness: ""
         }
 
         // Bind functions passing data from child objects to local context
         this.handleDataClick = this.handleDataClick.bind(this);
         this.resetSelection = this.resetSelection.bind(this);
+        this.setHighlightedGenes = this.setHighlightedGenes.bind(this);
+        this.setHighlightMode = this.setHighlightMode.bind(this)
+        this.toggleDarkmode = this.toggleDarkmode.bind(this)
 	}
 
     /**
@@ -125,9 +135,8 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                     const contig_options: Option[] = []
                     contigs.forEach((each: any) => contig_options.push({ "label": each, "value": each }))
 
-                    this.setState({contigs: contig_options})
-                    this.setState({g_options: gene_options})
-                    this.setState({filters: {e_value: 1.0, show_unassinged: true, g_searched: []}})
+                    this.setState({contigs: contig_options, g_options: gene_options})
+                    this.setState({filters: {e_value: 1.0, show_unassinged: true, g_searched: []}, highlightedGenes: new Set<string>()})
                     this.setState({is_loading: false})
                 });
             }
@@ -163,12 +172,26 @@ class TaxaminerDashboard extends React.Component<Props, State> {
             this.setState({selected_row: this.state.data[keys[0]]});
         }
 
-        if(this.state.select_mode === 'add') {
-            keys.forEach(key => this.state.selected_data.add(key))
-            // this.state.selected_data.concat(key)
-        } else if(this.state.select_mode === 'remove') {
-            keys.forEach(key => this.state.selected_data.delete(key))
-            //this.state.selected_data.delete(key)
+        // Process if highlight mode is enabled
+        if (this.state.highlightMode) {
+            keys.forEach(key => {
+                if (key === "BinaPp01" ) {
+                }
+                if (this.state.highlightedGenes.has(key)) {
+                    this.state.highlightedGenes.delete(key)
+                } else {
+                   this.state.highlightedGenes.add(key)
+                }
+            })
+            this.setState({filters: {e_value: this.state.filters.e_value, show_unassinged: this.state.filters.show_unassinged, g_searched: Array.from(this.state.highlightedGenes), c_searched: this.state.filters.c_searched}})
+        } else {
+            if(this.state.select_mode === 'add') {
+                keys.forEach(key => this.state.selected_data.add(key))
+                // this.state.selected_data.concat(key)
+            } else if(this.state.select_mode === 'remove') {
+                keys.forEach(key => this.state.selected_data.delete(key))
+                //this.state.selected_data.delete(key)
+            }
         }
 
         // update fasta data
@@ -179,7 +202,6 @@ class TaxaminerDashboard extends React.Component<Props, State> {
 
         // save selection
         setSelection(this.props.base_url, this.state.dataset_id, this.state.selected_data)
-
     }
 
     /**
@@ -203,7 +225,13 @@ class TaxaminerDashboard extends React.Component<Props, State> {
      * @param values values passed from FilterUI components
      */
     setFilters = (values: any) => {
-        this.setState({filters: values})
+        if (this.state.highlightMode) {
+            this.setState({filters: values})
+        } else {
+            values.g_searched = []
+            this.setState({filters: values})
+        }
+        
     }
 
     /**
@@ -223,6 +251,10 @@ class TaxaminerDashboard extends React.Component<Props, State> {
         this.setState({scatter_data: values})
     }
 
+    /**
+     * Change the current dataset
+     * @param ID new dataset ID
+     */
     updateDatasetID = (ID: number) => {
         if (ID !== this.state.dataset_id) {
             this.setState({dataset_id: ID}, () => {
@@ -231,10 +263,46 @@ class TaxaminerDashboard extends React.Component<Props, State> {
         }
     }
 
+    /**
+     * Set the currently highlighted genes
+     * @param genes gene identifiers
+     */
+    setHighlightedGenes(genes: Set<string>) {
+        this.setState({highlightedGenes: genes}, () => {
+            this.setState({filters:  {e_value: this.state.filters.e_value, show_unassinged: this.state.filters.show_unassinged, g_searched: Array.from(genes), c_searched:  this.state.filters.c_searched}})
+        })
+    }
+
+    /**
+     * Chnage the highlight mode
+     * @param mode true if on / false if off
+     */
+    async setHighlightMode(mode: boolean) {
+        this.setState({highlightMode: mode})
+        if (!mode) {
+            this.setState({filters:  {e_value: this.state.filters.e_value, show_unassinged: this.state.filters.show_unassinged, g_searched: [], c_searched:  this.state.filters.c_searched}})
+        } else {
+            this.setState({filters:  {e_value: this.state.filters.e_value, show_unassinged: this.state.filters.show_unassinged, g_searched: Array.from(this.state.highlightedGenes), c_searched:  this.state.filters.c_searched}})
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    /**
+     * Change the stylesheet accordingly
+     */
+    toggleDarkmode(): void {
+        if (this.state.brightness === "bootstrap-dark.css") {
+            this.setState({brightness: ""})
+        } else {
+            this.setState({brightness: "bootstrap-dark.css"})
+        }
+    }
+
     render() {
         return (
             <Container fluid>
-                <Row><TopBar/></Row>
+                <link rel="stylesheet" href={this.state.brightness}></link>
+                <Row><TopBar toggleDarkmode={this.toggleDarkmode}/></Row>
                 <Row>
                 <Col xs={7}>
                     <Scatter3D
@@ -270,7 +338,13 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                             <FilterUI
                             g_options={this.state.g_options}
                             sendValuesUp={this.setFilters}
-                            contig_options={this.state.contigs}/>
+                            sendClick={this.handleDataClick}
+                            contig_options={this.state.contigs}
+                            global_selection={this.state.selected_data}
+                            highlightedGenes={this.state.highlightedGenes}
+                            passNewHighlightedGenes={this.setHighlightedGenes}
+                            highlightMode={this.state.highlightMode}
+                            setHighlightMode={this.setHighlightMode}/>
                         </Tab>
                         <Tab eventKey="diamodn" title="Diamond Output">
                             <Row>
@@ -292,6 +366,8 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                                 show_unassigned={this.state.filters.show_unassinged}
                                 scatter_data = {this.state.scatter_data}
                                 dataset_id={this.state.dataset_id}
+                                g_searched={this.state.filters.g_searched}
+                                c_searched={this.state.filters.c_searched}
                                 />
                         </Tab>
                         <Tab eventKey="PCA" title="PCA">

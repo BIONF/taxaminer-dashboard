@@ -1,7 +1,8 @@
 #!/bin/bash
-
+CONDA=$(conda info --base)
+echo "Your conda path is $CONDA"
+source $CONDA/etc/profile.d/conda.sh
 # setup new conda env
-source ~/anaconda3/etc/profile.d/conda.sh
 conda create -n taxaminer-dash -y
 conda activate taxaminer-dash
 

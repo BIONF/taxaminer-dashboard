@@ -4,7 +4,7 @@ import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 import Select, { createFilter } from 'react-select';
 import { FixedSizeList as List } from "react-window";
-import { Search } from "./Search";
+import { Search } from "./Highlight";
 
 const height = 35;
 
@@ -12,6 +12,12 @@ interface Props {
     sendValuesUp: any
     g_options: string[]
     contig_options: { label: string; value: string; }[]
+    global_selection: Set<string>
+    highlightedGenes: Set<string>
+    passNewHighlightedGenes: Function
+    highlightMode: boolean
+    setHighlightMode: Function
+    sendClick: Function
 }
 
 interface State {
@@ -58,7 +64,6 @@ class FilterUI extends React.Component<Props, State> {
             g_searched: [],
             c_searched: []
         }
-        this.passSearch = this.passSearch.bind(this);
 	}  
 
     /**
@@ -84,18 +89,6 @@ class FilterUI extends React.Component<Props, State> {
     }
 
     /**
-     * Pass searched IDs up
-     * @param e Edit event of the dropdown selector
-     */
-    passSearch(e: string[]) {
-        console.log(e)
-        this.setState({g_searched: e}, () => {
-            const values = {'show_unassinged': this.state.show_unassigned, 'e_value': this.state.e_value, 'g_searched': e, 'c_searched': this.state.c_searched}
-            this.props.sendValuesUp(values)
-        })
-    }
-
-    /**
      * Pass filtered IDs up
      * @param e Edit event of the dropdown selector
      */
@@ -116,8 +109,13 @@ class FilterUI extends React.Component<Props, State> {
         return (
             <>
             <Search
-            sendValuesUp={this.passSearch}
+            sendClick={this.props.sendClick}
+            passHighlightedGenes={this.props.passNewHighlightedGenes}
             g_options={this.props.g_options}
+            global_selection={this.props.global_selection}
+            highlightedGenes={this.props.highlightedGenes}
+            highlightMode={this.props.highlightMode}
+            setHighlightMode={this.props.setHighlightMode}
             />
             <Card className="m-2">
                 <Card.Body>
