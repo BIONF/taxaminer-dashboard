@@ -19,6 +19,7 @@ interface State {
     file_name: string
     show_modal: boolean
     keep_zip: boolean
+    file_size: number
 }
 
 /**
@@ -35,7 +36,8 @@ class UploadDialogue extends Component<Props, State> {
             uploaded: false,
             file_name: "",
             show_modal: false,
-            keep_zip: false
+            keep_zip: false,
+            file_size: 0
         }
         
     }
@@ -47,7 +49,7 @@ class UploadDialogue extends Component<Props, State> {
     uploadFile() {
         const endpoint = `http://${this.props.base_url}:5500/api/v1/data/upload`;
         // ensure that an actual file was selected
-        if (this.state.file.size > 0) {
+        if (this.state.file_size > 0) {
             let data = new FormData()
             data.append('files', this.state.file)
             data.append('name', this.state.file_name)
@@ -66,12 +68,10 @@ class UploadDialogue extends Component<Props, State> {
             })
             .then(response => response.json())
             // update UI
-            .then(data => {
-                this.setState({uploaded: true})
-            })
             .finally(() => {
-                this.setState({file: new File([""], "filename")})
-                this.props.hide_modal_callback()
+                this.props.hide_modal_callback(this.state.file_name)
+                this.setState({file: new File([""], "filename"), uploaded: true})
+               
             })
         }
     }
@@ -81,8 +81,11 @@ class UploadDialogue extends Component<Props, State> {
      * @param e Form.Control input change event
      */
     setFile(e: any) {
-        console.log(e.target.files)
-        this.setState({file: e.target.files[0]})
+        console.log(e)
+        if (typeof e.target.files[0] === "undefined") {
+            this.setState({file: new File([""], "filename"), file_size: 0})
+        }
+        this.setState({file: e.target.files[0], path: "", valid_path: false, file_size: e.target.files[0].size})
     }
 
     /**
@@ -114,12 +117,12 @@ class UploadDialogue extends Component<Props, State> {
             addPath(this.props.base_url, this.state.file_name, this.state.path)
             .finally(() => {
                 this.setState({path: ""})
-                this.props.hide_modal_callback()
+                this.props.hide_modal_callback("")
             })
         }
 
-        if (this.state.file.size === 0) {
-            return this.props.hide_modal_callback()
+        if (this.state.file_size === 0 && !this.state.valid_path) {
+            return this.props.hide_modal_callback("")
         }
         this.uploadFile()
     }
@@ -130,7 +133,7 @@ class UploadDialogue extends Component<Props, State> {
      */
     cancel = () => {
         this.setState({valid_path: false, invalid_name: false, file: new File([""], "filename")})
-        return this.props.hide_modal_callback()
+        return this.props.hide_modal_callback("")
     }
 
     render() {
@@ -164,7 +167,7 @@ class UploadDialogue extends Component<Props, State> {
                             type="file"
                             onChange={(e: any) => this.setFile(e)}
                             accept={`.zip`}
-                            disabled={this.state.valid_path}/>
+                            disabled={this.state.path !== ""}/>
                     </Form.Group>
                     <Form.Group>
                         <Form.Text>Advanced settings</Form.Text>
@@ -183,6 +186,7 @@ class UploadDialogue extends Component<Props, State> {
                             placeholder="Filepath"
                             isInvalid={!this.state.valid_path}
                             onChange={(e: any) => this.checkFilePath(e.target.value)}
+                            disabled={this.state.file_size > 0}
                             />
                         <Form.Control.Feedback type="invalid">
                             Invalid filepath
@@ -193,7 +197,7 @@ class UploadDialogue extends Component<Props, State> {
               </Modal.Body>
               <Modal.Footer>
                 <Button onClick={this.cancel} variant="danger"><span className='bi bi-x-circle m-2'/>Cancel</Button>
-                <Button onClick={this.hideModal} disabled={!(this.state.invalid_name && (this.state.file.size !== 0 || this.state.valid_path))}><span className='bi bi-upload m-2'/>Submit</Button>
+                <Button onClick={this.hideModal} disabled={!(this.state.invalid_name && (this.state.file_size !== 0 || this.state.valid_path))}><span className='bi bi-upload m-2'/>Submit</Button>
               </Modal.Footer>
             </Modal>
         );

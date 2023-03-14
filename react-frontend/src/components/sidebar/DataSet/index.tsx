@@ -5,9 +5,10 @@ import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 import { DataSetMeta } from "./dataset_metadata";
 import UploadDialogue from "./UploadDialogue";
+import { listDatasets } from "../../../api";
 
 interface State {
-    datasets: any
+    datasets: any[]
     new_id: number
     show_import_modal: boolean
     show_remove: boolean
@@ -43,10 +44,20 @@ class DataSetSelector extends React.Component<Props, State> {
     /**
      * Receive signal from child that import form has finished
      */
-    hideModalCallback = () => {
+    hideModalCallback = async (title: string) => {
         if (this.state.show_import_modal) {
             this.setState({ show_import_modal: false })
-            this.updateIndex()
+            // update datasets
+            const datasets = await this.updateIndex()
+            if (title !== "") {
+                for (let i=0; i < datasets.length; i++) {
+                    if (datasets[i].title === "/" + title) {
+                        this.setState({new_id: -1})
+                        this.props.dataset_changed(i)
+                        break
+                    }
+                }
+            }
         }
     }
 
@@ -76,16 +87,12 @@ class DataSetSelector extends React.Component<Props, State> {
     /**
      * Update indexed available datasets
      */
-    updateIndex() {
-        const endpoint = `http://${this.props.base_url}:5500/api/v1/data/datasets`;
-        const default_values = [{id: -1, title: "Select a dataset",  text: "A sample dataset to test on small scale"}]
-		fetch(endpoint)
-			.then(response => response.json())
-			.then(data => {
-				this.setState( {datasets: default_values.concat(data)}, () => {
-                    this.setState({new_id: -1})
-                } );
-		})
+    async updateIndex() {
+        const datasets = await listDatasets(this.props.base_url)
+        this.setState({datasets: datasets}, () => {
+            this.setState({new_id: -1})
+        });
+        return datasets
     }
 
 
@@ -120,7 +127,7 @@ class DataSetSelector extends React.Component<Props, State> {
                                     <Button onClick={this.showModal} variant="success">
                                         <span className='bi bi-upload m-2'/>Add new
                                     </Button>
-                                    <Button onClick={this.showRemoveModal} variant="danger">
+                                    <Button onClick={this.showRemoveModal} variant="danger" disabled={(this.state.new_id === -1)}>
                                         <span className='bi bi-trash m-2'/>Remove
                                     </Button>
                                     <Modal show={this.state.show_remove}>
@@ -128,7 +135,7 @@ class DataSetSelector extends React.Component<Props, State> {
                                             <Modal.Title><span className='bi bi-trash m-2'/> Confirm delete</Modal.Title>
                                         </Modal.Header>
                                         <Modal.Body>
-                                            Remove dataset {this.state.new_id}?
+                                            Remove dataset {this.state.new_id !== -1 &&this.state.datasets[Math.abs(this.state.new_id)].title.replace("/", "")}?
                                         </Modal.Body>
                                         <Modal.Footer>
                                             <Button onClick={this.hideRemoveModal}><span className='bi bi-x-circle m-2'/>Cancel</Button>

@@ -99,9 +99,11 @@ class Search extends React.Component<Props, State> {
      * Add Search to global selection
      */
     async applyToGlobalSelection() {
-        await this.props.setHighlightMode(false)
-        this.props.sendClick(Array.from(this.props.highlightedGenes))
-        await this.props.setHighlightMode(true)
+        if (this.props.highlightedGenes.size > 0) {
+            await this.props.setHighlightMode(false)
+            this.props.sendClick(Array.from(this.props.highlightedGenes))
+            await this.props.setHighlightMode(true)
+        }
     }
 
     /**
@@ -162,7 +164,7 @@ class Search extends React.Component<Props, State> {
                       <Accordion.Body>
                         {
                             Array.from(this.props.highlightedGenes).map((gene:string) => {
-                                return <Badge className="m-1" onClick={() => this.remove(gene)}>{gene} <span className="bi bi-x"></span></Badge>
+                                return <Badge key={gene} className="m-1" onClick={() => this.remove(gene)}>{gene} <span className="bi bi-x"></span></Badge>
                             })
                         }
                       </Accordion.Body>

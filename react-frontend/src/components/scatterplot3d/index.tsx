@@ -5,10 +5,41 @@ import Col from 'react-bootstrap/Col';
 import Form from 'react-bootstrap/Form';
 import { Button, ButtonGroup, InputGroup } from 'react-bootstrap';
 import Select from 'react-select';
-import { Spinner } from "react-bootstrap";
-
+import chroma from 'chroma-js';
 
 const colors = require("./colors.json")
+
+/**
+ * Added menu buttons (auto-rotate)
+ */
+const updatemenus=[
+    {
+        buttons: [
+            {
+                args: [undefined, {
+					frame: {duration: 5},
+					transition: {duration: 0},
+					fromcurrent: true,
+					mode: "immediate"
+				}],
+                label: 'Demo rotation',
+                method: 'animate'
+            },
+        ],
+        direction: 'left',
+        pad: {'r': 10, 't': 10},
+        showactive: true,
+        type: 'buttons',
+        x: 0.1,
+        xanchor: 'left',
+        y: 1.1,
+        yanchor: 'top'
+    }
+]
+
+/**
+ * Set a placeholder layout pointing the user to the dataset card -->
+ */
 const default_layout = {
 	xaxis: {autorange: false, visible: false}, 
 	yaxis: {autorange: false, visible: false}, 
@@ -23,8 +54,11 @@ const default_layout = {
 				"size": 28
 			}
 		}
-	]
+	],
+	updatemenus: updatemenus
 }
+
+const frames: any[] = []
 
 interface Props {
 	dataset_id: any
@@ -38,6 +72,11 @@ interface Props {
 	c_searched: string[]
 	scatterPoints: any[]
 	filters: any
+	selected_row: any
+	main_data: any
+
+	// backward compatibility
+	gene_order_supported: boolean
 }
 
 interface State {
@@ -62,6 +101,11 @@ interface State {
 	last_click_time: any
 	hover_buttons: string[]
 	hoverTemplate: string
+	camera: any
+	starsign_steps: number
+	opacity: number
+	last_legend: any
+	trace_order: string[]
 }
 
 /**
@@ -78,7 +122,7 @@ class Scatter3D extends Component<Props, State> {
 			auto_size: true, // automatically size dots in scatterplot
 			marker_size: 5, // actual dot size in the plot
 			manual_size: 5, // dot size selected by user
-			color_palette: "rainbow", // currently selected color palette
+			color_palette: "spectrum", // currently selected color palette
 			color_options: colors.options, // color palette options
 			camera_ratios: {xy: 1.0, xz: 1.0, yz: 1.0},
 			legendonly: [],
@@ -91,22 +135,49 @@ class Scatter3D extends Component<Props, State> {
 			auto_size_px: 0,
 			last_click_time: Date.now(), 
 			hover_buttons: ["primary", "secondary", "secondary"],
-			hoverTemplate: "%{customdata[0]} <br>%{customdata[1]} <br><extra>Best hit: %{customdata[2]} <br>Best hit e-value: %{customdata[3]} <br>Taxonomic assignment: %{customdata[4]} <br>Contig name: %{customdata[5]} <br> </extra>" 
+			hoverTemplate: "%{customdata[0]} <br>%{customdata[1]} <br><extra>Best hit: %{customdata[2]} <br>Best hit e-value: %{customdata[3]} <br>Taxonomic assignment: %{customdata[4]} <br>Contig name: %{customdata[5]} <br> </extra>",
+			camera: {},
+			starsign_steps: 0,
+			opacity: 1,
+			last_legend: Date.now(),
+			trace_order: []
 		}
         this.sendClick = this.sendClick.bind(this);
+
+		// calculate frames
+		const angle_step = 2 * Math.PI / 200;
+		const center = {x:0, y:0}
+		for (let i = 0, angle = 0; i < 200; i++, angle += angle_step) {
+			let point = {
+				x: center.x + Math.sin(angle) * 1,
+				y: center.y + Math.cos(angle) * 1,
+				z: 1
+			}
+			frames.push({layout: {"scene.camera.eye" : point}})
+		}
 	}
+	
 	
 	/**
 	 * Reload plot if dataset has changed
 	 * @param prev previous state
 	 */
-	componentDidUpdate(prev: any) {
-		if (prev.scatterPoints !== this.props.scatterPoints) {
+	componentDidUpdate(prevProps: Props, prevState: State) {
+		// Dataset has changed
+		if (prevProps.scatterPoints !== this.props.scatterPoints) {
 			const new_size = this.set_auto_size(this.props.scatterPoints);
-			this.setState( { marker_size: new_size, auto_size: true})
+			this.setState( { marker_size: new_size, auto_size: true, starsign_steps: 0})
 			return this.build_plot()
-		} else if (prev.e_value !== this.props.e_value || prev.show_unassigned !== this.props.show_unassigned || this.state.g_search_len !== this.props.g_searched.length || prev.c_searched !== this.props.c_searched){
-			this.build_plot()
+		}
+		// Filters have changed
+		else if (prevProps.e_value !== this.props.e_value || prevProps.show_unassigned !== this.props.show_unassigned || this.state.g_search_len !== this.props.g_searched.length || prevProps.c_searched !== this.props.c_searched)
+		{
+			return this.build_plot(undefined, undefined, true)
+		}
+		// gene order and gene selection
+		else if (prevProps.selected_row !== this.props.selected_row || prevState.starsign_steps !== this.state.starsign_steps || prevState.opacity !== this.state.opacity)
+		{
+			return this.build_plot()
 		}
 	}
 
@@ -117,13 +188,18 @@ class Scatter3D extends Component<Props, State> {
 	 * @param nextContext new context
 	 * @returns boolean
 	 */
-	 shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<any>, nextContext: any): boolean {
+	 shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, nextContext: any): boolean {
 		// New dataset
 		if (nextProps.scatterPoints !== this.props.scatterPoints) {
 			return true
 		}
 		// external changes
 		if (nextProps.e_value !== this.props.e_value || nextProps.show_unassigned !== this.props.show_unassigned || nextProps.c_searched !== this.props.c_searched) {
+			return true
+		}
+		// figure config changes => sync to scatter matrix as well
+		if(nextState.color_palette !== this.state.color_palette ||nextState.opacity !== this.state.opacity || nextState.marker_size !== this.state.marker_size || nextState.legendonly !== this.state.legendonly || nextState.marker_size !== this.state.marker_size) {
+			this.props.passScatterData({ colors: nextState.color_palette, legendonly: nextState.legendonly, opacity: nextState.opacity, marker_size: nextState.marker_size})
 			return true
 		}
 		// changes of the figure should always raise an update, otherwise user interaction is limited
@@ -142,6 +218,13 @@ class Scatter3D extends Component<Props, State> {
 			*/
 			return true
 		}
+		if (nextProps.selected_row !== this.props.selected_row && this.state.starsign_steps > 0) {
+			return true
+		}
+		if (nextState.starsign_steps !== this.state.starsign_steps || nextState.opacity !== this.state.opacity) {
+			return true
+		}
+
 		return false
 	}
 
@@ -166,7 +249,7 @@ class Scatter3D extends Component<Props, State> {
 			// If ratios have changed
 			if (new_ratios.xy !== old_ratios.xy || new_ratios.xz !== old_ratios.xz || new_ratios.yz !== old_ratios.yz) {
 				this.props.sendCameraData(e['scene.camera'])
-				this.setState({camera_ratios: new_ratios})
+				this.setState({camera_ratios: new_ratios, camera: e['scene.camera']})
 			}
 		}
     }
@@ -191,7 +274,6 @@ class Scatter3D extends Component<Props, State> {
 		this.setState({color_palette: key}, () => {
 			this.build_plot()
 		})
-		this.props.passScatterData({ colors: key, legendonly: this.state.legendonly})
 	}
 
 	/**
@@ -234,14 +316,13 @@ class Scatter3D extends Component<Props, State> {
 		} else {
 			this.setState( { auto_size_px: new_size } )
 		}
-
 		return new_size
 	}
 
 	/**
 	 * Toggle automatic sizing of plot markers
 	 */
-	toggle_auto_size(e: any){
+	toggle_auto_size(): void{
 		// toggle
 		const now = !this.state.auto_size
 		// update markers if automatic sizing was enabled
@@ -289,7 +370,7 @@ class Scatter3D extends Component<Props, State> {
 		
 	}
 
-	/**
+	/**	
 	 * Track grouped de-/selection using the scatterplot legend
 	 * This is tied to onRestyle to avoid desync with onClick() events
 	 * @param e restyle event
@@ -299,9 +380,8 @@ class Scatter3D extends Component<Props, State> {
 		const legendonly = plot.data.filter((trace: any) => trace.visible === "legendonly")
 		if (legendonly !== this.state.legendonly) {
 			this.setState({legendonly: legendonly})
-			this.props.passScatterData({ colors: this.state.color_palette, legendonly: legendonly})
 		}
-		this.setState({ ui_revision: "false"})
+		this.build_plot()
 	}
 
 	/**
@@ -309,7 +389,7 @@ class Scatter3D extends Component<Props, State> {
 	 * @param data API data
 	 * @returns list of traces
 	 */
-	transformData (data: any[]) {
+	transformData (data: any[], isolated?: number, doubleclicked?: number, noSort?: boolean) {
 		const searched = this.props.g_searched
 		const occurrences = {Unassigned: 0}
 		// Avoid NoneType Exceptions
@@ -317,17 +397,25 @@ class Scatter3D extends Component<Props, State> {
 			return []
 		}
 
+		if (typeof isolated === "undefined") {
+			isolated = -1
+		}
 		// Hover enabled
 		const hover_template = this.state.hoverTemplate
+		const my_scale = chroma.scale('Spectral');
 		
 		const traces: any[] = []
-       	for (const chunk of data) {
-		    const x : string[] = [];
-		    const y : string[] = [];
-            const z : string[] = [];
-            let label = "";
+       	for (let i = 0; i < data.length; i++) {
+			const chunk = data[i]
+		    let x : any[] = [];
+		    let y : any[] = [];
+            let z : any[] = [];
+
+			// Label + Occurences
+            let label = chunk[0]['plot_label']
+			occurrences[label as keyof typeof occurrences] = 0
+
             const my_customdata : any = [];
-			let visible = true
 
 			/**
 			 * Apply filters
@@ -346,27 +434,18 @@ class Scatter3D extends Component<Props, State> {
 					x.push(each['Dim.1'])
 					y.push(each['Dim.2'])
 					z.push(each['Dim.3'])
-					label = each['plot_label']
 					my_customdata.push([each['plot_label'], each['g_name'], each['best_hit'], each['bh_evalue'], each['taxon_assignment'], each['c_name']])
+					occurrences[label as keyof typeof occurrences] = occurrences[label as keyof typeof occurrences] + 1
 				} 
 				// Include unassigned data points (which usually don't have an e-value)
-				else if(each['plot_label'] === 'Unassigned' && c_match) {
-					if (!this.props.show_unassigned) {
-						visible = false
-					}
+				else if(each['plot_label'] === 'Unassigned' && c_match && this.props.show_unassigned) {
 					x.push(each['Dim.1'])
 					y.push(each['Dim.2'])
 					z.push(each['Dim.3'])
-					label = each['plot_label']
 					my_customdata.push([each['plot_label'], each['g_name'], each['best_hit'], each['bh_evalue'], each['taxon_assignment'], each['c_name']])
+					occurrences[label as keyof typeof occurrences] = occurrences[label as keyof typeof occurrences] + 1
 				} else {
 					// nada
-				}
-				// increment counters
-				if (occurrences[each['plot_label'] as keyof typeof occurrences] !== undefined) {
-					occurrences[each['plot_label'] as keyof typeof occurrences] = occurrences[each['plot_label'] as keyof typeof occurrences] + 1
-				} else {
-					occurrences[each['plot_label'] as keyof typeof occurrences] = 1
 				}
 		    }
 
@@ -378,26 +457,35 @@ class Scatter3D extends Component<Props, State> {
 					opacity: 0.5,
 					color: 'rgb(192,192,192)'
 				}
+			} else if (this.state.starsign_steps > 0) {
+				marker = {
+					size: this.state.marker_size,
+					opacity: this.state.opacity
+				}
 			} else {
 				marker = {
-					size: this.state.marker_size
+					size: this.state.marker_size,
+					opacity: this.state.opacity
 				}
 			}
 
-			// @ts-ignore
+			// Fill with undefined data, if a trace is empty, otherwise Plotly will remove it from the legend
+			if (x.length === 0) {
+				x = [undefined]
+				y = [undefined]
+				z = [undefined]
+			}
+
             const trace = {
                 type: 'scatter3d',
                 mode: 'markers',
-				// legendgroup: "Genes",
                 x: x,
                 y: y,
                 z: z,
-				// @ts-ignore
-                name: label + ` (${occurrences[label]})`,
-				// @ts-ignore
+                name: label,
                 text: label,
 				marker: marker,
-				visible: visible,
+				visible: true,
 				customdata: my_customdata,
 				hovertemplate: hover_template,
 				hoverinfo: "all"
@@ -407,6 +495,37 @@ class Scatter3D extends Component<Props, State> {
 			}
             traces.push(trace)
         }
+		
+		
+		// This fixes edge cases where c_searched my become undefined
+		let my_contigs = this.props.c_searched
+		if (this.props.c_searched === undefined) {
+			my_contigs = []
+		}
+
+		/**
+		 * The following code is used to sort the traces in the scatterplot. Plotly tracks the state of the legend selection (i.e. selected traces) by the trace index.
+		 * => if the order of the traces changes, the trace selection changes as well as it is not tied to the ID of the trace
+		 * => The traces MUST ONLY be re-sorted if no filter are currently applied
+		 */
+		if (!noSort && this.props.e_value === 1 && my_contigs.length === 0) {
+
+			// Case I => No filter => sort by occurences
+			traces.sort(function(a, b){return occurrences[b.text as keyof typeof occurrences] - occurrences[a.text as keyof typeof occurrences]})
+			const new_order = []
+			for (const trace of traces) {
+				new_order.push(trace.name)
+				trace.name = trace.name + ` (${occurrences[trace.name as keyof typeof occurrences]})`
+			}
+			// save current order to state
+			this.setState({trace_order: new_order})
+		} else {
+			// If filter are currently applied => keep consistent with last sorting
+			traces.sort((a, b) =>{return this.state.trace_order.lastIndexOf(a.text) - this.state.trace_order.lastIndexOf(b.text)})
+			for (const trace of traces) {
+				trace.name = trace.name + ` (${occurrences[trace.name as keyof typeof occurrences]})`
+			}
+		}
 
 		// setup traces for selected / searched dots
 		let searched_rows: any[] = []
@@ -418,10 +537,11 @@ class Scatter3D extends Component<Props, State> {
 			}
 		}
 
+
+		// New trace setup
 		const x : string[] = [];
 		const y : string[] = [];
         const z : string[] = [];
-        let label = "";
         const my_customdata : any = [];
 
 		searched_rows.forEach(each => {
@@ -429,7 +549,6 @@ class Scatter3D extends Component<Props, State> {
 			x.push(each['Dim.1'])
 			y.push(each['Dim.2'])
 			z.push(each['Dim.3'])
-			label = "Search results"
 			my_customdata.push([each['plot_label'], each['g_name'], each['best_hit'], each['bh_evalue'], each['taxon_assignment'], each['c_name']])
         })
 
@@ -441,13 +560,12 @@ class Scatter3D extends Component<Props, State> {
 				x: x,
 				y: y,
 				z: z,
-				// @ts-ignore
-				name: label,
-				text: label,
+				name: "Search results",
+				text: "Search results",
 				marker: {
 					size: this.state.marker_size,
 					symbol: "diamond",
-					color: 'rgb(255,102,0)'
+					color: 'rgb(0,0,255)'
 				},
 				visible: true,
 				customdata: my_customdata,
@@ -464,10 +582,90 @@ class Scatter3D extends Component<Props, State> {
 			traces.push(trace)
 		}
 		
-		
-		// @ts-ignore
-		// Custom sort function, sort by number of occurences, decreasing
-		traces.sort(function(a, b){return occurrences[b.text] - occurrences[a.text]})
+		// Apply continous color palette
+		if (this.state.color_palette === "spectrum") {
+			for (let i =0; i < traces.length; i++) {
+				if (traces[i].name === "Search results") {
+					continue
+				}
+				// @ts-ignore
+				traces[i]['marker']['color'] = my_scale(i/traces.length).saturate(3).hex()
+				if (doubleclicked) {
+					if (i !== doubleclicked) {
+						traces[i]['visible'] = "legendonly"
+					}
+				}
+			}
+		}
+
+		/**
+		 * The following code constructs line traces between the neighbouring genes of the currently selected row
+		 */
+		if (this.state.starsign_steps > 0) {
+			const gene_order_x : number[] = [];
+			const gene_order_y : number[] = [];
+			const gene_order_z : number[] = [];
+
+			const ordered_genes = []
+			ordered_genes.push(this.props.selected_row)
+
+			// Create an ordered array reflecting gene order
+			for (let i=0; i < this.state.starsign_steps; i++){
+				if (ordered_genes[0].upstream_gene !== "") {
+					ordered_genes.unshift(this.props.main_data[ordered_genes[0].upstream_gene])
+				}
+				if (ordered_genes[ordered_genes.length - 1].downstream_gene !== "") {
+					ordered_genes.push(this.props.main_data[ordered_genes[ordered_genes.length - 1].downstream_gene])
+				}
+				
+			}
+
+			const neighbouring_custom_data = []
+			for (const gene of ordered_genes) {
+				if (gene === undefined) {
+					continue
+				}
+				gene_order_x.push(gene['Dim.1'])
+				gene_order_y.push(gene['Dim.2'])
+				gene_order_z.push(gene['Dim.3'])
+				neighbouring_custom_data.push([gene['plot_label'], gene['g_name'], gene['best_hit'], gene['bh_evalue'], gene['taxon_assignment'], gene['c_name']])
+			}
+
+			// Create lines connecting neighbouring genes
+			const order_trace: any = {
+				type: 'scatter3d',
+				mode: 'lines',
+				name: "Neighbouring genes",
+				width: 10,
+				x: gene_order_x,
+				y: gene_order_y,
+				z: gene_order_z,
+				line: {
+					color: 'black',
+					width: 6
+				},
+				hoverinfo: 'skip'
+			}
+
+			// Create marker for neighbouring genes
+			const order_stars_trace: any = {
+				type: 'scatter3d',
+				mode: 'markers',
+				name: "Neighbouring genes",
+				// width: 5,
+				x: gene_order_x,
+				y: gene_order_y,
+				z: gene_order_z,
+				marker: {
+					size: this.state.marker_size,
+					symbol: "diamond",
+					color: 'black'
+				},
+				customdata: neighbouring_custom_data
+			}
+			traces.push(order_trace)
+			traces.push(order_stars_trace)
+		}
 		return traces
 	}
 
@@ -475,9 +673,12 @@ class Scatter3D extends Component<Props, State> {
 	 * Build the 3D scatterplot
 	 * @returns Plotly Plot as React component
 	 */
-	build_plot() {
+	build_plot(isolated?: number, doubeclicked?: number, initialBuild?: boolean) {
 		// store figure components
-		const new_data = this.transformData(this.props.scatterPoints)
+		const new_data = this.transformData(this.props.scatterPoints, isolated, doubeclicked, initialBuild)
+		for (const trace of new_data) {
+			trace['visible'] = true
+		}
 		const new_layout = {
 			autosize: true, 
 			showlegend: true, 
@@ -487,24 +688,13 @@ class Scatter3D extends Component<Props, State> {
 				tracegroupgap: 1,
 				hovermode: 'closest'
 			},
-			colorway : colors.palettes[this.state.color_palette],
-			
+			scene: {camera: this.state.camera},
+			updatemenus: updatemenus
 		}
-		const new_config = {scrollZoom: true}
+		const new_config = {scrollZoom: true, doubleClickDelay: 2000}
 		const my_scene = this.state.figure.scene
 		// @ts-ignore
-		this.setState({figure: {data: new_data, layout: new_layout, config: new_config}, g_search_len: this.props.g_searched.length, scene: my_scene})
-	}
-
-	/**
-	 * Save the plot before rendering component 
-	 * => impedes the plot from reseting on legend clicks
-	 */
-	legendClick(e: any) {
-		var plot: any = document.getElementById('scatter3d')
-		this.setState({figure: plot}, () => {
-			this.build_plot()
-		})
+		this.setState({figure: {data: new_data, layout: new_layout, config: new_config, frames: frames}, g_search_len: this.props.g_searched.length, scene: my_scene})
 		return true
 	}
 
@@ -514,10 +704,12 @@ class Scatter3D extends Component<Props, State> {
 	exportVisible(): void {
 		const final_selection = new Set<string>()
 		for (const chunk of this.state.figure.data) {
-			if (!this.state.legendonly.includes(chunk)) {
-				for (const custom_data of chunk['customdata']) {
-					final_selection.add(custom_data[1])
-				}
+			console.log(chunk)
+			if(chunk['mode'] === "lines" || chunk['name'] === "Neighbouring genes" || chunk['visible'] === "legendonly") {
+				continue
+			}
+			for (const custom_data of chunk['customdata']) {
+				final_selection.add(custom_data[1])
 			}
 		}
 		this.props.sendClick(Array.from(final_selection))
@@ -530,62 +722,84 @@ class Scatter3D extends Component<Props, State> {
 	render() {
 		return (
 			<div>
-				<div style={{ overflow: "auto" }}>
-                	{this.state.is_loading  && <div className="text-center"><br></br><Spinner animation="border"></Spinner></div>}
-				</div>
                 <br></br>
 				<Plot
 				divId='scatter3d'
 				data={this.state.figure.data}
 				layout={this.state.figure.layout}
+				frames= {this.state.figure.frames}
 				config={this.state.figure.layout}
 				onClick={(e: any) => this.sendClick(e.points[0].customdata[1])}
 				onRelayout={(e: any) => this.passCameraData(e)}
 				useResizeHandler = {true}
-    			style = {{width: "100%", minHeight: 600}}
+    			style = {{width: "100%", minHeight: 800}}
 				onRestyle={(e: any) => this.updateLegendSelection(e)}
 				revision={this.state.revision}
 				onUpdate={(figure) => this.setState({figure: figure})}
-				onLegendClick={(e) => this.legendClick(e)}
 				/>
 				<Row>
-                    <Col xs={5}>
-						<InputGroup>
-                            <Form.Check 
-								inline
-                                type="switch"
-                                id="custom-switch"
-                                label="Auto-size dots"
-								checked={this.state.auto_size}
-								onChange={(e: any) => this.toggle_auto_size(e)}
-                            />
-						</InputGroup>
-                        <ButtonGroup>
+                    <Col xs={2}>
+						<Form.Label className='md-2'>Hoverdata</Form.Label>
+                        <InputGroup>
+						<ButtonGroup>
 								<Button variant={this.state.hover_buttons[0]} onClick={() => this.switchHoverData("full")}><span className='bi bi-eye-fill'/></Button>
 								<Button variant={this.state.hover_buttons[1]} onClick={() => this.switchHoverData("reduced")}><span className='bi bi-eye'/></Button>
 								<Button variant={this.state.hover_buttons[2]} onClick={() => this.switchHoverData("none")}><span className='bi bi-eye-slash'/></Button>
 						</ButtonGroup>
-						<Button className='m-2' onClick={() => this.exportVisible()}>Export all visible genes <span className='bi bi-box-arrow-in-right'/></Button>
-                    </Col>
-                    <Col>
-						<InputGroup>
-							<Form.Label>Dot size</Form.Label>
-							<Form.Range 
-								min={1} 
-								max={10}
-								step={1}
-								defaultValue={5}
-								
-								onChange={(e :any) => this.set_manual_size(e.target.value)}
-								className="m-2"
-							/>
 						</InputGroup>
-                    </Col>
+					</Col>
+					<Col xs={1}>
+						<Form.Label className='md-1'>Export</Form.Label>
+						<InputGroup>
+							<Button onClick={() => this.exportVisible()}>View<span className='bi bi-box-arrow-in-right ml-1'/></Button>
+						</InputGroup>
+					</Col>
+					<Col>
+						<Form.Label className='md-2'>Gene order</Form.Label>
+						<InputGroup className="md-2">
+							<Button disabled={!this.props.gene_order_supported} onClick={() => {if(this.state.starsign_steps > 0){this.setState({starsign_steps: this.state.starsign_steps - 1})}}}><span className="bi bi-dash-circle"></span></Button>
+							<Form.Control
+							placeholder="None"
+							contentEditable={false}
+							onChange={() => false}
+							value={`${this.state.starsign_steps} steps`}
+							disabled={!this.props.gene_order_supported}
+							/>
+							<Button disabled={!this.props.gene_order_supported} onClick={() => this.setState({starsign_steps: this.state.starsign_steps + 1})}><span className="bi bi-plus-circle"></span></Button>
+                		</InputGroup>
+					</Col>
 					<Col xs={3}>
+						<Form.Label className='md-2'>Dot size</Form.Label>
+						<InputGroup className="md-2">
+							<Button disabled={this.state.auto_size} onClick={() => {if(this.state.manual_size >= 2){this.set_manual_size(this.state.manual_size - 1)}}}><span className="bi bi-dash-circle"></span></Button>
+							<Form.Control
+							placeholder="None"
+							contentEditable={false}
+							onChange={() => false}
+							value={`${this.state.manual_size} px`}
+							/>
+							<Button disabled={this.state.auto_size} onClick={() => this.set_manual_size(this.state.manual_size + 1)}><span className="bi bi-plus-circle"></span></Button>
+							<Button onClick={() => this.toggle_auto_size()} variant={(this.state.auto_size && "success") || "secondary"}><span className={(this.state.auto_size && "bi bi-lock-fill") || "bi bi-unlock-fill"}></span>Auto</Button>
+                		</InputGroup>
+					</Col>
+					<Col>
+						<Form.Label className='md-2'>Opacity</Form.Label>
+						<InputGroup className="md-2">
+							<Button onClick={() => {if(this.state.opacity >= 0.1){this.setState({opacity: this.state.opacity - 0.05})}}}><span className="bi bi-dash-circle"></span></Button>
+							<Form.Control
+							placeholder="None"
+							contentEditable={false}
+							onChange={() => false}
+							value={`${Math.round(this.state.opacity * 100)}%`}
+							/>
+							<Button onClick={() => {if(this.state.opacity <= 0.95){this.setState({opacity: this.state.opacity + 0.05})}}}><span className="bi bi-plus-circle"></span></Button>
+                		</InputGroup>
+					</Col>
+					<Col>
 						<Form.Label>Color Palette</Form.Label>
 						<Select
-						defaultInputValue='Rainbow'
-						defaultValue={"rainbow"}
+						defaultInputValue='Spectrum'
+						defaultValue={"spectrum"}
 						options={this.state.color_options}
 						onChange={(e: any) => this.set_color_palette(e.value)}
 						/>

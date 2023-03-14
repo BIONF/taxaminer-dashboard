@@ -20,6 +20,7 @@ interface Props {
   passCustomFields: Function
   is_loading: boolean
   dataset_id: number
+  gene_pos_supported: boolean
 }
 
 interface State {
@@ -28,7 +29,11 @@ interface State {
     options: any[]
     grouped_fields: any
     has_loaded: boolean
+    gene_pos: string
+    coord_type: string
 }
+
+
 
 /**
  * Customizable representation of table rows for a selected dot
@@ -36,8 +41,9 @@ interface State {
 class SelectionView extends React.Component<Props, State> {
   constructor(props: any){
 		super(props);
-    this.state = { custom_fields: [], show_field_modal: false, options: [], grouped_fields: {}, has_loaded: false}
+    this.state = { custom_fields: [], show_field_modal: false, options: [], grouped_fields: {}, has_loaded: false, gene_pos: "Select a gene to get started", coord_type: "J"}
 	}
+
 
   /**
    * Fetch user configs on componenMount
@@ -68,8 +74,11 @@ class SelectionView extends React.Component<Props, State> {
    * @param snapshot Snapshot
    */
    componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<any>, snapshot?: any): void {
+
     if (prevProps.row !== this.props.row) {
       this.convertFieldsOptions()
+      // convert coords
+      this.formatCoord()
     }
 
     if (prevProps.dataset_id !== this.props.dataset_id) {
@@ -87,6 +96,28 @@ class SelectionView extends React.Component<Props, State> {
 			  }
       )
     }
+  }
+
+  /**
+   * Update the genomic coordinates
+   */
+  formatCoord(): void {
+    if (this.props.gene_pos_supported) {
+      const coord_formats = {
+        "J": `${this.props.row.c_name}:${this.props.row.start}...${this.props.row.end}`,
+        "U": `${this.props.row.c_name}:${this.props.row.start}-${this.props.row.end}`
+      }
+      this.setState({gene_pos: coord_formats[this.state.coord_type as keyof typeof coord_formats]})
+    }
+  }
+
+  /**
+   * Switch to the next supported coordinate format
+   */
+  nextCoordFormat(): void {
+    const coord_formats = ["J", "U"]
+    const now = coord_formats.lastIndexOf(this.state.coord_type)
+    this.setState({coord_type: coord_formats[(now + 1) % coord_formats.length]}, () => this.formatCoord())
   }
 
 
@@ -255,7 +286,7 @@ class SelectionView extends React.Component<Props, State> {
               </Col>
           </Row>
           <Row>
-            <Col md="auto">
+            <Col xs={7}>
               <InputGroup className="m-2">
                   <InputGroup.Text id="ncbi-id">Best hit</InputGroup.Text>
                     <Form.Control
@@ -278,6 +309,21 @@ class SelectionView extends React.Component<Props, State> {
                     target="_blank">
                       <span className="bi bi-box-arrow-up-right"></span>
                     </Button>
+                </InputGroup>
+              </Col>
+              <Col xs={5}>
+                <InputGroup className="m-2">
+                  <InputGroup.Text id="contig">Gene Pos</InputGroup.Text>
+                  <Form.Control
+                    placeholder="Selected a Gene to get started"
+                    contentEditable={false}
+                    value={this.state.gene_pos}
+                    onChange={() => false}
+                    disabled={!this.props.gene_pos_supported}
+                  />
+                  <Button disabled={!this.props.gene_pos_supported} variant='secondary' onClick={() => {this.nextCoordFormat()}}>{this.state.coord_type}</Button>
+                  <Button disabled={!this.props.gene_pos_supported} onClick={() => {navigator.clipboard.writeText(this.state.gene_pos)}}><span className='bi bi-clipboard2'/></Button>
+                  
                 </InputGroup>
               </Col>
             </Row>
@@ -303,7 +349,7 @@ class SelectionView extends React.Component<Props, State> {
             <Row>
               { // Load custom fields from prop and render additional UI elements
               this.state.custom_fields.map((item: any) => (
-                <CustomOutput col={item.value} row={this.props.row} name={item.label} tooltip={item.tooltip}/>
+                <CustomOutput key={item.label} col={item.value} row={this.props.row} name={item.label} tooltip={item.tooltip}/>
               ))}
             </Row>
               

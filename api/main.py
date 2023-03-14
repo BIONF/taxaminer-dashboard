@@ -76,7 +76,7 @@ def upload_file():
         os.renames(f"./temp/{file_name}/proteins.faa", f"./datasets/{file_name}/proteins.faa")
         os.renames(f"./temp/{file_name}/taxonomic_assignment/gene_table_taxon_assignment.csv", f"./datasets/{file_name}/gene_table_taxon_assignment.csv")
         os.renames(f"./temp/{file_name}/gene_info/summary.txt", f"./datasets/{file_name}/summary.txt")
-        os.renames(f"./temp/{file_name}/PCA_and_clustering/PCA_results/pca_loadings.csv", f"./datasets/{file_name}/pca_loadings.csv")
+        os.renames(f"./temp/{file_name}/PCA/contribution_of_variables.csv", f"./datasets/{file_name}/contribution_of_variables.csv")
 
         if keep_zip:
             os.renames(f"./temp/{file_name}.zip", f"./datasets/{file_name}/{file_name}.zip")
@@ -95,7 +95,7 @@ def upload_file():
         file.write(DEFAULT_CONFIG)
 
     # return as json
-    return "Finished"
+    return jsonify("OK")
 
 
 @app.route('/data/path', methods=['PUT'])

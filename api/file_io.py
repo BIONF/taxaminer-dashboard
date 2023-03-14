@@ -8,7 +8,7 @@ FILES = [("taxonomic_hits.txt", "/taxonomic_hits.txt"),
         ("proteins.faa", "/proteins.faa"), 
         ("gene_table_taxon_assignment.csv","/taxonomic_assignment/gene_table_taxon_assignment.csv"), 
         ("summary.txt", "/gene_info/summary.txt"),
-        ("pca_loadings.csv", "/PCA_and_clustering/PCA_results/pca_loadings.csv")]
+        ("pca_loadings.csv", "/PCA/contribution_of_variables.csv")]
 
 def get_baseurl(my_id):
     my_id = int(my_id)
@@ -28,7 +28,7 @@ def validate_path(my_path):
         "/proteins.faa", 
         "/taxonomic_assignment/gene_table_taxon_assignment.csv", 
         "/gene_info/summary.txt",
-        "/PCA_and_clustering/PCA_results/pca_loadings.csv"]
+        "/PCA/contribution_of_variables.csv"]
 
     for file in files:
         if not os.path.isfile(my_path + file) and not os.path.islink(my_path + file):
@@ -82,7 +82,7 @@ def fast_fasta_loader(path, fasta_id):
             lines[i] = line.rstrip()
 
     for i, line in enumerate(lines):
-        if line.startswith(">" + fasta_id):
+        if line.startswith(">" + fasta_id) or line.startswith(">" + fasta_id.replace("gene-", "")) or line.startswith(">" + fasta_id.replace("rna-", "")):
             start_index = i
             break
 

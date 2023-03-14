@@ -32,6 +32,22 @@ export function addPath(base_url: string, name: string, path: string) {
 
 }
 
+
+export async function listDatasets(base_url: string) {
+    const endpoint = `http://${base_url}:5500/api/v1/data/datasets`;
+    const default_values = [{id: -1, title: "Select a dataset",  text: "A sample dataset to test on small scale"}]
+	await fetch(endpoint)
+		.then(response => response.json())
+		.then(data => {
+            // append
+            default_values.push(...data)
+        })
+        .catch((reason: any) => {
+            console.error(reason)
+        })
+    return default_values
+}
+
 /**
  * Fetch PCA data
  * @param base_url API base URL 

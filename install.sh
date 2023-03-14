@@ -14,6 +14,7 @@ pip install flask flask-cors
 conda install nodejs -y
 cd react-frontend
 npm install --legacy-peer-deps
+npm run build
 
 # setup directories
 cd ..

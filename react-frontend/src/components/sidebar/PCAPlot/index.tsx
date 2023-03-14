@@ -3,6 +3,7 @@ import Plot from 'react-plotly.js';
 import { Card, Form, Row } from 'react-bootstrap';
 import { Col } from 'react-bootstrap';
 import { FetchPCA } from '../../../api';
+import chroma from "chroma-js";
 
 const variables = require("../../../static/tableRows.json")
 
@@ -59,6 +60,7 @@ class PCAPlot extends Component<Props, State> {
 					this.setState({figure: this.build_plot()})
 			})
 		}
+		
 	}
 
 	componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<any>, snapshot?: any): void {
@@ -119,8 +121,11 @@ class PCAPlot extends Component<Props, State> {
 		// holds all plot traces
 		const traces: any[] = []
 
+		const my_scale = chroma.scale('Spectral');
+
 		if (data.length !== 0) {
-			for (const pca_point of data) {
+			for (let i = 0; i < data.length; i ++) {
+				const pca_point = data[i]
 				const pca_x : any[] = [];
 				const pca_y : any[] = [];
 				const pca_z : any[] = [];
@@ -162,7 +167,7 @@ class PCAPlot extends Component<Props, State> {
 					name: pca_point.label,
 					text: pca_labels,
 					marker: {
-						color: "Black"
+						color: my_scale(i/data.length).saturate(6).hex()
 					},
 					customdata: [pca_point.label]
 				}
@@ -194,7 +199,7 @@ class PCAPlot extends Component<Props, State> {
 					hoverinfo: "skip",
 					name: "Cones",
 					// all black color gradient
-					colorscale: [[0, "black"], [1, "black"]],
+					colorscale: [[0, my_scale(i/data.length).saturate(6).hex()], [1, my_scale(i/data.length).saturate(6).hex()]],
 					showscale: false,
 					sizemode: "absolute",
 					// scale size based on shortest vector

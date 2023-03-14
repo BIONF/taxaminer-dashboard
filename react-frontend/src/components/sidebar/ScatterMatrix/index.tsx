@@ -1,3 +1,4 @@
+import chroma from 'chroma-js';
 import { Component } from 'react';
 import Plot from 'react-plotly.js';
 const colors = require("./colors.json");
@@ -123,6 +124,7 @@ class ScatterMatrix extends Component<Props, any> {
 	 */
 	transformData (data: any[], legendonly: any[]) {
 		let legendonly_names: string[] = []
+		const occurrences = {Unassigned: 0}
 
 		legendonly.forEach((dot: any) => {
 			legendonly_names.push(dot.text)
@@ -174,6 +176,12 @@ class ScatterMatrix extends Component<Props, any> {
 				} else {
 					//console.log(each['g_name'])
 				}
+				// increment counters
+				if (occurrences[each['plot_label'] as keyof typeof occurrences] !== undefined) {
+					occurrences[each['plot_label'] as keyof typeof occurrences] = occurrences[each['plot_label'] as keyof typeof occurrences] + 1
+				} else {
+					occurrences[each['plot_label'] as keyof typeof occurrences] = 1
+				}
 		    }
 
 			// Setup the plot trace
@@ -195,12 +203,28 @@ class ScatterMatrix extends Component<Props, any> {
                 name: label,
                 text: label,
 				visible: visible,
+				marker: {
+					size: this.props.scatter_data.marker_size,
+					opacity: this.props.scatter_data.opacity
+				},
 
 				// track the unique gene name
 				customdata: gene_names
             }
 			return trace
         })
+		traces.sort(function(a, b){return occurrences[b.text as keyof typeof occurrences] - occurrences[a.text as keyof typeof occurrences]})
+
+		const my_scale = chroma.scale('Spectral');
+		if (this.props.scatter_data.colors === "spectrum") {
+			for (let i =0; i < traces.length; i++) {
+				if (traces[i].name === "Search results") {
+					continue
+				}
+				// @ts-ignore
+				traces[i]['marker']['color'] = my_scale(i/traces.length).saturate(3).hex()
+			}
+		}
 		return traces
 	}
 
