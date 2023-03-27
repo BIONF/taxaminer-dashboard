@@ -2,6 +2,8 @@
  * DATASET MANAGEMENT
  */
 
+import { DiamondRow } from "./structures";
+
 
 /**
  * Verify that a path leads to a legitimate taXaminer result folder
@@ -42,11 +44,34 @@ export async function listDatasets(base_url: string) {
             // append
             default_values.push(...data)
         })
-        .catch((reason: any) => {
+        .catch((reason: string) => {
             console.error(reason)
         })
     return default_values
 }
+
+/**
+ * Remove a dataset 
+ * @param base_url API base URL
+ * @param dataset_id ID of the dataset (number)
+ * @returns Promise
+ */
+export function removeDataset(base_url: string, dataset_id: number) {
+    const endpoint = `http://${base_url}:5500/api/v1/data/remove?id=${dataset_id}`;
+    return fetch(endpoint)
+}
+
+/**
+ * Fetch dataset metadata
+ * @param base_url API base URL
+ * @param dataset_id ID of the dataset (number)
+ * @returns Promise
+ */
+export function fetchMetaData(base_url: string, dataset_id: number) {
+    const endpoint = `http://${base_url}:5500/api/v1/data/summary?id=${dataset_id}`;
+    return fetch(endpoint)
+}
+
 
 /**
  * Fetch PCA data
@@ -57,8 +82,8 @@ export async function listDatasets(base_url: string) {
 export function FetchPCA(base_url: string, dataset_id: number) {
     const endpoint = `http://${base_url}:5500/api/v1/data/pca_contribution?id=${dataset_id}`;
 	return fetch(endpoint)
-		    .then(response => response.json())
-			.then(data => data)
+    .then(response => response.json())
+    .then(data => data)
 }
 
 /**
@@ -70,6 +95,23 @@ export function FetchPCA(base_url: string, dataset_id: number) {
  */
 export function fetchFasta(base_url: string, dataset_id: number, fasta_header: string) {
 	return fetch(`http://${base_url}:5500/api/v1/data/seq?id=${dataset_id}&fasta_id=${fasta_header}`)
+		.then(response => response.json())
+		.then(data => data)
+        .catch((error) => {
+            console.error(error);
+        });
+}
+
+
+/**
+ * Fetch the diamond hits of a given ID of a given dataset
+ * @param base_url API base url
+ * @param dataset_id dataset id
+ * @param fasta_header fasta id (string)
+ * @returns list of rows as JSON objects
+ */
+export function fetchDiamond(base_url: string, dataset_id: number, fasta_header: string): Promise<DiamondRow[]> {
+	return fetch(`http://${base_url}:5500/api/v1/data/diamond?id=${dataset_id}&fasta_id=${fasta_header}`)
 		.then(response => response.json())
 		.then(data => data)
         .catch((error) => {

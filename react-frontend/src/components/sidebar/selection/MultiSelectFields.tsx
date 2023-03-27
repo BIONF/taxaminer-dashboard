@@ -9,8 +9,8 @@ const animatedComponents = makeAnimated();
 
 interface Props {
   options: any[]
-  default_fields: any[]
-  onFieldsChange: Function
+  default_fields: string[]
+  onFieldsChange: (values: string[]) => void
 }
 
 /**

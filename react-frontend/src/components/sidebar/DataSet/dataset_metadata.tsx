@@ -1,5 +1,6 @@
 import React from "react";
 import { Accordion } from "react-bootstrap";
+import { fetchMetaData } from "../../../api";
 
 import "./style.css";
 
@@ -12,6 +13,9 @@ interface State {
     metadata: string
 }
 
+/**
+ * Component displaying assembly & analysis metadata
+ */
 class DataSetMeta extends React.Component<Props, State> {
     constructor(props: any){
 		super(props);
@@ -42,12 +46,11 @@ class DataSetMeta extends React.Component<Props, State> {
      */
     fetchMetaData() {
         if (this.props.dataset_id !== -1) {
-            const endpoint = `http://${this.props.base_url}:5500/api/v1/data/summary?id=${this.props.dataset_id}`;
-		        fetch(endpoint)
-			    .then(response => response.text())
-			    .then(data => {
-				    this.setState( {metadata: data} )
-		    })
+            fetchMetaData(this.props.base_url, this.props.dataset_id)
+			.then((response: any) => response.text())
+			.then(data => {
+				this.setState( {metadata: data} )
+            })
         }
     }
 

@@ -9,18 +9,18 @@ import SelectionModeSelector from './Components/SelectionModeSelector';
 import SelectionTable from './Components/SelectionTable';
 import ColumnSelector from './Components/ColumnSelector'
 
-const fields_glossary: any[] = require("./Components/field_options.json")
+import fields_glossary from "./Components/field_options.json";
 
 interface Props {
     data: []
     keys: Set<string>
     setSelectMode: any
-    passClick: any
+    passClick: (genes: string[]) => void
     dataset_id: number
     base_url: string
-    row: any
+    row: Record<never, never>
     customFields: any[]
-    resetSelection: Function
+    resetSelection: () => void
 }
   
 interface State {
@@ -38,7 +38,7 @@ interface State {
 
 class TableView extends React.Component<Props, State> {
     // Set up states for loading data
-	constructor(props: any){
+	constructor(props: Props){
 		super(props);
 		this.state ={ 
             aa_seq: "Pick a gene",
@@ -58,10 +58,8 @@ class TableView extends React.Component<Props, State> {
     /**
      * Component did update
      * @param prevProps previous Props
-     * @param prevState previous State
-     * @param snapshot previous snapshot
      */
-    componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>, snapshot?: any): void {
+    componentDidUpdate(prevProps: Readonly<Props>): void {
         if (prevProps.row !== this.props.row) {
             this.convertFieldsOptions()
         }
@@ -118,7 +116,7 @@ class TableView extends React.Component<Props, State> {
         const names = this.state.child_cols.map((col: any) => {
             return col.text
         })
-        let file_content: string = ""
+        let file_content = ""
 
         // Table header row
         for (const name of names) {
@@ -134,7 +132,7 @@ class TableView extends React.Component<Props, State> {
             file_content = file_content.concat("\n")
         }
 
-        var a = document.createElement("a");
+        const a = document.createElement("a");
         // create file
         a.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(file_content));
         // set as download

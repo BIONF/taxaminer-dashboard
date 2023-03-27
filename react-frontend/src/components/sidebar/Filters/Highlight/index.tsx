@@ -5,13 +5,13 @@ import Form from 'react-bootstrap/Form';
 
 
 interface Props {
-    sendClick: Function
+    sendClick: (genes: string[]) => void
     passHighlightedGenes: any
     g_options: string[]
     global_selection: Set<string>
     highlightedGenes: Set<string>
     highlightMode: boolean
-    setHighlightMode: Function
+    setHighlightMode: (mode: boolean) => void
 }
 
 interface State {

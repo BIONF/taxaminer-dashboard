@@ -3,6 +3,11 @@ CONDA=$(conda info --base)
 echo "Your conda path is $CONDA"
 source $CONDA/etc/profile.d/conda.sh
 
+# export HOST variable
+export HOST=localhost
+
+dev='false'
+
 # parse flags
 while getopts 'd' flag; do
     case "${flag}" in
@@ -27,10 +32,10 @@ else
     exit 1
 fi
 
-if [[ -v dev ]]; then
+if [ "$dev" == 'true' ]; then
     echo "Running in dev mode"
-    npm start --prefix ./react-frontend & cd ./api && python3 main.py
+    npm start --prefix ./react-frontend & cd ./api && python main.py
 else
     echo "Running in production mode"
-    cd ./react-frontend && npx serve -s build & cd ./api && python3 main.py
+    cd ./react-frontend && npx serve -s build & cd ./api && python main.py
 fi

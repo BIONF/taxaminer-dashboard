@@ -4,8 +4,10 @@ import Container from 'react-bootstrap/Container';
 import { Button, Form, Nav } from "react-bootstrap";
 
 interface Props {
-    toggleDarkmode: any
+    toggleDarkmode: () => void
 }
+
+
 
 // Main Navbar
 class TopBar extends React.Component<Props, any> {

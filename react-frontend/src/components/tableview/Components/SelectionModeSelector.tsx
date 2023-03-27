@@ -5,13 +5,13 @@ import { Row, Col } from 'react-bootstrap';
 import { getFastaDownload } from '../../../api';
 
 interface Props {
-  passMode: Function
-  resetSelection: Function
+  passMode: (mode: string) => void
+  resetSelection: () => void
   selection: Set<string>
   dataset_id: number
   base_url: string
   main_data: any
-  passCsvExport: Function
+  passCsvExport: () => void
 }
 
 /**
@@ -39,7 +39,7 @@ function SelectionModeSelector(props: Props) {
     getFastaDownload(props.base_url, props.dataset_id, my_body)
     // create a temporary link & click to download blob as file
     .then((data) => {
-      var a = document.createElement("a");
+      const a = document.createElement("a");
       a.href = window.URL.createObjectURL(data);
       a.download = "selection." + type;
       a.click();
@@ -53,7 +53,7 @@ function SelectionModeSelector(props: Props) {
     const all_json = Array.from(props.selection).map((each: string) => {
       return props.main_data[each]
     })
-    var a = document.createElement("a");
+    const a = document.createElement("a");
     // pretty print
     a.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(all_json, null, 2)));
     // set as download

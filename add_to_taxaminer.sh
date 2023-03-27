@@ -19,3 +19,4 @@ echo "Installing Node.js server and npm packages"
 conda install nodejs -y
 cd react-frontend
 npm install --legacy-peer-deps
+npm run build

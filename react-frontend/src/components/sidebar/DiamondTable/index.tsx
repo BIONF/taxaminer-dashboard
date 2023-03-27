@@ -12,7 +12,8 @@ import { Spinner } from "react-bootstrap";
 // local imports
 import "./customstyle.css"
 import ColumnSelector from "./ColumnSelector";
-const raw_cols = require("./diamond_cols.json")
+import { fetchDiamond } from "../../../api";
+import raw_cols from "./diamond_cols.json";
 
 /**
  * Custom number sorting function for bootstrap-table
@@ -35,7 +36,7 @@ const numberSort = (a: number, b: number, order: string, dataField: any, rowA: a
  * Props of this class
  */
 interface Props {
-    dataset_id: any
+    dataset_id: number
     row: any
     base_url: string
 }
@@ -54,7 +55,7 @@ interface State {
 * Diamond table
 */
 class Table extends Component<Props, State> {
-    constructor(props: any){
+    constructor(props: Props){
 		super(props);
 		this.state ={ 
             table_data: [], 
@@ -125,6 +126,7 @@ class Table extends Component<Props, State> {
             }
             // either allow sorting by value or searching by string
             if (text_cols.includes(col.value)) {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
                 new_col.filter = textFilter()
             } else {
@@ -147,15 +149,8 @@ class Table extends Component<Props, State> {
     /**
     * Toogle modal open
     */
-    showModal = () => {
-        this.setState({ show_field_modal: true });
-    };
-
-    /**
-    * Toggle modal closed
-    */
-    hideModal = () => {
-        this.setState({ show_field_modal: false });
+    showModal = (show: boolean) => {
+        this.setState({ show_field_modal: show });
     };
 
     /**
@@ -175,8 +170,7 @@ class Table extends Component<Props, State> {
                     }
                 }
             }
-            this.setState({ custom_fields: fields})
-            this.setState({active_cols: new_cols})
+            this.setState({ custom_fields: fields, active_cols: new_cols})
 
             // set valid flag if necessary
             if (!this.state.is_valid) {
@@ -187,22 +181,16 @@ class Table extends Component<Props, State> {
 
 
     // Props of parent element changed (=> selected row)
-    componentDidUpdate(prev_props: any) {
-        if (prev_props.row !== this.props.row) {
+    componentDidUpdate(prevProps: Props) {
+        if (prevProps.row !== this.props.row) {
             this.setState({loading: true})
             // fetch the table data
-		    const endpoint = `http://${this.props.base_url}:5500/api/v1/data/diamond?id=${this.props.dataset_id}&fasta_id=${this.props.row.fasta_header}`;
-		    fetch(endpoint)
-			    .then(response => response.json())
-			    .then(data => {
-                    data = data.map((row: any) => {
-                        // explicitly convert from scientific notation
-                        row.evalue = Number(row.evalue)
-                        return row
-                    })
-				    this.setState( {table_data: data} )
-                    this.setState({loading: false})
-			    })
+            fetchDiamond(this.props.base_url, this.props.dataset_id, this.props.row.fasta_header)
+            .then(data => {
+                // convert to appropriate datatype for proper sorting
+                data = data.map((row: any) => { row.evalue = Number(row.evalue); return row })
+                this.setState({ table_data: data, loading: false })
+            }) 
         }
     }
 
@@ -211,11 +199,11 @@ class Table extends Component<Props, State> {
         <>
             <Row>
                 <Col className="text-center">
-                    <Button className="md-2" style={{width: "100%"}} onClick={() => this.showModal()}>
+                    <Button className="md-2" style={{width: "100%"}} onClick={() => this.showModal(true)}>
                         <span className='bi bi-list-ul m-2'/>Change columns
                     </Button>
                 </Col>
-                <Modal show={this.state.show_field_modal} handleClose={this.hideModal}>
+                <Modal show={this.state.show_field_modal} handleClose={() => this.showModal(false)}>
                     <Modal.Header>
                         <Modal.Title>Choose custom fields</Modal.Title>
                     </Modal.Header>
@@ -225,7 +213,7 @@ class Table extends Component<Props, State> {
                         default_fields={this.state.custom_fields}/>  
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button onClick={this.hideModal} disabled={!this.state.is_valid}>Close</Button>
+                        <Button onClick={() => this.showModal(false)} disabled={!this.state.is_valid}>Close</Button>
                     </Modal.Footer>
                 </Modal>
             </Row>
@@ -246,6 +234,6 @@ class Table extends Component<Props, State> {
         </>
       );
   }
-};
+}
 
 export default Table;

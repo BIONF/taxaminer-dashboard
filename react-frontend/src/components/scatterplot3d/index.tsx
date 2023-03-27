@@ -7,7 +7,7 @@ import { Button, ButtonGroup, InputGroup } from 'react-bootstrap';
 import Select from 'react-select';
 import chroma from 'chroma-js';
 
-const colors = require("./colors.json")
+import colors from "./colors.json";
 
 /**
  * Added menu buttons (auto-rotate)
@@ -83,7 +83,6 @@ interface State {
 	data: any[]
 	traces: any[]
 	selected_gene: string
-	ui_revision: any
 	auto_size: boolean
 	marker_size: number
 	manual_size: number
@@ -104,7 +103,6 @@ interface State {
 	camera: any
 	starsign_steps: number
 	opacity: number
-	last_legend: any
 	trace_order: string[]
 }
 
@@ -115,10 +113,9 @@ class Scatter3D extends Component<Props, State> {
 	constructor(props: any){
 		super(props);
 		this.state ={ 
-			data: [] , // raw JSON data
+			data: [], // raw JSON data
 			traces: [], // traces dicts for plotly
 			selected_gene: "", // g_name
-			ui_revision: "true", // bound to plot to preserve camera position
 			auto_size: true, // automatically size dots in scatterplot
 			marker_size: 5, // actual dot size in the plot
 			manual_size: 5, // dot size selected by user
@@ -139,7 +136,6 @@ class Scatter3D extends Component<Props, State> {
 			camera: {},
 			starsign_steps: 0,
 			opacity: 1,
-			last_legend: Date.now(),
 			trace_order: []
 		}
         this.sendClick = this.sendClick.bind(this);
@@ -148,7 +144,7 @@ class Scatter3D extends Component<Props, State> {
 		const angle_step = 2 * Math.PI / 200;
 		const center = {x:0, y:0}
 		for (let i = 0, angle = 0; i < 200; i++, angle += angle_step) {
-			let point = {
+			const point = {
 				x: center.x + Math.sin(angle) * 1,
 				y: center.y + Math.cos(angle) * 1,
 				z: 1
@@ -188,9 +184,9 @@ class Scatter3D extends Component<Props, State> {
 	 * @param nextContext new context
 	 * @returns boolean
 	 */
-	 shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, nextContext: any): boolean {
+	shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>): boolean {
 		// New dataset
-		if (nextProps.scatterPoints !== this.props.scatterPoints) {
+		if (nextProps.scatterPoints !== this.props.scatterPoints || nextProps.dataset_id !== this.props.dataset_id) {
 			return true
 		}
 		// external changes
@@ -198,7 +194,7 @@ class Scatter3D extends Component<Props, State> {
 			return true
 		}
 		// figure config changes => sync to scatter matrix as well
-		if(nextState.color_palette !== this.state.color_palette ||nextState.opacity !== this.state.opacity || nextState.marker_size !== this.state.marker_size || nextState.legendonly !== this.state.legendonly || nextState.marker_size !== this.state.marker_size) {
+		if(nextState.color_palette !== this.state.color_palette ||nextState.opacity !== this.state.opacity || nextState.marker_size !== this.state.marker_size || nextState.legendonly !== this.state.legendonly) {
 			this.props.passScatterData({ colors: nextState.color_palette, legendonly: nextState.legendonly, opacity: nextState.opacity, marker_size: nextState.marker_size})
 			return true
 		}
@@ -206,11 +202,6 @@ class Scatter3D extends Component<Props, State> {
 		if (nextState.figure !== this.state.figure) {
 			return true
 		}
-		// dataset changed
-		if (nextProps.dataset_id !== this.props.dataset_id) {
-			return true
-		}
-
 		if (nextProps.g_searched.length !== this.state.g_search_len || nextProps.g_searched !== this.props.g_searched) {
 			/** 
 			 * When the global g_searched is updated this plot will re-render!
@@ -218,13 +209,10 @@ class Scatter3D extends Component<Props, State> {
 			*/
 			return true
 		}
-		if (nextProps.selected_row !== this.props.selected_row && this.state.starsign_steps > 0) {
+		// If neighbouring genes is enabled => click event requires re-render
+		if ((nextProps.selected_row !== this.props.selected_row || nextState.starsign_steps !== this.state.starsign_steps)  && this.state.starsign_steps > 0) {
 			return true
 		}
-		if (nextState.starsign_steps !== this.state.starsign_steps || nextState.opacity !== this.state.opacity) {
-			return true
-		}
-
 		return false
 	}
 
@@ -239,11 +227,11 @@ class Scatter3D extends Component<Props, State> {
 		if(e['scene.camera'].up){
 			// coordinate ratios
 			const my_camera = e['scene.camera'].eye
-			const xy = Math.round(my_camera.x / my_camera.y * 100) / 100
-			const xz = Math.round(my_camera.x / my_camera.z * 100) / 100
-			const yz = Math.round(my_camera.y / my_camera.z * 100) / 100
-
-			const new_ratios = {xy: xy, xz: xz, yz: yz}
+			const new_ratios = {
+				xy: Math.round(my_camera.x / my_camera.y * 100) / 100, 
+				xz: Math.round(my_camera.x / my_camera.z * 100) / 100, 
+				yz: Math.round(my_camera.y / my_camera.z * 100) / 100
+			}
 			const old_ratios = this.state.camera_ratios
 
 			// If ratios have changed
@@ -298,7 +286,7 @@ class Scatter3D extends Component<Props, State> {
 		}
 		let total_points = 0;
 		// overall size of all trace arrays
-		for (var trace of data) {
+		for (const trace of data) {
 			total_points = total_points + trace.length
 		}
 		// this was chosen arbitrarily
@@ -328,25 +316,13 @@ class Scatter3D extends Component<Props, State> {
 		// update markers if automatic sizing was enabled
 		if (now === true) {
 			this.setState( { marker_size: this.state.auto_size_px, auto_size: now}, () => {
-				this.setState({ ui_revision: "false"})
 				this.build_plot()
 			})
 		} else {
 			this.setState({ marker_size: this.state.manual_size, auto_size: now}, () => {
-				this.setState({ ui_revision: "false"})
 				this.build_plot()
 			})
 		}
-	}
-
-	/**
-	 * En-/Dis-able hover data overlay
-	 * @param enabled true if enabled
-	 */
-	setHoverData(enabled: boolean) {
-		this.setState({show_hover: !this.state.show_hover}, () => {
-			this.build_plot()
-		})
 	}
 	
 	/**
@@ -376,7 +352,7 @@ class Scatter3D extends Component<Props, State> {
 	 * @param e restyle event
 	 */
 	updateLegendSelection(e: any, ) {
-		var plot: any = document.getElementById('scatter3d')
+		const plot: any = document.getElementById('scatter3d')
 		const legendonly = plot.data.filter((trace: any) => trace.visible === "legendonly")
 		if (legendonly !== this.state.legendonly) {
 			this.setState({legendonly: legendonly})
@@ -400,19 +376,17 @@ class Scatter3D extends Component<Props, State> {
 		if (typeof isolated === "undefined") {
 			isolated = -1
 		}
-		// Hover enabled
-		const hover_template = this.state.hoverTemplate
 		const my_scale = chroma.scale('Spectral');
 		
 		const traces: any[] = []
-       	for (let i = 0; i < data.length; i++) {
+		for (let i = 0; i < data.length; i++) {
 			const chunk = data[i]
-		    let x : any[] = [];
-		    let y : any[] = [];
+			let x : any[] = [];
+			let y : any[] = [];
             let z : any[] = [];
 
 			// Label + Occurences
-            let label = chunk[0]['plot_label']
+            const label = chunk[0]['plot_label']
 			occurrences[label as keyof typeof occurrences] = 0
 
             const my_customdata : any = [];
@@ -420,7 +394,7 @@ class Scatter3D extends Component<Props, State> {
 			/**
 			 * Apply filters
 			 */
-		   	for (const each of chunk) {
+			for (const each of chunk) {
 				// contig filter prequisited
 				let c_match = true
 				if (this.props.c_searched) {
@@ -431,23 +405,23 @@ class Scatter3D extends Component<Props, State> {
 
 				// filter by e-value
 				if(parseFloat(each['bh_evalue']) < this.props.e_value && c_match) {
-					x.push(each['Dim.1'])
-					y.push(each['Dim.2'])
-					z.push(each['Dim.3'])
+					x.push(each['PC_1'])
+					y.push(each['PC_2'])
+					z.push(each['PC_3'])
 					my_customdata.push([each['plot_label'], each['g_name'], each['best_hit'], each['bh_evalue'], each['taxon_assignment'], each['c_name']])
 					occurrences[label as keyof typeof occurrences] = occurrences[label as keyof typeof occurrences] + 1
 				} 
 				// Include unassigned data points (which usually don't have an e-value)
 				else if(each['plot_label'] === 'Unassigned' && c_match && this.props.show_unassigned) {
-					x.push(each['Dim.1'])
-					y.push(each['Dim.2'])
-					z.push(each['Dim.3'])
+					x.push(each['PC_1'])
+					y.push(each['PC_2'])
+					z.push(each['PC_3'])
 					my_customdata.push([each['plot_label'], each['g_name'], each['best_hit'], each['bh_evalue'], each['taxon_assignment'], each['c_name']])
 					occurrences[label as keyof typeof occurrences] = occurrences[label as keyof typeof occurrences] + 1
 				} else {
 					// nada
 				}
-		    }
+			}
 
 			// Setup the plot trace
 			let marker = {}
@@ -487,10 +461,10 @@ class Scatter3D extends Component<Props, State> {
 				marker: marker,
 				visible: true,
 				customdata: my_customdata,
-				hovertemplate: hover_template,
+				hovertemplate: this.state.hoverTemplate,
 				hoverinfo: "all"
             }
-			if (hover_template === "") {
+			if (this.state.hoverTemplate === "") {
 				trace.hoverinfo = "none"
 			}
             traces.push(trace)
@@ -528,7 +502,7 @@ class Scatter3D extends Component<Props, State> {
 		}
 
 		// setup traces for selected / searched dots
-		let searched_rows: any[] = []
+		const searched_rows: any[] = []
 		for (const chunk of data) {
 			for (const row of chunk) {
 				if (searched.includes(row['g_name'])) {
@@ -546,9 +520,9 @@ class Scatter3D extends Component<Props, State> {
 
 		searched_rows.forEach(each => {
 			// push 3D coordinates in arrays accordingly
-			x.push(each['Dim.1'])
-			y.push(each['Dim.2'])
-			z.push(each['Dim.3'])
+			x.push(each['PC_1'])
+			y.push(each['PC_2'])
+			z.push(each['PC_3'])
 			my_customdata.push([each['plot_label'], each['g_name'], each['best_hit'], each['bh_evalue'], each['taxon_assignment'], each['c_name']])
         })
 
@@ -570,12 +544,12 @@ class Scatter3D extends Component<Props, State> {
 				visible: true,
 				customdata: my_customdata,
 				hovermode: this.state.show_hover,
-				hovertemplate: hover_template,
+				hovertemplate: this.state.hoverTemplate,
 				hoverinfo: "all"
 			}
 
 			// Hide all hover infos per user settings
-			if (hover_template === "") {
+			if (this.state.hoverTemplate === "") {
 				trace.hoverinfo = "none"
 			}
 			
@@ -584,7 +558,7 @@ class Scatter3D extends Component<Props, State> {
 		
 		// Apply continous color palette
 		if (this.state.color_palette === "spectrum") {
-			for (let i =0; i < traces.length; i++) {
+			for (let i=0; i < traces.length; i++) {
 				if (traces[i].name === "Search results") {
 					continue
 				}
@@ -612,10 +586,16 @@ class Scatter3D extends Component<Props, State> {
 			// Create an ordered array reflecting gene order
 			for (let i=0; i < this.state.starsign_steps; i++){
 				if (ordered_genes[0].upstream_gene !== "") {
-					ordered_genes.unshift(this.props.main_data[ordered_genes[0].upstream_gene])
+					const next_gene: any = this.props.main_data[ordered_genes[0].upstream_gene]
+					if (next_gene.c_name === ordered_genes[0].c_name) {
+						ordered_genes.unshift(next_gene)
+					}
 				}
 				if (ordered_genes[ordered_genes.length - 1].downstream_gene !== "") {
-					ordered_genes.push(this.props.main_data[ordered_genes[ordered_genes.length - 1].downstream_gene])
+					const next_gene: any = this.props.main_data[ordered_genes[ordered_genes.length - 1].downstream_gene]
+					if (next_gene.c_name === ordered_genes[ordered_genes.length - 1].c_name) {
+						ordered_genes.push(next_gene)
+					}
 				}
 				
 			}
@@ -625,9 +605,9 @@ class Scatter3D extends Component<Props, State> {
 				if (gene === undefined) {
 					continue
 				}
-				gene_order_x.push(gene['Dim.1'])
-				gene_order_y.push(gene['Dim.2'])
-				gene_order_z.push(gene['Dim.3'])
+				gene_order_x.push(gene['PC_1'])
+				gene_order_y.push(gene['PC_2'])
+				gene_order_z.push(gene['PC_3'])
 				neighbouring_custom_data.push([gene['plot_label'], gene['g_name'], gene['best_hit'], gene['bh_evalue'], gene['taxon_assignment'], gene['c_name']])
 			}
 
@@ -652,7 +632,6 @@ class Scatter3D extends Component<Props, State> {
 				type: 'scatter3d',
 				mode: 'markers',
 				name: "Neighbouring genes",
-				// width: 5,
 				x: gene_order_x,
 				y: gene_order_y,
 				z: gene_order_z,
@@ -674,11 +653,10 @@ class Scatter3D extends Component<Props, State> {
 	 * @returns Plotly Plot as React component
 	 */
 	build_plot(isolated?: number, doubeclicked?: number, initialBuild?: boolean) {
-		// store figure components
+		// Filter data
 		const new_data = this.transformData(this.props.scatterPoints, isolated, doubeclicked, initialBuild)
-		for (const trace of new_data) {
-			trace['visible'] = true
-		}
+
+		// Plot layout
 		const new_layout = {
 			autosize: true, 
 			showlegend: true, 
@@ -704,7 +682,6 @@ class Scatter3D extends Component<Props, State> {
 	exportVisible(): void {
 		const final_selection = new Set<string>()
 		for (const chunk of this.state.figure.data) {
-			console.log(chunk)
 			if(chunk['mode'] === "lines" || chunk['name'] === "Neighbouring genes" || chunk['visible'] === "legendonly") {
 				continue
 			}
@@ -732,7 +709,7 @@ class Scatter3D extends Component<Props, State> {
 				onClick={(e: any) => this.sendClick(e.points[0].customdata[1])}
 				onRelayout={(e: any) => this.passCameraData(e)}
 				useResizeHandler = {true}
-    			style = {{width: "100%", minHeight: 800}}
+				style = {{width: "100%", minHeight: 800}}
 				onRestyle={(e: any) => this.updateLegendSelection(e)}
 				revision={this.state.revision}
 				onUpdate={(figure) => this.setState({figure: figure})}
@@ -766,7 +743,7 @@ class Scatter3D extends Component<Props, State> {
 							disabled={!this.props.gene_order_supported}
 							/>
 							<Button disabled={!this.props.gene_order_supported} onClick={() => this.setState({starsign_steps: this.state.starsign_steps + 1})}><span className="bi bi-plus-circle"></span></Button>
-                		</InputGroup>
+						</InputGroup>
 					</Col>
 					<Col xs={3}>
 						<Form.Label className='md-2'>Dot size</Form.Label>
@@ -780,7 +757,7 @@ class Scatter3D extends Component<Props, State> {
 							/>
 							<Button disabled={this.state.auto_size} onClick={() => this.set_manual_size(this.state.manual_size + 1)}><span className="bi bi-plus-circle"></span></Button>
 							<Button onClick={() => this.toggle_auto_size()} variant={(this.state.auto_size && "success") || "secondary"}><span className={(this.state.auto_size && "bi bi-lock-fill") || "bi bi-unlock-fill"}></span>Auto</Button>
-                		</InputGroup>
+						</InputGroup>
 					</Col>
 					<Col>
 						<Form.Label className='md-2'>Opacity</Form.Label>
@@ -793,7 +770,7 @@ class Scatter3D extends Component<Props, State> {
 							value={`${Math.round(this.state.opacity * 100)}%`}
 							/>
 							<Button onClick={() => {if(this.state.opacity <= 0.95){this.setState({opacity: this.state.opacity + 0.05})}}}><span className="bi bi-plus-circle"></span></Button>
-                		</InputGroup>
+						</InputGroup>
 					</Col>
 					<Col>
 						<Form.Label>Color Palette</Form.Label>

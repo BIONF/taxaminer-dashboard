@@ -5,12 +5,12 @@ import Card from 'react-bootstrap/Card';
 import { Row, Col, Form } from 'react-bootstrap';
 
 // possible options
-const options = require("./main_cols.json")
+import options from "./main_cols.json";
 const animatedComponents = makeAnimated();
 
 interface Props {
-	passCols: Function
-	customFields: any[]
+	passCols: (cols: any) => void
+	customFields: string[]
 	options: any[]
 }
 
@@ -82,12 +82,12 @@ class ColumnSelector extends Component<Props, State> {
 						<Card.Body>
 							<Card.Title className='d-flex justify-content-between align-items-center'>Select Columns
 								<Form.Check 
-                        		type="switch"
-                        		id="sync_custom_fields"
-                        		label="Sync with custom fields"
-                        		defaultChecked={false}
+								type="switch"
+								id="sync_custom_fields"
+								label="Sync with custom fields"
+								defaultChecked={false}
 								onChange={(e) => this.setSync(e.target.checked)}
-                    			/>
+								/>
 							</Card.Title>
 							<Select 
 							options={this.props.options} 

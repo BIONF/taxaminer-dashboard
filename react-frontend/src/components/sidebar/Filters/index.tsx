@@ -14,10 +14,10 @@ interface Props {
     contig_options: { label: string; value: string; }[]
     global_selection: Set<string>
     highlightedGenes: Set<string>
-    passNewHighlightedGenes: Function
+    passNewHighlightedGenes: (genes: Set<string>) => void
     highlightMode: boolean
-    setHighlightMode: Function
-    sendClick: Function
+    setHighlightMode: (mode: boolean) => void
+    sendClick: (keys: string[]) => void
 }
 
 interface State {
@@ -93,7 +93,7 @@ class FilterUI extends React.Component<Props, State> {
      * @param e Edit event of the dropdown selector
      */
      passContigs(e: any) {
-        let new_keys: string[] = []
+        const new_keys: string[] = []
         // extract IDs
         e.forEach((element: any) => {
           new_keys.push(element.value)

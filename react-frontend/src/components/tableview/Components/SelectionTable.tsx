@@ -14,7 +14,7 @@ interface Props {
     keys: Set<string>
     master_data:  { [key: string]: any }
     passClick: any
-    trackTable: Function
+    trackTable: (cols: any, rows: any) => void
 }
 
 interface State {
@@ -76,7 +76,7 @@ class SelectionTable extends Component<Props, State> {
      */
     componentDidMount() {
         // also update table cols
-        let new_cols: string[] = []
+        const new_cols: string[] = []
         this.props.col_keys.forEach((element: any) => {
             new_cols.push((rich_cols as any)[element['value']])
         });
@@ -105,9 +105,9 @@ class SelectionTable extends Component<Props, State> {
         // Table cols have changed
         if (prevProps.col_keys !== this.props.col_keys) {
             // also update table cols
-            let new_cols: any[] = []
+            const new_cols: any[] = []
             this.props.col_keys.forEach((element: any) => {
-                if (rich_cols.hasOwnProperty(element['value'])) {
+                if (Object.prototype.hasOwnProperty.call(rich_cols,element['value'])) {
                     new_cols.push((rich_cols as any)[element['value']])
                 } else {
                     const constructed_col = {
@@ -169,6 +169,6 @@ class SelectionTable extends Component<Props, State> {
         </>
       );
   }
-};
+}
 
 export default SelectionTable;

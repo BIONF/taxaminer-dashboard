@@ -46,11 +46,13 @@ class UploadDialogue extends Component<Props, State> {
      * Upload a file to file storage
      * @param e event
      */
+
+    // TODO MOVE
     uploadFile() {
         const endpoint = `http://${this.props.base_url}:5500/api/v1/data/upload`;
         // ensure that an actual file was selected
         if (this.state.file_size > 0) {
-            let data = new FormData()
+            const data = new FormData()
             data.append('files', this.state.file)
             data.append('name', this.state.file_name)
             data.append('keep_zip', String(this.state.keep_zip ? 1 : 0))
@@ -100,6 +102,10 @@ class UploadDialogue extends Component<Props, State> {
         this.setState({file_name: new_name})
     }
 
+    /**
+     * Verify that a given filepath points to a valid taXaminer output
+     * @param path 
+     */
     checkFilePath(path: string) {
         verifyPath(this.props.base_url, path)
         .then(data => this.setState({valid_path: data}))
@@ -166,7 +172,7 @@ class UploadDialogue extends Component<Props, State> {
                         <Form.Control 
                             type="file"
                             onChange={(e: any) => this.setFile(e)}
-                            accept={`.zip`}
+                            accept={`.zip, .tar.gz`}
                             disabled={this.state.path !== ""}/>
                     </Form.Group>
                     <Form.Group>

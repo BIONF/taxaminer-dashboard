@@ -29,13 +29,13 @@ interface State {
     dataset_id: number
     is_loading: boolean
     contigs: Option[]
-    selected_row: any
+    selected_row: Record<never, never>
     aa_seq: string
     camera: any
     select_mode: string
     selected_data: Set<string>
     data: any
-    e_value: any
+    e_value: number
     filters: any
     scatter_data: any
     g_options: any[]
@@ -103,8 +103,8 @@ class TaxaminerDashboard extends React.Component<Props, State> {
             fetch(endpoint)
             .then(response => response.json())
             .then(data => {
-                const main_data: { [id: string] : {}; } = {};
-			    this.setState( {scatterPoints: data}, () => {
+                const main_data: { [id: string] : Record<string, never>; } = {};
+                this.setState( {scatterPoints: data}, () => {
                     for (const chunk of data) {
                         for (const row of chunk) {
                             const key = row.g_name as string
@@ -112,7 +112,8 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                             main_data[key] = row
                         }
                     }
-                    this.setState({data: main_data, gene_order_supported: Object.values(main_data)[0].hasOwnProperty('upstream_gene'), gene_pos_supported: Object.values(main_data)[0].hasOwnProperty('end')})
+                    const first_row = main_data[Object.keys(main_data)[0]]
+                    this.setState({data: main_data, gene_order_supported:  Object.prototype.hasOwnProperty.call(first_row, 'upstream_gene'), gene_pos_supported: Object.prototype.hasOwnProperty.call(first_row, 'end')})
 
                     // Load user selection
                     getUserSelection(this.props.base_url, id)
@@ -133,7 +134,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                     /**
                     * Extract unique contig identifiers
                     */
-                    let contigs = new Set()
+                    const contigs = new Set()
                     for (const key of Object.keys(main_data)) {
                         // @ts-ignore
                         const item = main_data[key]
@@ -273,7 +274,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
      * Set the currently highlighted genes
      * @param genes gene identifiers
      */
-    setHighlightedGenes(genes: Set<string>) {
+    setHighlightedGenes(genes: Set<string>): void {
         this.setState({highlightedGenes: genes}, () => {
             this.setState({g_searched: Array.from(genes)})
         })

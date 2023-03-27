@@ -4,12 +4,12 @@ import makeAnimated from 'react-select/animated';
 import { Container, Form } from 'react-bootstrap';
 
 // possible options
-const options = require("./diamond_cols.json")
+import options from "./diamond_cols.json";
 const animatedComponents = makeAnimated();
 
 interface Props {
     default_fields: any[]
-    set_fields: Function
+    set_fields: (fields: any) => void
 }
 
 interface State {
@@ -20,7 +20,7 @@ interface State {
  * Dropdown selector for custom fields to be displayed in the sidebar
  */
 class ColumnSelector extends Component<Props, State> {
-    constructor(props: any){
+    constructor(props: Props){
         super(props)
         this.state = {  
             is_valid: false

@@ -11,13 +11,13 @@ import { Badge, Modal, OverlayTrigger, Tab, Tabs, Tooltip } from 'react-bootstra
 import MultiSelectFields from './MultiSelectFields'
 
 // dictionary
-const fields_glossary: any[] = require("./field_options.json")
+import fields_glossary from "./field_options.json";
 
 interface Props {
   base_url: string
   row: any
   aa_seq: string
-  passCustomFields: Function
+  passCustomFields: (fields: any) => void
   is_loading: boolean
   dataset_id: number
   gene_pos_supported: boolean
@@ -51,18 +51,18 @@ class SelectionView extends React.Component<Props, State> {
 	componentDidMount() {
     if (this.props.dataset_id !== -1) {
       const endpoint = `http://${this.props.base_url}:5500/api/v1/data/userconfig?dataset_id=${this.props.dataset_id}`;
-		  fetch(endpoint)
-			  .then(response => response.json())
-			  .then(data => {
+		fetch(endpoint)
+		.then(response => response.json())
+		.then(data => {
           // catch networking errors
           if (data === undefined) {
             data = []
           }
-				  this.setState( {custom_fields: data.custom_fields, has_loaded: true} )
+		this.setState( {custom_fields: data.custom_fields, has_loaded: true} )
 
-          // Update globally
-          this.props.passCustomFields(data.custom_fields)
-			  }
+        // Update globally
+        this.props.passCustomFields(data.custom_fields)
+		}
       )
     }
 	}
@@ -70,10 +70,8 @@ class SelectionView extends React.Component<Props, State> {
   /**
    * 
    * @param prevProps previous Props
-   * @param prevState previous State
-   * @param snapshot Snapshot
    */
-   componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<any>, snapshot?: any): void {
+   componentDidUpdate(prevProps: Readonly<Props>): void {
 
     if (prevProps.row !== this.props.row) {
       this.convertFieldsOptions()
@@ -82,19 +80,18 @@ class SelectionView extends React.Component<Props, State> {
     }
 
     if (prevProps.dataset_id !== this.props.dataset_id) {
-      const endpoint = `http://${this.props.base_url}:5500/api/v1/data/userconfig?dataset_id=${this.props.dataset_id}`;
-		  fetch(endpoint)
-			  .then(response => response.json())
-			  .then(data => {
+		const endpoint = `http://${this.props.base_url}:5500/api/v1/data/userconfig?dataset_id=${this.props.dataset_id}`;
+		fetch(endpoint)
+			.then(response => response.json())
+			.then(data => {
           // catch networking errors
           if (data === undefined) {
             data = []
-          }
-				  this.setState( {custom_fields: data.custom_fields} )
-          // Update globally
-          this.props.passCustomFields(data.custom_fields)
-			  }
-      )
+        }
+		this.setState( {custom_fields: data.custom_fields} )
+        // Update globally
+        this.props.passCustomFields(data.custom_fields)
+	})
     }
   }
 
@@ -126,7 +123,7 @@ class SelectionView extends React.Component<Props, State> {
   */
   convertFieldsOptions() {
     let options: { label: string; value: string; }[] = []
-    let ids = new Set()
+    const ids = new Set()
     const grouped_fields: any = {}
     // available row features
     const row_keys = Object.keys(this.props.row)
@@ -144,7 +141,7 @@ class SelectionView extends React.Component<Props, State> {
                   const new_id = each.charAt(each.length - 1)
 
                   // add new ID
-                  if (!grouped_fields.hasOwnProperty(new_id)) {
+                  if (!Object.prototype.hasOwnProperty.call(grouped_fields, new_id)) {
                     const prev = grouped_fields
                     prev[new_id] = [{ label: (field.label + " (" + each + ")"), value: each, tooltip: field.tooltip }]
                     this.setState({ grouped_fields: prev})
@@ -188,9 +185,8 @@ class SelectionView extends React.Component<Props, State> {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
       body: JSON.stringify({ custom_fields: this.state.custom_fields })
     };
-
+     // save settings
     fetch(`http://${this.props.base_url}:5500/api/v1/data/userconfig?dataset_id=${this.props.dataset_id}`, request)
-    .then(response => console.log(response))
   };
 
   /**
@@ -349,7 +345,7 @@ class SelectionView extends React.Component<Props, State> {
             <Row>
               { // Load custom fields from prop and render additional UI elements
               this.state.custom_fields.map((item: any) => (
-                <CustomOutput key={item.label} col={item.value} row={this.props.row} name={item.label} tooltip={item.tooltip}/>
+                <CustomOutput id={item.label} key={item.label} col={item.value} row={this.props.row} name={item.label} tooltip={item.tooltip}/>
               ))}
             </Row>
               

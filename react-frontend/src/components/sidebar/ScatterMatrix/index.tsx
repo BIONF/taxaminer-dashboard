@@ -1,10 +1,10 @@
 import chroma from 'chroma-js';
 import { Component } from 'react';
 import Plot from 'react-plotly.js';
-const colors = require("./colors.json");
+import colors from "./colors.json";
 
 interface Props {
-	sendClick: Function
+	sendClick: (genes: string[]) => void
 	e_value: number
 	show_unassigned: boolean
     scatter_data: any
@@ -40,10 +40,8 @@ class ScatterMatrix extends Component<Props, any> {
 	/**
 	 * Act on Prop updates (=> mainly: load a different dataset)
 	 * @param prevProps previous props
-	 * @param prevState previous state
-	 * @param snapshot previous snapshot
 	 */
-	componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<any>, snapshot?: any): void {
+	componentDidUpdate(prevProps: Readonly<Props>, ): void {
 		// fetch the new dataset if the ID has changed
 		if (prevProps.scatterPoints !== this.props.scatterPoints) {
 			this.set_auto_size(this.props.scatterPoints);
@@ -68,16 +66,6 @@ class ScatterMatrix extends Component<Props, any> {
     }
 
 	/**
-	 * This fixes a problem where some interactions reset the camera.
-	 * Manually updating the uirevision state blocks plot resets
-	 * @returns True (as required by OnLegendClick() => )
-	 */
-	lock_uirevision(){
-		this.setState({ ui_revision: "true" })
-		return(true)
-	}
-
-	/**
 	 * Set automatic marker size
 	 */
 	set_auto_size(data: any){
@@ -86,7 +74,7 @@ class ScatterMatrix extends Component<Props, any> {
 		}
 		let total_points = 0;
 		// overall size of all trace arrays
-		for (var trace of data) {
+		for (const trace of data) {
 			total_points = total_points + trace.length
 		}
 		// this was chosen arbitrarily
@@ -100,7 +88,7 @@ class ScatterMatrix extends Component<Props, any> {
 
 
 	/**
-	 * 
+	 * Set matrix axes
 	 * @returns Set scatterplot axis
 	 */
     set_axis() {
@@ -123,7 +111,7 @@ class ScatterMatrix extends Component<Props, any> {
 	 * @returns list of traces
 	 */
 	transformData (data: any[], legendonly: any[]) {
-		let legendonly_names: string[] = []
+		const legendonly_names: string[] = []
 		const occurrences = {Unassigned: 0}
 
 		legendonly.forEach((dot: any) => {
@@ -137,22 +125,21 @@ class ScatterMatrix extends Component<Props, any> {
 
         let traces: any[] = []
         traces = data.map(each => {
-		    const x : string[] = [];
-		    const y : string[] = [];
+			const x : string[] = [];
+			const y : string[] = [];
             const z : string[] = [];
             let label = "";
             const gene_names : string[] = [];
-            let chunk = each;
+            const chunk = each;
 
 			// push 3D coordinates in arrays accordingly
-		    for(const each of chunk) {
+			for(const each of chunk) {
 				// filter by contigs
 				if (this.props.c_searched !== undefined) {
 					if (this.props.c_searched.length !== 0 && !this.props.c_searched.includes(each['c_name'])) {
 						continue
 					}
 				}
-
 				// exclude unassigned
 				if (!this.props.show_unassigned && each['plot_label'] === "Unassigned"){
 					continue
@@ -160,17 +147,17 @@ class ScatterMatrix extends Component<Props, any> {
 				
                 // filter by e-value
 				if(parseFloat(each['bh_evalue']) < this.props.e_value) {
-					x.push(each['Dim.1'])
-					y.push(each['Dim.2'])
-					z.push(each['Dim.3'])
+					x.push(each['PC_1'])
+					y.push(each['PC_2'])
+					z.push(each['PC_3'])
 					label = each['plot_label']
 					gene_names.push(each['g_name'])
 				} 
 				// Include unassigned data points (which usually don't have a e-value)
 				else if(this.props.show_unassigned === true && each['plot_label'] === 'Unassigned') {
-					x.push(each['Dim.1'])
-					y.push(each['Dim.2'])
-					z.push(each['Dim.3'])
+					x.push(each['PC_1'])
+					y.push(each['PC_2'])
+					z.push(each['PC_3'])
 					label = each['plot_label']
 					gene_names.push(each['g_name'])
 				} else {
@@ -182,7 +169,7 @@ class ScatterMatrix extends Component<Props, any> {
 				} else {
 					occurrences[each['plot_label'] as keyof typeof occurrences] = 1
 				}
-		    }
+			}
 
 			// Setup the plot trace
 			let visible = undefined
@@ -196,9 +183,9 @@ class ScatterMatrix extends Component<Props, any> {
             const trace = {
                 type: 'splom',
                 dimensions: [
-                    {label: "Dim.1", values: x},
-                    {label: "Dim.2", values: y},
-                    {label: "Dim.3", values: z},
+                    {label: "PC_1", values: x},
+                    {label: "PC_2", values: y},
+                    {label: "PC_3", values: z},
                 ],
                 name: label,
                 text: label,
@@ -233,7 +220,7 @@ class ScatterMatrix extends Component<Props, any> {
 	 * @param points plotly points
 	 */
 	handleSelection(points: any) {
-		let selected_ids: string[] = []
+		const selected_ids: string[] = []
 		for (const point of points) {
 			selected_ids.push(point.customdata)
 		}
@@ -265,7 +252,7 @@ class ScatterMatrix extends Component<Props, any> {
                         yaxis2:this.set_axis(),
                         yaxis3:this.set_axis(),
                         yaxis4:this.set_axis()},
-						colorway : colors.palettes[this.props.scatter_data.colors]
+						colorway : colors.palettes[this.props.scatter_data.colors as keyof typeof colors.palettes]
 						}}
                     style = {{width: "95%", height: "100%", minHeight: 600}}
 

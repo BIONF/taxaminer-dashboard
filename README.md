@@ -1,21 +1,25 @@
 # taXaminer Dashboard
+`v1.0.0`
+
 The program contained in this repository provides a interactive representation of the output of [taXaminer](https://github.com/BIONF/taXaminer).
 
 # Installation
 ## Download
-`git clone https://github.com/lukekoch/taxaminer-dashboard-react.git`
+`git clone https://github.com/BIONF/taxaminer-dashboard.git`
 
 **Please note:** The dashboard is being developed parallel to taXaminer. Refer to section [Compatibility](##compatibility) to check if your output files are compatible.
 
 # Installation
-This tool requires conda to install dependencies. Simply make `install.sh` executable (`chmod +x install.sh`) and run it `./install.sh`.
+The dashboard is optimized for Linux / Unix operation system and MacOS. Bash scripts are provided for the installation and execution. Manual installation on Windows is possible but, if possible, consider installing the dashboard on the Windows subsystem for Linux (WSL) instead.
 
-If you have already set up a taxaminer conda env, you may use `add_to_taxaminer.sh` to add the required packages to you taXaminer env. Please not that this uses the default name from taXaminer's installer script.
+This tool requires [conda](conda.io) to install dependencies. Simply make `install.sh` executable (`chmod +x install.sh`) and run it `./install.sh`.
+
+If you have already set up a taxaminer conda env, you may use `add_to_taxaminer.sh` to add the required packages to you taXaminer env. Please note that this uses the default name from taXaminer's installer script.
 
 # Usage
 ## Adding Datasets
 ### Using the import assistant
-Next to the dataset selector in the top right corner you'll find an "import" button. Clicking on it will open a dialogue asking you to choose a custom name for your new dataset, select a .zip file to import and decide whether you want to keep the original .zip after import or discard it. There are several conditions to be met here:
+Next to the dataset selector in the top right corner you'll find an "import" button. Clicking on it will open a dialogue asking you to choose a custom name for your new dataset, select a .zip / .tar.gz file to import and decide whether you want to keep the original .zip after import or discard it. There are several conditions to be met here:
 
 1. The name chosen for you new dataset must be unique and cannot be empty (=> there is no subdirectoy of /datasets with this name)
 2. The selected .zip file must contain the taXaminer output directory at top level (=> you should see paths like foo.zip > proteins.faa)
@@ -34,31 +38,29 @@ To add a dataset, create a new subdirectoy with a name of your choice in the "da
 ## Starting the application
 The dashboard requires both a Node.js and python process to be running in the background. `start.sh` will auto-detect you conda installation options (see above) and launch the processes. Do not close the terminal the processes are running in. Please wait until you the terminal provides an output similar to this:
 ```
-Compiled successfully!
-
-You can now view react-frontend in the browser.
-
-  Local:            http://localhost:3000
-  On Your Network:  http://172.17.102.12:3000
-
-Note that the development build is not optimized.
-To create a production build, use npm run build.
-
-webpack compiled successfully
-No issues found.
+   ┌────────────────────────────────────────────┐
+   │                                            │
+   │   Serving!                                 │
+   │                                            │
+   │   - Local:    http://localhost:3000        │
+   │   - Network:  http://172.21.157.104:3000   │
+   │                                            │
+   │   Copied local address to clipboard!       │
+   │                                            │
+   └────────────────────────────────────────────┘
 ```
-Then use one of the available links to open the dashboard in you browser. If you're running the dashboard on a remote system the "Local" address **will not** work. Depending one the size of your dataset I might take a few seconds to load all data.
+Then use one of the available links to open the dashboard in you browser. If you're running the dashboard on a remote system the "Local" address **will not** work. Depending one the size of your dataset it might take a few seconds to load all data.
 
 ## Switching datasets
 The drowdown selector "Dataset Selection" at the top right will allow you to switch between datasets contained in subfolder of "datasets".
 
-## Stoppign the application
+## Stopping the application
 You may use `Ctrl+C` in your original terminal to kill both processes and shutdown the application.
 
 # Compatibility
 
 ## taXaminer datasets
-The current version incorporates the changes of commit [a424195](https://github.com/BIONF/taXaminer/commit/a424195509a2bc425ed7012c26ce056b565e7254). If any problems arise please open a new issue using the label [compatibitlity](https://github.com/lukekoch/taxaminer-dashboard-react/labels/compatibility).
+This version of the taXaminer-dashboard incorporates the changes v0.07.0 of taXaminer (https://github.com/BIONF/taXaminer/releases/tag/v0.7.1). If any problems arise please open a new issue using the label [compatibitlity](https://github.com/BIONF/taxaminer-dashboard/labels/compatibility).
 
 ## Browser compatibility
 This tool is developed and tested on the following browsers:

@@ -5,17 +5,17 @@ import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 import { DataSetMeta } from "./dataset_metadata";
 import UploadDialogue from "./UploadDialogue";
-import { listDatasets } from "../../../api";
+import { listDatasets, removeDataset } from "../../../api";
 
 interface State {
-    datasets: any[]
+    datasets: {id: number, title: string, text: string}[]
     new_id: number
     show_import_modal: boolean
     show_remove: boolean
 }
 
 interface Props {
-    dataset_changed: Function
+    dataset_changed: (id: number) => void
     base_url: string
     current_id: number
     is_loading: boolean
@@ -23,7 +23,7 @@ interface Props {
 
 // Allows the user to select a dataset
 class DataSetSelector extends React.Component<Props, State> {
-    constructor(props: any){
+    constructor(props: Props){
         super(props)
         this.state = {  
             datasets: [{id: -1, title: "Select a dataset to get started",  text: "A sample dataset to test on small scale"}],
@@ -61,21 +61,25 @@ class DataSetSelector extends React.Component<Props, State> {
         }
     }
 
+    /**
+     * Show the import modal
+     */
     showModal = () => {
         this.setState({ show_import_modal: true })
     }
 
-    showRemoveModal = () => {
-        this.setState({ show_remove: true })
+    /**
+     * Toggle remove dataset dialogue
+     */
+    showRemoveModal = (show: boolean) => {
+        this.setState({ show_remove: show })
     }
 
-    hideRemoveModal = () => {
-        this.setState({ show_remove: false })
-    }
-
+    /**
+     * Remove the currently selected dataset
+     */
     removeDataset = () => {
-        const endpoint = `http://${this.props.base_url}:5500/api/v1/data/remove?id=${this.state.new_id}`;
-        fetch(endpoint)
+        removeDataset(this.props.base_url, this.state.new_id)
         .then(() => {
             this.updateIndex()
             this.setState({new_id: -1})
@@ -95,7 +99,6 @@ class DataSetSelector extends React.Component<Props, State> {
         return datasets
     }
 
-
     render() {
         return (
             <>
@@ -114,7 +117,7 @@ class DataSetSelector extends React.Component<Props, State> {
                                     </Form.Select>
                                     <Button 
                                     type="submit" 
-                                    onClick={(e:any) => this.props.dataset_changed(this.state.new_id)}
+                                    onClick={() => this.props.dataset_changed(this.state.new_id)}
                                     disabled={(this.state.new_id === -1)}>
                                         {
                                             this.props.is_loading && <Spinner className="mr-2" as="span" animation="border" size="sm" role="status" aria-hidden="true"/>
@@ -127,7 +130,7 @@ class DataSetSelector extends React.Component<Props, State> {
                                     <Button onClick={this.showModal} variant="success">
                                         <span className='bi bi-upload m-2'/>Add new
                                     </Button>
-                                    <Button onClick={this.showRemoveModal} variant="danger" disabled={(this.state.new_id === -1)}>
+                                    <Button onClick={() => this.showRemoveModal(true)} variant="danger" disabled={(this.state.new_id === -1)}>
                                         <span className='bi bi-trash m-2'/>Remove
                                     </Button>
                                     <Modal show={this.state.show_remove}>
@@ -138,7 +141,7 @@ class DataSetSelector extends React.Component<Props, State> {
                                             Remove dataset {this.state.new_id !== -1 &&this.state.datasets[Math.abs(this.state.new_id)].title.replace("/", "")}?
                                         </Modal.Body>
                                         <Modal.Footer>
-                                            <Button onClick={this.hideRemoveModal}><span className='bi bi-x-circle m-2'/>Cancel</Button>
+                                            <Button onClick={() => this.showRemoveModal(false)}><span className='bi bi-x-circle m-2'/>Cancel</Button>
                                             <Button variant="danger" onClick={this.removeDataset}><span className='bi bi-trash m-2'/>Remove</Button>
                                         </Modal.Footer>
                                     </Modal>

@@ -5,7 +5,7 @@ import { Col } from 'react-bootstrap';
 import { FetchPCA } from '../../../api';
 import chroma from "chroma-js";
 
-const variables = require("../../../static/tableRows.json")
+import variables from "../../../static/tableRows.json";
 
 
 interface Props {
@@ -29,7 +29,7 @@ interface State {
 }
 
 /**
- * Main Scatterplot Component
+ * PCA info plot components
  */
 class PCAPlot extends Component<Props, State> {
 	constructor(props: any){
@@ -63,7 +63,14 @@ class PCAPlot extends Component<Props, State> {
 		
 	}
 
-	componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<any>, snapshot?: any): void {
+
+	/**
+	 * React call on component update
+	 * @param prevProps previous Props
+	 * @param prevState previous State
+	 */
+	componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<any>): void {
+		// Load new PCA data, if dataset has changed
 		if (prevProps.dataset_id !== this.props.dataset_id) {
 			if (this.props.dataset_id !== -1) {
 				FetchPCA(this.props.base_url, this.props.dataset_id)
@@ -75,6 +82,7 @@ class PCAPlot extends Component<Props, State> {
 			}
 		}
 
+		// sync to main scatterplot
 		if (prevProps.camera !== this.props.camera && this.state.sync_camera) {
 			this.setState({camera: this.props.camera}, () => {
 				this.setState({figure: this.build_plot()})
@@ -86,24 +94,20 @@ class PCAPlot extends Component<Props, State> {
 		}
 	}
 
-	setVar(var_id: string){
+	/**
+	 * Set the currently selected variable from all PCA vars
+	 * @param var_id name of variable
+	 * @returns 
+	 */
+	setVar(var_id: string): void{
 		for (const variable of variables) {
 			const re = new RegExp(variable.value + ".*");
 			if (variable.value === var_id || re.test(var_id)) {
+				// @ts-ignore
 				return this.setState({selected_var: var_id, selected_label: variable.label, selected_verbose: variable.tooltip})
 			}
 		}
 		
-	}
-
-	/**
-	 * This fixes a problem where some interactions reset the camera.
-	 * Manually updating the uirevision state blocks plot resets
-	 * @returns True (as required by OnLegendClick() => )
-	 */
-	lock_uirevision(){
-		this.setState({ ui_revision: "true" })
-		return(true)
 	}
 
 	/**
@@ -112,7 +116,6 @@ class PCAPlot extends Component<Props, State> {
 	 * @returns list of traces
 	 */
 	transformData (data: any[]) {
-
 		// Avoid NoneType Exceptions
 		if (data == null) {
 			return []
@@ -120,7 +123,6 @@ class PCAPlot extends Component<Props, State> {
 
 		// holds all plot traces
 		const traces: any[] = []
-
 		const my_scale = chroma.scale('Spectral');
 
 		if (data.length !== 0) {
@@ -213,8 +215,6 @@ class PCAPlot extends Component<Props, State> {
 			}
 
 		}
-
-		
 		return traces
 	}
 
@@ -237,8 +237,7 @@ class PCAPlot extends Component<Props, State> {
 						legend: {itemsizing: 'constant', tracegroupgap: 1, itemclick: false, itemdoubleclick: false},
 						}}
 					useResizeHandler = {true}
-    				style = {{width: "100%", minHeight: 600}}
-					//onLegendClick={(e: any) => this.lock_uirevision()}
+					style = {{width: "100%", minHeight: 600}}
 					config={{scrollZoom: true}}
 					className='mt-2'
 					onClick={(e: any) => this.setVar(e.points[0].data.customdata[0])}
@@ -246,14 +245,24 @@ class PCAPlot extends Component<Props, State> {
 			)
 	}
 
+	/**
+	 * Toogle arrow tips visibility
+	 */
 	toggleArrows = () => {
 		this.setState({arrows_on: !this.state.arrows_on})
 	}
 
+	/**
+	 * Toggle camera sync
+	 */
 	toggleSync = () => {
 		this.setState({sync_camera: !this.state.sync_camera})
 	}
 
+	/**
+	 * Update current camera settings
+	 * @param camera plotly camera
+	 */
 	updateCamera = (camera: any) => {
 		this.setState({camera: camera})
 	}

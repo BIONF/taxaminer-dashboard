@@ -101,7 +101,6 @@ def upload_file():
 @app.route('/data/path', methods=['PUT'])
 @cross_origin()
 def add_path():
-    query_parameters = request.args
     payload = request.get_json()
     path = payload['path']
     name = payload['name']
@@ -122,6 +121,7 @@ def add_path():
 @app.route('/data/verify_path', methods=['GET'])
 @cross_origin()
 def verify_path():
+    """Verify that a path leads to a valid taXaminer output"""
     query_parameters = request.args
     my_path = query_parameters.get("path")
 
@@ -133,6 +133,7 @@ def verify_path():
 @app.route('/api/v1/data/remove', methods=['GET'])
 @cross_origin()
 def remove_datasets():
+    """Remove a dataset dir"""
     query_parameters = request.args
     my_id = query_parameters.get("id")
     my_dir = file_io.get_baseurl(my_id)
@@ -226,7 +227,7 @@ def amino_acid_seq():
     my_id = int(my_id)
     my_dir = file_io.get_baseurl(int(my_id))
 
-    seq = file_io.fast_fasta_loader(f"./datasets/{my_dir}/proteins.faa", fasta_id)
+    seq = file_io.fasta_loader(f"./datasets/{my_dir}/proteins.faa", fasta_id)
 
     # add newlines for formatting, this should be replaced by React code later
     every = 60
@@ -318,7 +319,7 @@ def download_fasta():
 
     # load requested sequences
     for gene in genes:
-        sequences.append(">" + gene + '\n' + file_io.fast_fasta_loader(f"./datasets/{my_dir}/proteins.faa", gene))
+        sequences.append(">" + gene + '\n' + file_io.fasta_loader(f"./datasets/{my_dir}/proteins.faa", gene))
 
     response_text = "\n".join(sequences)
 
