@@ -319,7 +319,7 @@ def download_fasta():
 
     # load requested sequences
     for gene in genes:
-        sequences.append(">" + gene + '\n' + file_io.fasta_loader(f"./datasets/{my_dir}/proteins.faa", gene))
+        sequences.append(f">{gene['fasta_header']}\n" + file_io.fasta_loader(f"./datasets/{my_dir}/proteins.faa", gene['fasta_header']))
 
     response_text = "\n".join(sequences)
 

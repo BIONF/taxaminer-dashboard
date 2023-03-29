@@ -11,15 +11,35 @@ FILES = [("taxonomic_hits.txt", "/taxonomic_hits.txt"),
         ("pca_loadings.csv", "/PCA/contribution_of_variables.csv")]
 
 def get_baseurl(my_id):
+    """
+    Get the basepath of a dataset
+    """
     my_id = int(my_id)
-    return os.listdir("./datasets")[my_id - 1]
+    valid_folders = []
+
+    for file in os.listdir("./datasets"):
+        obj = os.path.join("./datasets", file)
+        if os.path.isdir(obj):
+            valid_folders.append(file)
+
+    return valid_folders[my_id - 1]
 
 def load_dataset_folders():
+    """
+    Generate an index of datasets
+    """
     datasets = []
-    for i, file in enumerate(os.listdir("./datasets")):
+    valid_folders = []
+
+    # filter for directories => e.g. .DS_Store must be excluded
+    for file in os.listdir("./datasets"):
         obj = os.path.join("./datasets", file)
-        if os.path.isdir(obj) and file != "README.md":
-            datasets.append({'id': i + 1, 'title': str(obj).replace("./datasets", "").replace("\\", "")})
+        if os.path.isdir(obj):
+            valid_folders.append(obj)
+
+    for i, file in enumerate(valid_folders):
+        datasets.append({'id': i + 1, 'title': str(file).replace("./datasets", "").replace("\\", "")})
+
     return datasets
 
 def validate_path(my_path):
@@ -84,7 +104,7 @@ def fasta_loader(path, fasta_id):
             lines[i] = line.rstrip()
 
     for i, line in enumerate(lines):
-        if line.startswith(">" + fasta_id) or line.startswith(">" + fasta_id.replace("gene-", "")) or line.startswith(">" + fasta_id.replace("rna-", "")):
+        if line.startswith(">" + fasta_id):
             start_index = i
             break
 
@@ -147,7 +167,6 @@ def parse_user_config(dataset_id):
 def write_user_config(json_data, dataset_id):
     """Write user config to disk"""
     base_path = get_baseurl(dataset_id)
-    print(base_path)
     with open(f"./datasets/{base_path}/user.json", 'w') as json_file:
         json.dump(json_data, json_file)
 

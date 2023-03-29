@@ -60,7 +60,7 @@ You may use `Ctrl+C` in your original terminal to kill both processes and shutdo
 # Compatibility
 
 ## taXaminer datasets
-This version of the taXaminer-dashboard incorporates the changes v0.07.0 of taXaminer (https://github.com/BIONF/taXaminer/releases/tag/v0.7.1). If any problems arise please open a new issue using the label [compatibitlity](https://github.com/BIONF/taxaminer-dashboard/labels/compatibility).
+This version of the taXaminer-dashboard incorporates the changes v0.7.1 of taXaminer (https://github.com/BIONF/taXaminer/releases/tag/v0.7.1). If any problems arise please open a new issue using the label [compatibitlity](https://github.com/BIONF/taxaminer-dashboard/labels/compatibility).
 
 ## Browser compatibility
 This tool is developed and tested on the following browsers:
