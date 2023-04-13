@@ -11,7 +11,7 @@ conda install python=3.8 pip -y
 pip install flask flask-cors
 
 # setup node
-conda install nodejs -y
+conda install nodejs=18.14.0 -y
 cd react-frontend
 npm install --legacy-peer-deps
 npm run build
