@@ -77,6 +77,7 @@ interface Props {
 
 	// backward compatibility
 	gene_order_supported: boolean
+	dim_string: string
 }
 
 interface State {
@@ -405,17 +406,17 @@ class Scatter3D extends Component<Props, State> {
 
 				// filter by e-value
 				if(parseFloat(each['bh_evalue']) < this.props.e_value && c_match) {
-					x.push(each['PC_1'])
-					y.push(each['PC_2'])
-					z.push(each['PC_3'])
+					x.push(each[`${this.props.dim_string}1`])
+					y.push(each[`${this.props.dim_string}2`])
+					z.push(each[`${this.props.dim_string}3`])
 					my_customdata.push([each['plot_label'], each['g_name'], each['best_hit'], each['bh_evalue'], each['taxon_assignment'], each['c_name']])
 					occurrences[label as keyof typeof occurrences] = occurrences[label as keyof typeof occurrences] + 1
 				} 
 				// Include unassigned data points (which usually don't have an e-value)
 				else if(each['plot_label'] === 'Unassigned' && c_match && this.props.show_unassigned) {
-					x.push(each['PC_1'])
-					y.push(each['PC_2'])
-					z.push(each['PC_3'])
+					x.push(each[`${this.props.dim_string}1`])
+					y.push(each[`${this.props.dim_string}2`])
+					z.push(each[`${this.props.dim_string}3`])
 					my_customdata.push([each['plot_label'], each['g_name'], each['best_hit'], each['bh_evalue'], each['taxon_assignment'], each['c_name']])
 					occurrences[label as keyof typeof occurrences] = occurrences[label as keyof typeof occurrences] + 1
 				} else {
@@ -605,9 +606,9 @@ class Scatter3D extends Component<Props, State> {
 				if (gene === undefined) {
 					continue
 				}
-				gene_order_x.push(gene['PC_1'])
-				gene_order_y.push(gene['PC_2'])
-				gene_order_z.push(gene['PC_3'])
+				gene_order_x.push(gene[`${this.props.dim_string}1`])
+				gene_order_y.push(gene[`${this.props.dim_string}2`])
+				gene_order_z.push(gene[`${this.props.dim_string}3`])
 				neighbouring_custom_data.push([gene['plot_label'], gene['g_name'], gene['best_hit'], gene['bh_evalue'], gene['taxon_assignment'], gene['c_name']])
 			}
 

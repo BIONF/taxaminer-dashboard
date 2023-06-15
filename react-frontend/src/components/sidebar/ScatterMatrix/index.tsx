@@ -13,6 +13,9 @@ interface Props {
 	scatterPoints: any[]
 	g_searched: string[]
 	c_searched: string[]
+
+	// backwards compatibilities
+	dim_string: string
 }
 
 /**
@@ -147,17 +150,17 @@ class ScatterMatrix extends Component<Props, any> {
 				
                 // filter by e-value
 				if(parseFloat(each['bh_evalue']) < this.props.e_value) {
-					x.push(each['PC_1'])
-					y.push(each['PC_2'])
-					z.push(each['PC_3'])
+					x.push(each[`${this.props.dim_string}1`])
+					y.push(each[`${this.props.dim_string}2`])
+					z.push(each[`${this.props.dim_string}3`])
 					label = each['plot_label']
 					gene_names.push(each['g_name'])
 				} 
 				// Include unassigned data points (which usually don't have a e-value)
 				else if(this.props.show_unassigned === true && each['plot_label'] === 'Unassigned') {
-					x.push(each['PC_1'])
-					y.push(each['PC_2'])
-					z.push(each['PC_3'])
+					x.push(each[`${this.props.dim_string}1`])
+					y.push(each[`${this.props.dim_string}2`])
+					z.push(each[`${this.props.dim_string}3`])
 					label = each['plot_label']
 					gene_names.push(each['g_name'])
 				} else {

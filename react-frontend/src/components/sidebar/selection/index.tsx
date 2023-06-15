@@ -7,7 +7,7 @@ import Col from "react-bootstrap/esm/Col";
 import Accordion from 'react-bootstrap/Accordion';
 import Button from 'react-bootstrap/Button';
 import CustomOutput from './custom_output';
-import { Badge, Modal, OverlayTrigger, Tab, Tabs, Tooltip } from 'react-bootstrap';
+import { Alert, Badge, Modal, OverlayTrigger, Placeholder, Tab, Tabs, Tooltip } from 'react-bootstrap';
 import MultiSelectFields from './MultiSelectFields'
 
 // dictionary
@@ -16,9 +16,13 @@ import fields_glossary from "./field_options.json";
 interface Props {
   base_url: string
   row: any
+
   aa_seq: string
+  aa_key: string
+
   passCustomFields: (fields: any) => void
   is_loading: boolean
+  is_updating: boolean
   dataset_id: number
   gene_pos_supported: boolean
 }
@@ -51,19 +55,18 @@ class SelectionView extends React.Component<Props, State> {
 	componentDidMount() {
     if (this.props.dataset_id !== -1) {
       const endpoint = `http://${this.props.base_url}:5500/api/v1/data/userconfig?dataset_id=${this.props.dataset_id}`;
-		fetch(endpoint)
-		.then(response => response.json())
-		.then(data => {
-          // catch networking errors
-          if (data === undefined) {
-            data = []
-          }
-		this.setState( {custom_fields: data.custom_fields, has_loaded: true} )
+      fetch(endpoint)
+      .then(response => response.json())
+      .then(data => {
+        // catch networking errors
+        if (data === undefined) {
+          data = []
+        }
+        this.setState( {custom_fields: data.custom_fields, has_loaded: true} )
 
         // Update globally
         this.props.passCustomFields(data.custom_fields)
-		}
-      )
+      })
     }
 	}
 
@@ -375,14 +378,36 @@ class SelectionView extends React.Component<Props, State> {
                     <Accordion.Item eventKey="0">
                       <Accordion.Header>Amino Acid Sequence</Accordion.Header>
                         <Accordion.Body>
-                          
-                          <div className='md-2'>
-                          <pre className='pre-scrollable m-2'>
-                            <code>
-                            {this.props.aa_seq}
-                            </code>
-                          </pre>
-                        </div>
+                          { 
+                            this.props.aa_seq === "" && 
+                            <Alert variant="danger">
+                              <Alert.Heading>Oh snap! There is nothing here!</Alert.Heading>
+                              <p>
+                                We are trying to find a FASTA entry with the key stored in the column <i>{this.props.aa_key}</i>, 
+                                which currently has the value of <b>{this.props.row[this.props.aa_key]}</b>. <br/>
+                                <br/>
+                                Please check that your <i>proteins.faa</i> file is stored correctly and readable. If this does not
+                                solve the problem, please ensure that the FASTA ID formatting matches the formatting of the one ID displayed above.
+                              </p>
+                            </Alert>
+                          }
+                          { !this.props.is_updating && 
+                            <div className='md-2'>
+                            <pre className='pre-scrollable m-2'>
+                              <code>
+                              {this.props.aa_seq}
+                              </code>
+                            </pre>
+                            </div>
+                          }
+                          {
+                            this.props.is_updating &&
+                            <Placeholder as="p" animation="glow">
+                              <Placeholder xs={8}/>
+                              <Placeholder xs={6}/>
+                              <Placeholder xs={12}/>
+                            </Placeholder>
+                          }
                     </Accordion.Body>
                   </Accordion.Item>   
                 </Accordion>

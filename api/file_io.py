@@ -79,8 +79,6 @@ def convert_csv_to_json(path):
         labeled_dict = dict()
 
         for row in csv_reader:
-            if "protID" in row.keys():
-                row['fasta_header'] = row['protID']
             if row['plot_label'] in labeled_dict.keys():
                 labeled_dict[row['plot_label']].append(row)
             else:
@@ -93,11 +91,12 @@ def convert_csv_to_json(path):
     return traces_list
 
 
-def fasta_loader(path, fasta_id):
+def fasta_loader(path, fasta_id: str):
     """Load fasta sequence data"""
     seq = ""
     start_index = -1
 
+    fasta_id = fasta_id.strip()
     with open(path, "r") as f:
         lines = f.readlines()
         for i, line in enumerate(lines):

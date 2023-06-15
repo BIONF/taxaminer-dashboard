@@ -48,9 +48,13 @@ interface State {
     cooldown: boolean
     brightness: string
 
+    is_updating: boolean
+
     // Backward compatibility
     gene_order_supported: boolean
     gene_pos_supported: boolean
+    dim_string: string
+    fasta_col: string
 }
   
 
@@ -81,7 +85,10 @@ class TaxaminerDashboard extends React.Component<Props, State> {
             brightness: "",
             gene_order_supported: true,
             gene_pos_supported: true,
-            g_searched: []
+            g_searched: [],
+            dim_string: "PC_",
+            fasta_col: "fasta_header",
+            is_updating: false
         }
 
         // Bind functions passing data from child objects to local context
@@ -114,6 +121,19 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                     }
                     const first_row = main_data[Object.keys(main_data)[0]]
                     this.setState({data: main_data, gene_order_supported:  Object.prototype.hasOwnProperty.call(first_row, 'upstream_gene'), gene_pos_supported: Object.prototype.hasOwnProperty.call(first_row, 'end')})
+                    
+                    // Make backwards compatible
+                    if(Object.prototype.hasOwnProperty.call(first_row, "Dim.1") && this.state.dim_string === "PC_") {
+                        this.setState({dim_string: "Dim."})
+                    } else if(Object.prototype.hasOwnProperty.call(first_row, "PC_1") && this.state.dim_string === "Dim.") {
+                        this.setState({dim_string: "PC_"})
+                    }
+
+                    if (Object.prototype.hasOwnProperty.call(first_row, "protID")) {
+                        this.setState({fasta_col: "protID"})
+                    } else {
+                        this.setState({fasta_col: "fasta_header"})
+                    }
 
                     // Load user selection
                     getUserSelection(this.props.base_url, id)
@@ -176,6 +196,8 @@ class TaxaminerDashboard extends React.Component<Props, State> {
      * @param new_seq 
      */
     handleDataClick(keys: string[]) {
+        this.setState({is_updating: true})
+
         const new_row = this.state.data[keys[0]];
         if (new_row !== undefined) {
             this.setState({selected_row: this.state.data[keys[0]]});
@@ -202,13 +224,14 @@ class TaxaminerDashboard extends React.Component<Props, State> {
         }
 
         // update fasta data
-        fetchFasta(this.props.base_url, this.state.dataset_id, new_row.fasta_header)
+        fetchFasta(this.props.base_url, this.state.dataset_id, this.state.data[keys[0]][this.state.fasta_col])
         .then(data => {
             this.setState( {aa_seq: data} )
         })
 
         // save selection
         setSelection(this.props.base_url, this.state.dataset_id, this.state.selected_data)
+        this.setState({is_updating: false})
     }
 
     /**
@@ -326,7 +349,8 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                     passScatterData={this.shareScatterData}
                     filters={this.state.filters}
                     selected_row={this.state.selected_row}
-                    gene_order_supported={this.state.gene_order_supported}/>
+                    gene_order_supported={this.state.gene_order_supported}
+                    dim_string={this.state.dim_string}/>
                 </Col>
                 <Col>
                      <Tabs>
@@ -341,8 +365,10 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                             base_url={this.props.base_url}
                             row={this.state.selected_row}
                             aa_seq={this.state.aa_seq}
+                            aa_key={this.state.fasta_col}
                             passCustomFields={this.setCustomFields}
                             is_loading={this.state.is_loading}
+                            is_updating={this.state.is_updating}
                             gene_pos_supported={this.state.gene_pos_supported}/>
                         </Tab>
                         <Tab eventKey="Filter" title="Filters">
@@ -379,6 +405,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                                 dataset_id={this.state.dataset_id}
                                 g_searched={this.state.filters.g_searched}
                                 c_searched={this.state.filters.c_searched}
+                                dim_string={this.state.dim_string}
                                 />
                         </Tab>
                         <Tab eventKey="PCA" title="PCA">
