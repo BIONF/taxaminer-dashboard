@@ -18,7 +18,7 @@ class TopBar extends React.Component<Props, any> {
             <Container fluid>
             <Navbar.Brand>
                     <img
-                        src="/logo_white.png"
+                        src={require("./logo_white.png")}
                         width="80"
                         height="60"
                         className="d-inline-block align-bottom"

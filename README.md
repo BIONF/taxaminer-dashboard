@@ -4,12 +4,14 @@
 The program contained in this repository provides a interactive representation of the output of [taXaminer](https://github.com/BIONF/taXaminer).
 
 # Installation
-## Download
+## Installing from a bundle
+We use [electron](https://www.electronjs.org/de/) and [pyinstaller](https://pyinstaller.org/en/stable/) to bundle the taXaminer-dashboard. Check whether a bundled installer for your OS is available in the [Releases section](https://github.com/BIONF/taxaminer-dashboard/releases). you can find more information on bundling for your own build targets on the dedicated [wiki page](https://github.com/BIONF/taxaminer-dashboard/wiki/Bundling-the-dashboard-using-electron). 
+## Installation from source
+First, pull this GitHub repository:
 `git clone https://github.com/BIONF/taxaminer-dashboard.git`
 
 **Please note:** The dashboard is being developed parallel to taXaminer. Refer to section [Compatibility](##compatibility) to check if your output files are compatible.
 
-# Installation
 The dashboard is optimized for Linux / Unix operation system and MacOS. Bash scripts are provided for the installation and execution. Manual installation on Windows is possible but, if possible, consider installing the dashboard on the Windows subsystem for Linux (WSL) instead.
 
 This tool requires [conda](conda.io) to install dependencies. Simply make `install.sh` executable (`chmod +x install.sh`) and run it `./install.sh`.

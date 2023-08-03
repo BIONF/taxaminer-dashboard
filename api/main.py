@@ -326,5 +326,16 @@ def download_fasta():
     # API answer
     return Response(response_text, mimetype="text", headers={"Content-disposition": "attachment; filename=myplot.csv"})
 
+
+@app.route("/pid", methods=['GET'])
+@cross_origin()
+def exit_api():
+    my_pid = os.getppid()
+    return {"pid": my_pid}
+   
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5500)
+    try:
+        app.run(host="0.0.0.0", port=5500)
+    except SyntaxError as msg:
+        print("...")

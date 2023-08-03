@@ -10,6 +10,11 @@
 
 # production
 /build
+/dist
+/api_dist
+
+# electron
+/out
 
 # misc
 .DS_Store

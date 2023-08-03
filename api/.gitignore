@@ -3,5 +3,8 @@
 /sample_data/*
 /datasets/*
 /temp/*
+/build
+/dist
 !/temp/README.md
 !/datasets/README.md
+main.spec
