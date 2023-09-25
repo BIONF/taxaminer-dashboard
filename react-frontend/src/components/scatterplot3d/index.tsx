@@ -8,6 +8,7 @@ import Select from 'react-select';
 import chroma from 'chroma-js';
 
 import colors from "./colors.json";
+import FadeIn from "react-fade-in";
 
 /**
  * Added menu buttons (auto-rotate)
@@ -103,8 +104,10 @@ interface State {
 	hoverTemplate: string
 	camera: any
 	starsign_steps: number
+	frozen_starsign_gene: string
 	opacity: number
 	trace_order: string[]
+	gene_plot_data: any[]
 }
 
 /**
@@ -137,7 +140,9 @@ class Scatter3D extends Component<Props, State> {
 			camera: {},
 			starsign_steps: 0,
 			opacity: 1,
-			trace_order: []
+			trace_order: [],
+			gene_plot_data : [],
+			frozen_starsign_gene: ""
 		}
         this.sendClick = this.sendClick.bind(this);
 
@@ -211,7 +216,10 @@ class Scatter3D extends Component<Props, State> {
 			return true
 		}
 		// If neighbouring genes is enabled => click event requires re-render
-		if ((nextProps.selected_row !== this.props.selected_row || nextState.starsign_steps !== this.state.starsign_steps)  && this.state.starsign_steps > 0) {
+		if ((nextProps.selected_row !== this.props.selected_row || nextState.starsign_steps !== this.state.starsign_steps)  && nextState.starsign_steps >= 0) {
+			return true
+		}
+		if (nextState.frozen_starsign_gene != this.state.frozen_starsign_gene) {
 			return true
 		}
 		return false
@@ -558,6 +566,12 @@ class Scatter3D extends Component<Props, State> {
 		}
 		
 		// Apply continous color palette
+		interface color_dict {
+			[key: string]: string | undefined
+		}
+
+		// Stores the color assigned to a gene in the scatterplot
+		const my_color_dict : color_dict = {};
 		if (this.state.color_palette === "spectrum") {
 			for (let i=0; i < traces.length; i++) {
 				if (traces[i].name === "Search results") {
@@ -565,6 +579,7 @@ class Scatter3D extends Component<Props, State> {
 				}
 				// @ts-ignore
 				traces[i]['marker']['color'] = my_scale(i/traces.length).saturate(3).hex()
+				my_color_dict[traces[i].text as string] = my_scale(i/traces.length).saturate(3).hex()
 				if (doubleclicked) {
 					if (i !== doubleclicked) {
 						traces[i]['visible'] = "legendonly"
@@ -582,7 +597,11 @@ class Scatter3D extends Component<Props, State> {
 			const gene_order_z : number[] = [];
 
 			const ordered_genes = []
-			ordered_genes.push(this.props.selected_row)
+			if (this.state.frozen_starsign_gene != "") {
+				ordered_genes.push(this.state.frozen_starsign_gene)
+			} else {
+				ordered_genes.push(this.props.selected_row)
+			}
 
 			// Create an ordered array reflecting gene order
 			for (let i=0; i < this.state.starsign_steps; i++){
@@ -601,6 +620,139 @@ class Scatter3D extends Component<Props, State> {
 				
 			}
 
+			// Create an ordered array reflecting gene order
+			const all_genes_ordered = []
+			let center_gene: any = {start: 0}
+			if (this.state.frozen_starsign_gene != "") {
+				center_gene = this.state.frozen_starsign_gene
+			} else {
+				center_gene = this.props.selected_row
+			}
+			all_genes_ordered.push(center_gene)
+			
+			for (let i=0; i < this.state.starsign_steps; i++){
+				if (all_genes_ordered[0].upstream_gene !== "") {
+					const next_gene: any = this.props.main_data[all_genes_ordered[0].upstream_gene]
+					if (next_gene.c_name === all_genes_ordered[0].c_name) {
+						if (parseInt(all_genes_ordered[0].start) - parseInt(next_gene.end) > 5) {
+							all_genes_ordered.unshift({
+								"g_len": parseInt(all_genes_ordered[0].start) - parseInt(next_gene.end),
+								"g_name": "Intergenic",
+							})
+						}
+						all_genes_ordered.unshift(next_gene)
+					}
+				}
+				if (all_genes_ordered[all_genes_ordered.length - 1].downstream_gene !== "") {
+					const next_gene: any = this.props.main_data[all_genes_ordered[all_genes_ordered.length - 1].downstream_gene]
+					if (next_gene.c_name === all_genes_ordered[all_genes_ordered.length - 1].c_name) {
+						if (parseInt(next_gene.start) - parseInt(all_genes_ordered[all_genes_ordered.length - 1].end) > 5) {
+							
+							all_genes_ordered.push({
+								"g_len": parseInt(next_gene.start) - parseInt(all_genes_ordered[all_genes_ordered.length - 1].end),
+								"g_name": "Intergenic",
+							})
+						}
+						all_genes_ordered.push(next_gene)
+					}
+				}
+
+				if (all_genes_ordered[0].upstream_gene == "" && all_genes_ordered[all_genes_ordered.length - 1].downstream_gene == "") {
+					break
+				}
+			}
+
+			const gene_plot_traces = []
+			const gene_plot_hover_template = "%{customdata[1]}:%{customdata[2]}-%{customdata[3]}<br>Best hit: %{customdata[4]} <br> e-value: %{customdata[5]}"
+			const e_value_x = []
+			const e_value_y =[]
+			let curr_stack_pos = 0
+			for (const gene of all_genes_ordered) {
+				let marker = {}
+				let next_hover_template = gene_plot_hover_template
+				if (gene.g_name == "Intergenic") {
+					marker = {
+						color: "rgb(128,128,128)", // grey
+						opacity: 0,
+						pattern: {
+							shape: "/",
+						},
+					}
+					// Disable additional hoverdata for intergenic regions
+					next_hover_template = "(region)"
+				} else if(gene.g_name == this.props.selected_row.g_name) {
+					marker = {
+						color: "rgb(105,105,105)", //grey
+						line: {
+							color:  "black",
+							width: 1.5
+						},
+						pattern: {
+							shape: '/',
+							fgcolor: "black",
+							bgcolor: my_color_dict[gene.plot_label]
+						},
+					}
+					if (gene.bh_evalue != "") {
+						if(parseFloat(gene.bh_evalue) != 0) {
+							e_value_y.push(parseFloat(gene.bh_evalue))
+							e_value_x.push(curr_stack_pos + 0.5 * gene.g_len);
+						}
+					}
+				} else {
+					marker = {
+						// Match the color to the color used in the 3D scatterplot
+						color: my_color_dict[gene.plot_label],
+						opacity: 1.0,
+						line: {
+							color:  "black",
+							width: 1.5
+						}
+					}
+					if (gene.bh_evalue != "") {
+						if(parseFloat(gene.bh_evalue) != 0) {
+							e_value_y.push(parseFloat(gene.bh_evalue))
+							e_value_x.push(curr_stack_pos + 0.5 * gene.g_len);
+						}
+					}
+				}
+
+				const new_trace = {
+					x: [gene.g_len],
+					y: [''],
+					name: gene.g_name,
+					orientation: 'h',
+					type: 'bar',
+					marker: marker,
+					// Hoverdata: Customdata[0] is passed in clicl events --> do not remove
+					customdata: [[gene.g_name, gene.c_name, gene.start, gene.end, gene.best_hit, gene.bh_evalue]],
+					hovertemplate: next_hover_template
+				};
+				gene_plot_traces.push(new_trace);
+				curr_stack_pos += parseInt(gene.g_len)
+			}
+			
+			// e-value scatter trace
+			const e_value_customdata = []
+			for (const e_value of e_value_y) {
+				e_value_customdata.push([e_value])
+			}
+			gene_plot_traces.push({
+				name: "e-value",
+				x: e_value_x,
+				y: e_value_y,
+				type: "scatter",
+				yaxis: 'y2',
+				mode: 'lines+markers',
+				line: {
+					dash: 'dashdot',
+					color: "black",
+				},
+				customdata: e_value_customdata,
+				hovertemplate: "%{customdata[0]}"
+			})
+			this.setState({gene_plot_data: gene_plot_traces});
+
 			const neighbouring_custom_data = []
 			for (const gene of ordered_genes) {
 				if (gene === undefined) {
@@ -615,15 +767,19 @@ class Scatter3D extends Component<Props, State> {
 			// Create lines connecting neighbouring genes
 			const order_trace: any = {
 				type: 'scatter3d',
-				mode: 'lines',
+				mode: 'lines+markers',
 				name: "Neighbouring genes",
-				width: 10,
 				x: gene_order_x,
 				y: gene_order_y,
 				z: gene_order_z,
 				line: {
 					color: 'black',
-					width: 6
+					width: this.state.marker_size,
+				},
+				marker: {
+					color: 'black',
+					size: this.state.marker_size,
+					symbol: "diamond"
 				},
 				hoverinfo: 'skip'
 			}
@@ -693,6 +849,13 @@ class Scatter3D extends Component<Props, State> {
 		this.props.sendClick(Array.from(final_selection))
 	}
 
+	freezeStarsign(gene: any) : void {
+		this.setState({frozen_starsign_gene: gene})
+		if (this.state.frozen_starsign_gene != "") {
+			this.setState({frozen_starsign_gene: ""})
+		}
+	}
+
 	/**
 	 * Render react component
 	 * @returns render react component
@@ -710,11 +873,38 @@ class Scatter3D extends Component<Props, State> {
 				onClick={(e: any) => this.sendClick(e.points[0].customdata[1])}
 				onRelayout={(e: any) => this.passCameraData(e)}
 				useResizeHandler = {true}
-				style = {{width: "100%", minHeight: 800}}
+				style = {{width: "100%", minHeight: 750}}
 				onRestyle={(e: any) => this.updateLegendSelection(e)}
 				revision={this.state.revision}
 				onUpdate={(figure) => this.setState({figure: figure})}
 				/>
+				{this.state.starsign_steps > 0 &&
+					<FadeIn transitionDuration={700}>
+						<Plot
+						// @ts-ignore
+						data={this.state.gene_plot_data}
+						layout={{
+							barmode: 'stack',
+							showlegend: false,
+							autosize: true,
+							margin: {l: 100, r: 20, b: 50, t: 30, pad: 5},
+							
+							yaxis2: {
+								anchor: 'x2',
+								overlaying: 'y',
+								ticks: 'outside',
+								tickformat: '.2e',
+								type: "log",
+								autorange:"reversed"
+							},
+						}}
+						style = {{width: "100%", minHeight: 150}}
+						useResizeHandler={true}
+						className='ml-1'
+						onClick={(e: any) => this.sendClick(e.points[0].customdata[0])}
+						/>
+					</FadeIn>
+				}
 				<Row>
                     <Col xs={2}>
 						<Form.Label className='md-2'>Hoverdata</Form.Label>
@@ -729,24 +919,26 @@ class Scatter3D extends Component<Props, State> {
 					<Col xs={1}>
 						<Form.Label className='md-1'>Export</Form.Label>
 						<InputGroup>
-							<Button onClick={() => this.exportVisible()}>View<span className='bi bi-box-arrow-in-right ml-1'/></Button>
+							<Button onClick={() => this.exportVisible()}><span className='bi bi-box-arrow-in-right ml-1'/></Button>
 						</InputGroup>
 					</Col>
-					<Col>
-						<Form.Label className='md-2'>Gene order</Form.Label>
+					<Col xs={3}>
+						<Form.Label className='md-2'>Starsign plot</Form.Label>
 						<InputGroup className="md-2">
 							<Button disabled={!this.props.gene_order_supported} onClick={() => {if(this.state.starsign_steps > 0){this.setState({starsign_steps: this.state.starsign_steps - 1})}}}><span className="bi bi-dash-circle"></span></Button>
 							<Form.Control
 							placeholder="None"
 							contentEditable={false}
 							onChange={() => false}
-							value={`${this.state.starsign_steps} steps`}
+							value={`${this.state.starsign_steps}`}
 							disabled={!this.props.gene_order_supported}
 							/>
 							<Button disabled={!this.props.gene_order_supported} onClick={() => this.setState({starsign_steps: this.state.starsign_steps + 1})}><span className="bi bi-plus-circle"></span></Button>
+							<Button variant='danger' disabled={(!this.props.gene_order_supported || this.state.starsign_steps === 0)} onClick={() => this.setState({starsign_steps: 0})}><span className="bi bi-x-circle"></span></Button>
+							<Button variant={this.state.frozen_starsign_gene === ""  && "success" || "danger"} disabled={!this.props.gene_order_supported} onClick={() => this.freezeStarsign(this.props.selected_row)}><span className="bi bi-snow"></span></Button>
 						</InputGroup>
 					</Col>
-					<Col xs={3}>
+					<Col xs={2}>
 						<Form.Label className='md-2'>Dot size</Form.Label>
 						<InputGroup className="md-2">
 							<Button disabled={this.state.auto_size} onClick={() => {if(this.state.manual_size >= 2){this.set_manual_size(this.state.manual_size - 1)}}}><span className="bi bi-dash-circle"></span></Button>
@@ -757,7 +949,7 @@ class Scatter3D extends Component<Props, State> {
 							value={`${this.state.manual_size} px`}
 							/>
 							<Button disabled={this.state.auto_size} onClick={() => this.set_manual_size(this.state.manual_size + 1)}><span className="bi bi-plus-circle"></span></Button>
-							<Button onClick={() => this.toggle_auto_size()} variant={(this.state.auto_size && "success") || "secondary"}><span className={(this.state.auto_size && "bi bi-lock-fill") || "bi bi-unlock-fill"}></span>Auto</Button>
+							<Button onClick={() => this.toggle_auto_size()} variant={(this.state.auto_size && "success") || "secondary"}><span className={(this.state.auto_size && "bi bi-lock-fill") || "bi bi-unlock-fill"}></span></Button>
 						</InputGroup>
 					</Col>
 					<Col>
