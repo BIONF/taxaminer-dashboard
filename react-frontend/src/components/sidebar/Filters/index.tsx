@@ -92,7 +92,7 @@ class FilterUI extends React.Component<Props, State> {
      * Pass filtered IDs up
      * @param e Edit event of the dropdown selector
      */
-     passContigs(e: any) {
+    passContigs(e: any) {
         const new_keys: string[] = []
         // extract IDs
         e.forEach((element: any) => {
@@ -108,15 +108,15 @@ class FilterUI extends React.Component<Props, State> {
     render() {
         return (
             <>
-            <Search
-            sendClick={this.props.sendClick}
-            passHighlightedGenes={this.props.passNewHighlightedGenes}
-            g_options={this.props.g_options}
-            global_selection={this.props.global_selection}
-            highlightedGenes={this.props.highlightedGenes}
-            highlightMode={this.props.highlightMode}
-            setHighlightMode={this.props.setHighlightMode}
-            />
+                <Search
+                sendClick={this.props.sendClick}
+                passHighlightedGenes={this.props.passNewHighlightedGenes}
+                g_options={this.props.g_options}
+                global_selection={this.props.global_selection}
+                highlightedGenes={this.props.highlightedGenes}
+                highlightMode={this.props.highlightMode}
+                setHighlightMode={this.props.setHighlightMode}
+                />
             <Card className="m-2">
                 <Card.Body>
                     <Card.Title>Filter</Card.Title>

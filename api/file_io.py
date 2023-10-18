@@ -171,7 +171,7 @@ def write_user_config(json_data, dataset_id):
 
 def load_pca_coords(base_path):
     """3D plot of variable contribution"""
-    with open(f"./datasets/{base_path}/pca_loadings.csv", 'r') as file:
+    with open(f"./datasets/{base_path}/contribution_of_variables.csv", 'r') as file:
         lines = file.readlines()
     
     final_lines = []

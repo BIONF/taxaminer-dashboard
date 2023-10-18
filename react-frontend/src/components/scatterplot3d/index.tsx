@@ -526,12 +526,11 @@ class Scatter3D extends Component<Props, State> {
 		const y : string[] = [];
         const z : string[] = [];
         const my_customdata : any = [];
-
 		searched_rows.forEach(each => {
 			// push 3D coordinates in arrays accordingly
-			x.push(each['PC_1'])
-			y.push(each['PC_2'])
-			z.push(each['PC_3'])
+			x.push(each[`${this.props.dim_string}1`])
+			y.push(each[`${this.props.dim_string}2`])
+			z.push(each[`${this.props.dim_string}3`])
 			my_customdata.push([each['plot_label'], each['g_name'], each['best_hit'], each['bh_evalue'], each['taxon_assignment'], each['c_name']])
         })
 

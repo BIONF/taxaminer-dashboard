@@ -111,7 +111,28 @@ class TaxaminerDashboard extends React.Component<Props, State> {
             .then(response => response.json())
             .then(data => {
                 const main_data: { [id: string] : Record<string, never>; } = {};
-                this.setState( {scatterPoints: data}, () => {
+                const plotData = [];
+                for (const chunk of data) {
+                    const chunkData = []
+                    for (const each of chunk) {
+                        chunkData.push({
+                            plot_label: each['plot_label'], 
+                            g_name: each['g_name'],
+                            best_hit: each['best_hit'],
+                            bh_evalue: each['bh_evalue'],
+                            taxon_assignment: each['taxon_assignment'],
+                            c_name: each["c_name"],
+                            "Dim.1": each["Dim.1"],
+                            "Dim.2": each["Dim.2"],
+                            "Dim.3": each["Dim.3"],
+                            "PC_1": each["PC_1"],
+                            "PC_2": each["PC_2"],
+                            "PC_3": each["PC_3"]
+                        })
+                    }
+                    plotData.push(chunkData);
+                }
+                this.setState( {scatterPoints: plotData}, () => {
                     for (const chunk of data) {
                         for (const row of chunk) {
                             const key = row.g_name as string

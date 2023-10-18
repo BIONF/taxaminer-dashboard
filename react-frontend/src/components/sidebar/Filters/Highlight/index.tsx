@@ -2,6 +2,7 @@ import React from "react";
 import { Accordion, Badge, Button, InputGroup, Row } from "react-bootstrap";
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
+import CSVDialogue from "./CSVDialogue";
 
 
 interface Props {
@@ -23,6 +24,7 @@ interface State {
     selected_genes: string[]
     valid_gene: string
     search: string
+    show_csv: boolean
 }
 
 
@@ -39,8 +41,11 @@ class Search extends React.Component<Props, State> {
             selected_genes: [],
             valid_gene: "",
             search: "",
+            show_csv: false
         }
-	}  
+        this.hideCSVModal = this.hideCSVModal.bind(this);
+        this.submitCSVModal = this.submitCSVModal.bind(this);
+	}
 
     /**
      * Handle searchbar inputs
@@ -121,10 +126,23 @@ class Search extends React.Component<Props, State> {
         this.props.setHighlightMode(!this.props.highlightMode)
     }
 
+    showCSVModal() {
+        this.setState({show_csv: true})
+    }
+
+    hideCSVModal() {
+        this.setState({show_csv: false})
+    }
+
+    submitCSVModal(gene_ids: string[]) {
+        this.props.sendClick(gene_ids)
+    }
+
 
     render() {
         return (
             <>
+            {this.state.show_csv && <CSVDialogue passCloseUp={this.hideCSVModal} submitGenes={this.submitCSVModal}/>}
             <Card className="m-2">
                 <Card.Body>
                     <Card.Title>
@@ -173,9 +191,10 @@ class Search extends React.Component<Props, State> {
                     </Row>
                     <Row>
                         <div className="text-center mt-2">
-                            <Button variant="success" className='me-2' disabled={!this.props.highlightMode} onClick={() => this.addGlobalSelection()} >Add from current selection <i className="bi bi-box-arrow-right lg" ></i></Button>
+                            <Button variant="success" className='me-2' disabled={!this.props.highlightMode} onClick={() => this.addGlobalSelection()} >Add from current selection <i className="bi bi-box-arrow-right" ></i></Button>
                             <Button variant="primary" className='me-2' disabled={!this.props.highlightMode} onClick={() => this.applyToGlobalSelection()}>Apply to global selection <i className="bi bi-box-arrow-in-right"></i></Button>
-                            <Button variant="danger" className='md-2' disabled={!this.props.highlightMode} onClick={() => this.resetSearch()}>Reset multi-search <i className="bi bi-trash"></i></Button>
+                            <Button variant="danger" className='me-2' disabled={!this.props.highlightMode} onClick={() => this.resetSearch()}>Reset multi-search <i className="bi bi-trash"></i></Button>
+                            <Button className="me-2" disabled={!this.props.highlightMode} onClick={() => this.showCSVModal()}>Add multiple IDs <i className="bi bi-stack"></i></Button>
                         </div>
                     </Row>
                     

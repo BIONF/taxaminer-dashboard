@@ -67,8 +67,9 @@ def upload_file():
         with zipfile.ZipFile(temp_path, 'r') as zip_ref:
             zip_ref.extractall("./temp/" + file_name + "/")
     elif temp_path.endswith(".tar.gz"):
-        with tarfile.TarFile(temp_path, 'r') as tar_ref:
-            tar_ref.extractall("./temp/" + file_name + "/")
+        tar = tarfile.open(temp_path, "r:gz")
+        tar.extractall("./temp/" + file_name + "/")
+        tar.close()
     
     # copy to dataset folder
     try:
