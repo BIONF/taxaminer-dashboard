@@ -2,7 +2,7 @@
  * DATASET MANAGEMENT
  */
 
-import { DiamondRow } from "./structures";
+import { DiamondRow } from "./interfaces";
 
 
 /**

@@ -71,7 +71,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
             select_mode: 'neutral',
             selected_data: new Set(),
             data: [],
-            scatter_data: { colors: "rainbow", legendonly: []},
+            scatter_data: { colors: {}, legendonly: []},
             e_value: 1.0,
             filters: {e_value: 1.0, show_unassinged: true, c_searched: []},
             g_options: [],

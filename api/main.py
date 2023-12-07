@@ -67,8 +67,9 @@ def upload_file():
         with zipfile.ZipFile(temp_path, 'r') as zip_ref:
             zip_ref.extractall("./temp/" + file_name + "/")
     elif temp_path.endswith(".tar.gz"):
-        with tarfile.TarFile(temp_path, 'r') as tar_ref:
-            tar_ref.extractall("./temp/" + file_name + "/")
+        tar = tarfile.open(temp_path, "r:gz")
+        tar.extractall("./temp/" + file_name + "/")
+        tar.close()
     
     # copy to dataset folder
     try:
@@ -79,9 +80,9 @@ def upload_file():
         os.renames(f"./temp/{file_name}/PCA/contribution_of_variables.csv", f"./datasets/{file_name}/contribution_of_variables.csv")
 
         if keep_zip:
-            os.renames(f"./temp/{file_name}.zip", f"./datasets/{file_name}/{file_name}.zip")
+            os.renames(temp_path, f"./datasets/{file_name}/{file_name}.{file_type}")
         else:
-            os.remove(f"./temp/{file_name}.zip")
+            os.remove(temp_path)
 
         # clean up
         shutil.rmtree("./temp/" + file_name + "/")

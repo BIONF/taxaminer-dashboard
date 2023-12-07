@@ -1,7 +1,5 @@
-import chroma from 'chroma-js';
 import { Component } from 'react';
 import Plot from 'react-plotly.js';
-import colors from "./colors.json";
 
 interface Props {
 	sendClick: (genes: string[]) => void
@@ -22,7 +20,7 @@ interface Props {
  * Main Scatterplot Component
  */
 class ScatterMatrix extends Component<Props, any> {
-	constructor(props: any){
+	constructor(props: Props){
 		super(props);
 		this.state ={ 
 			data: [] , // raw JSON data
@@ -33,9 +31,9 @@ class ScatterMatrix extends Component<Props, any> {
 			auto_size: true, // automatically size dots in scatterplot
 			marker_size: 5, // actual dot size in the plot
 			manual_size: 5, // dot size selected by user
-			color_options: colors.options, // color palette options
 			camera_ratios: {xy: 1.0, xz: 1.0, yz: 1.0},
-			my_plot: undefined
+			my_plot: undefined,
+			color_dict: {}
 		}
         this.sendClick = this.sendClick.bind(this);
 	}
@@ -54,7 +52,10 @@ class ScatterMatrix extends Component<Props, any> {
 			})
 			
 		} else if (prevProps.scatter_data !== this.props.scatter_data){
-			this.setState({my_plot: this.build_plot()})
+			this.setState({color_dict: this.props.scatter_data.colors}, () => {
+				this.setState({my_plot: this.build_plot()})
+			})
+			
 		} else if (prevProps.c_searched !== this.props.c_searched || prevProps.show_unassigned !== this.props.show_unassigned) {
 			this.setState({my_plot: this.build_plot()})
 		}
@@ -120,7 +121,6 @@ class ScatterMatrix extends Component<Props, any> {
 		legendonly.forEach((dot: any) => {
 			legendonly_names.push(dot.text)
 		})
-
 		// Avoid NoneType Exceptions
 		if (data == null) {
 			return []
@@ -195,7 +195,9 @@ class ScatterMatrix extends Component<Props, any> {
 				visible: visible,
 				marker: {
 					size: this.props.scatter_data.marker_size,
-					opacity: this.props.scatter_data.opacity
+					opacity: this.props.scatter_data.opacity,
+					// Copy color distribution from 3D plot
+					color: this.state.color_dict[label]
 				},
 
 				// track the unique gene name
@@ -204,17 +206,6 @@ class ScatterMatrix extends Component<Props, any> {
 			return trace
         })
 		traces.sort(function(a, b){return occurrences[b.text as keyof typeof occurrences] - occurrences[a.text as keyof typeof occurrences]})
-
-		const my_scale = chroma.scale('Spectral');
-		if (this.props.scatter_data.colors === "spectrum") {
-			for (let i =0; i < traces.length; i++) {
-				if (traces[i].name === "Search results") {
-					continue
-				}
-				// @ts-ignore
-				traces[i]['marker']['color'] = my_scale(i/traces.length).saturate(3).hex()
-			}
-		}
 		return traces
 	}
 
@@ -255,7 +246,6 @@ class ScatterMatrix extends Component<Props, any> {
                         yaxis2:this.set_axis(),
                         yaxis3:this.set_axis(),
                         yaxis4:this.set_axis()},
-						colorway : colors.palettes[this.props.scatter_data.colors as keyof typeof colors.palettes]
 						}}
                     style = {{width: "95%", height: "100%", minHeight: 600}}
 

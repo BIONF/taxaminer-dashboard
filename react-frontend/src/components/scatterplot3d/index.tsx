@@ -4,39 +4,13 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Form from 'react-bootstrap/Form';
 import { Button, ButtonGroup, InputGroup } from 'react-bootstrap';
-import Select from 'react-select';
 import chroma from 'chroma-js';
-
-import colors from "./colors.json";
 import FadeIn from "react-fade-in";
 
 /**
  * Added menu buttons (auto-rotate)
  */
-const updatemenus=[
-    {
-        buttons: [
-            {
-                args: [undefined, {
-					frame: {duration: 5},
-					transition: {duration: 0},
-					fromcurrent: true,
-					mode: "immediate"
-				}],
-                label: 'Demo rotation',
-                method: 'animate'
-            },
-        ],
-        direction: 'left',
-        pad: {'r': 10, 't': 10},
-        showactive: true,
-        type: 'buttons',
-        x: 0.1,
-        xanchor: 'left',
-        y: 1.1,
-        yanchor: 'top'
-    }
-]
+const updatemenus=[{}]
 
 /**
  * Set a placeholder layout pointing the user to the dataset card -->
@@ -59,7 +33,10 @@ const default_layout = {
 	updatemenus: updatemenus
 }
 
-const frames: any[] = []
+
+interface color_dict {
+	[key: string]: string | undefined
+}
 
 interface Props {
 	dataset_id: any
@@ -89,7 +66,7 @@ interface State {
 	marker_size: number
 	manual_size: number
 	color_palette: string
-	color_options: any
+	color_dict: color_dict
 	camera_ratios: {xy: number, xz: number, yz: number}
 	legendonly: any[]
 	figure: any
@@ -111,6 +88,27 @@ interface State {
 }
 
 /**
+ * For the x-th item out of n items, generate the appropriate color on a chosen color scale
+ * @param item_pos x
+ * @param max_item_number n
+ * @param color_descriptor One of "spectrum" or "colorblind"
+ * @returns Hex-encoded color code
+ */
+const custom_color_generator = (item_pos: number, max_item_number: number, color_descriptor: string) => {
+	if (color_descriptor == "spectrum") {
+		const my_scale = chroma.scale('Spectral');
+		return my_scale(item_pos/max_item_number).saturate(3).hex()
+	} else if(color_descriptor == "colorblind") {
+		// Map to a flat color scale
+		// Color are defined by https://colorbrewer2.org , the chose scale is coloblind-friendly
+		const my_scale = chroma.brewer.RdYlBu
+		return my_scale[item_pos % my_scale.length]
+	}
+}
+
+const palettes = [{"label": "Spectrum", "value": "spectrum"}, {"label": "Colorblind", "value": "colorblind"}]
+
+/**
  * Main Scatterplot Component
  */
 class Scatter3D extends Component<Props, State> {
@@ -123,11 +121,13 @@ class Scatter3D extends Component<Props, State> {
 			auto_size: true, // automatically size dots in scatterplot
 			marker_size: 5, // actual dot size in the plot
 			manual_size: 5, // dot size selected by user
-			color_palette: "spectrum", // currently selected color palette
-			color_options: colors.options, // color palette options
+
+			/* Coloring */
+			color_palette: "spectrum",
+			color_dict: {},
 			camera_ratios: {xy: 1.0, xz: 1.0, yz: 1.0},
 			legendonly: [],
-			figure: {data: [], layout: default_layout, frames: [], config: {}, scene: {}},
+			figure: {data: [], layout: default_layout, config: {}, scene: {}},
 			is_loading: false,
 			show_hover: true,
 			revision: 1,
@@ -145,18 +145,6 @@ class Scatter3D extends Component<Props, State> {
 			frozen_starsign_gene: ""
 		}
         this.sendClick = this.sendClick.bind(this);
-
-		// calculate frames
-		const angle_step = 2 * Math.PI / 200;
-		const center = {x:0, y:0}
-		for (let i = 0, angle = 0; i < 200; i++, angle += angle_step) {
-			const point = {
-				x: center.x + Math.sin(angle) * 1,
-				y: center.y + Math.cos(angle) * 1,
-				z: 1
-			}
-			frames.push({layout: {"scene.camera.eye" : point}})
-		}
 	}
 	
 	
@@ -200,8 +188,8 @@ class Scatter3D extends Component<Props, State> {
 			return true
 		}
 		// figure config changes => sync to scatter matrix as well
-		if(nextState.color_palette !== this.state.color_palette ||nextState.opacity !== this.state.opacity || nextState.marker_size !== this.state.marker_size || nextState.legendonly !== this.state.legendonly) {
-			this.props.passScatterData({ colors: nextState.color_palette, legendonly: nextState.legendonly, opacity: nextState.opacity, marker_size: nextState.marker_size})
+		if(nextState.color_dict !== this.state.color_dict ||nextState.opacity !== this.state.opacity || nextState.marker_size !== this.state.marker_size || nextState.legendonly !== this.state.legendonly) {
+			this.props.passScatterData({ colors: nextState.color_dict, legendonly: nextState.legendonly, opacity: nextState.opacity, marker_size: nextState.marker_size})
 			return true
 		}
 		// changes of the figure should always raise an update, otherwise user interaction is limited
@@ -385,7 +373,6 @@ class Scatter3D extends Component<Props, State> {
 		if (typeof isolated === "undefined") {
 			isolated = -1
 		}
-		const my_scale = chroma.scale('Spectral');
 		
 		const traces: any[] = []
 		for (let i = 0; i < data.length; i++) {
@@ -566,24 +553,21 @@ class Scatter3D extends Component<Props, State> {
 		}
 		
 		// Apply continous color palette
-		interface color_dict {
-			[key: string]: string | undefined
-		}
+		
 
 		// Stores the color assigned to a gene in the scatterplot
 		const my_color_dict : color_dict = {};
-		if (this.state.color_palette === "spectrum") {
-			for (let i=0; i < traces.length; i++) {
-				if (traces[i].name === "Search results") {
-					continue
-				}
-				// @ts-ignore
-				traces[i]['marker']['color'] = my_scale(i/traces.length).saturate(3).hex()
-				my_color_dict[traces[i].text as string] = my_scale(i/traces.length).saturate(3).hex()
-				if (doubleclicked) {
-					if (i !== doubleclicked) {
-						traces[i]['visible'] = "legendonly"
-					}
+
+		for (let i=0; i < traces.length; i++) {
+			if (traces[i].name === "Search results") {
+				continue
+			}
+			// @ts-ignore
+			traces[i]['marker']['color'] = custom_color_generator(i, traces.length, this.state.color_palette)
+			my_color_dict[traces[i].text as string] = custom_color_generator(i, traces.length, this.state.color_palette)
+			if (doubleclicked) {
+				if (i !== doubleclicked) {
+					traces[i]['visible'] = "legendonly"
 				}
 			}
 		}
@@ -802,7 +786,7 @@ class Scatter3D extends Component<Props, State> {
 			traces.push(order_trace)
 			traces.push(order_stars_trace)
 		}
-		return traces
+		return [traces, my_color_dict];
 	}
 
 	/**
@@ -829,7 +813,7 @@ class Scatter3D extends Component<Props, State> {
 		const new_config = {scrollZoom: true, doubleClickDelay: 2000}
 		const my_scene = this.state.figure.scene
 		// @ts-ignore
-		this.setState({figure: {data: new_data, layout: new_layout, config: new_config, frames: frames}, g_search_len: this.props.g_searched.length, scene: my_scene})
+		this.setState({figure: {data: new_data[0], layout: new_layout, config: new_config}, g_search_len: this.props.g_searched.length, scene: my_scene, color_dict: new_data[1]})
 		return true
 	}
 
@@ -868,7 +852,6 @@ class Scatter3D extends Component<Props, State> {
 				divId='scatter3d'
 				data={this.state.figure.data}
 				layout={this.state.figure.layout}
-				frames= {this.state.figure.frames}
 				config={this.state.figure.layout}
 				onClick={(e: any) => this.sendClick(e.points[0].customdata[1])}
 				onRelayout={(e: any) => this.passCameraData(e)}
@@ -967,12 +950,14 @@ class Scatter3D extends Component<Props, State> {
 					</Col>
 					<Col>
 						<Form.Label>Color Palette</Form.Label>
-						<Select
-						defaultInputValue='Spectrum'
+						<Form.Select
 						defaultValue={"spectrum"}
-						options={this.state.color_options}
-						onChange={(e: any) => this.set_color_palette(e.value)}
-						/>
+						onChange={(e: any) => this.set_color_palette(e.target.value)}
+						>
+							{ palettes.map((each: any) => {
+								return <option value={each.value}>{each.label}</option>
+							})}
+						</Form.Select>
 					</Col>
                 </Row>
 			</div>

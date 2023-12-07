@@ -12,10 +12,11 @@ import MultiSelectFields from './MultiSelectFields'
 
 // dictionary
 import fields_glossary from "./field_options.json";
+import { dictType } from '../../../api/interfaces';
 
 interface Props {
   base_url: string
-  row: any
+  row: dictType
 
   aa_seq: string
   aa_key: string
@@ -244,7 +245,7 @@ class SelectionView extends React.Component<Props, State> {
                     value={this.props.row.g_name}
                     onChange={() => false}
                   />
-                  <Button onClick={() => {navigator.clipboard.writeText(this.props.row.g_name)}}><span className='bi bi-clipboard2'/></Button>
+                  <Button onClick={() => {navigator.clipboard.writeText(this.props.row.g_name as string)}}><span className='bi bi-clipboard2'/></Button>
               </InputGroup>
             </Col>
             <Col md="auto">
@@ -256,7 +257,7 @@ class SelectionView extends React.Component<Props, State> {
                     value={this.props.row.c_name}
                     onChange={() => false}
                   />
-                  <Button onClick={() => {navigator.clipboard.writeText(this.props.row.c_name)}}><span className='bi bi-clipboard2'/></Button>
+                  <Button onClick={() => {navigator.clipboard.writeText(this.props.row.c_name as string)}}><span className='bi bi-clipboard2'/></Button>
                 </InputGroup>
               </Col>
           </Row>
@@ -304,7 +305,7 @@ class SelectionView extends React.Component<Props, State> {
                     />
                     <Button 
                     id="button.ncbi" 
-                    href={'https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=' + this.props.row.best_hitID.toString()}
+                    href={'https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=' + (this.props.row.best_hitID as unknown as number).toString()}
                     target="_blank">
                       <span className="bi bi-box-arrow-up-right"></span>
                     </Button>

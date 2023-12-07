@@ -3,7 +3,7 @@ import BootstrapTable from "react-bootstrap-table-next";
 import paginationFactory from 'react-bootstrap-table2-paginator';
 import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
 
-import { Modal } from 'react-bootstrap';
+import { Alert, Modal } from 'react-bootstrap';
 import { Component } from 'react';
 import { Row, Col } from 'react-bootstrap';
 import Button from 'react-bootstrap/Button';
@@ -14,6 +14,7 @@ import "./customstyle.css"
 import ColumnSelector from "./ColumnSelector";
 import { fetchDiamond } from "../../../api";
 import raw_cols from "./diamond_cols.json";
+import { tableCol } from "../../../api/interfaces";
 
 /**
  * Custom number sorting function for bootstrap-table
@@ -47,7 +48,7 @@ interface State {
     loading: boolean
     custom_fields: any[]
     show_field_modal: boolean
-    active_cols: any[]
+    active_cols: tableCol[]
     is_valid: boolean
 }
 
@@ -79,7 +80,7 @@ class Table extends Component<Props, State> {
     raw_cols = require("./diamond_cols.json")
 
     // these are only initial values
-    columns = [
+    columns: tableCol[] = [
         {
             dataField: "sseqid",
             text: "ID",
@@ -199,10 +200,21 @@ class Table extends Component<Props, State> {
         <>
             <Row>
                 <Col className="text-center">
-                    <Button className="md-2" style={{width: "100%"}} onClick={() => this.showModal(true)}>
+                    <Button className="mt-2" style={{width: "100%"}} onClick={() => this.showModal(true)}>
                         <span className='bi bi-list-ul m-2'/>Change columns
                     </Button>
                 </Col>
+            </Row>
+            <Row>
+                <Col className="text-center">
+                    {
+                    this.props.row.plot_label == "Unassigned" && 
+                    <Alert className="mt-2" variant="warning">
+                        <i className="bi bi-info-circle"></i> This gene was labeled as <b>Unassigned</b>. It's likely that no diamond hits are available.
+                    </Alert>}
+                </Col>
+            </Row>
+            <Row>
                 <Modal show={this.state.show_field_modal} handleClose={() => this.showModal(false)}>
                     <Modal.Header>
                         <Modal.Title>Choose custom fields</Modal.Title>

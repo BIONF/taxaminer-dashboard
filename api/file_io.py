@@ -148,7 +148,7 @@ def load_summary(dir):
     
     return "".join(lines)
 
-def load_user_config(dataset_id):
+def load_user_config(dataset_id) -> str:
     """Load a user config"""
     base_path = get_baseurl(dataset_id)
     with open(f"./datasets/{base_path}/user.json", "r") as file:
@@ -169,10 +169,17 @@ def write_user_config(json_data, dataset_id):
     with open(f"./datasets/{base_path}/user.json", 'w') as json_file:
         json.dump(json_data, json_file)
 
-def load_pca_coords(base_path):
+def load_pca_coords(base_path: str) -> []:
     """3D plot of variable contribution"""
-    with open(f"./datasets/{base_path}/pca_loadings.csv", 'r') as file:
-        lines = file.readlines()
+    lines = []
+    if os.path.isfile(f"./datasets/{base_path}/contribution_of_variables.csv"):
+        with open(f"./datasets/{base_path}/contribution_of_variables.csv", 'r') as file:
+            lines = file.readlines()
+    elif os.path.isfile(f"./datasets/{base_path}/pca_loadings.csv"):
+        with open(f"./datasets/{base_path}/pca_loadings.csv", 'r') as file:
+            lines = file.readlines()
+    else:
+        return []
     
     final_lines = []
     for line in lines[1:-1]:
@@ -186,7 +193,7 @@ def load_pca_coords(base_path):
     
     return final_lines
 
-def indexed_data(path):
+def indexed_data(path) -> dict:
     """Load the main scatterplot datafile and convert it to JSON"""
     with open(path, encoding='utf-8') as csvf:
         # load csv file data using csv library's dictionary reader
@@ -198,4 +205,3 @@ def indexed_data(path):
 
 
     return labeled_dict
-

@@ -13,8 +13,9 @@ pip install flask flask-cors
 # setup node
 conda install -c conda-forge nodejs=18.14.0 -y
 cd react-frontend
-npm install --legacy-peer-deps
-npm run build
+conda install -c conda-forge yarn
+yarn install
+yarn build
 
 # setup directories
 cd ..

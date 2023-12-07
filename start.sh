@@ -34,7 +34,7 @@ fi
 
 if [ "$dev" == 'true' ]; then
     echo "Running in dev mode"
-    npm start --prefix ./react-frontend & cd ./api && python main.py
+    cd ./react-frontend && yarn run start & cd ./api && python main.py
 else
     echo "Running in production mode"
     cd ./react-frontend && npx serve -s build & cd ./api && python main.py
