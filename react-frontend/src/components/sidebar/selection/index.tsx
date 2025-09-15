@@ -236,11 +236,11 @@ class SelectionView extends React.Component<Props, State> {
           <Tabs defaultActiveKey="fields-tab">
             <Tab title="Fields" eventKey="fields-tab">
             <Row>
-            <Col md="auto">
+            <Col xs={5}>
               <InputGroup className="m-2">
                 <InputGroup.Text id="gene-info-name">Gene Name</InputGroup.Text>
                   <Form.Control
-                    placeholder="Selected a Gene to get started"
+                    placeholder="Select a Gene"
                     contentEditable={false}
                     value={this.props.row.g_name}
                     onChange={() => false}
@@ -248,45 +248,24 @@ class SelectionView extends React.Component<Props, State> {
                   <Button onClick={() => {navigator.clipboard.writeText(this.props.row.g_name as string)}}><span className='bi bi-clipboard2'/></Button>
               </InputGroup>
             </Col>
-            <Col md="auto">
+            <Col>
                 <InputGroup className="m-2">
-                  <InputGroup.Text id="contig">Contig</InputGroup.Text>
+                  <InputGroup.Text id="contig">Gene Pos</InputGroup.Text>
                   <Form.Control
-                    placeholder="Selected a Gene to get started"
+                    placeholder="Select a Gene"
                     contentEditable={false}
-                    value={this.props.row.c_name}
+                    value={this.state.gene_pos}
                     onChange={() => false}
+                    disabled={!this.props.gene_pos_supported}
                   />
-                  <Button onClick={() => {navigator.clipboard.writeText(this.props.row.c_name as string)}}><span className='bi bi-clipboard2'/></Button>
+                  <Button disabled={!this.props.gene_pos_supported} variant='secondary' onClick={() => {this.nextCoordFormat()}}>{this.state.coord_type}</Button>
+                  <Button disabled={!this.props.gene_pos_supported} onClick={() => {navigator.clipboard.writeText(this.state.gene_pos)}}><span className='bi bi-clipboard2'/></Button>
+                  
                 </InputGroup>
               </Col>
           </Row>
           <Row>
-            <Col md="auto" xs={4}>
-                <InputGroup className="m-2">
-                  <InputGroup.Text id="gene-label">Label</InputGroup.Text>
-                    <Form.Control
-                      placeholder="Selected a Gene to get started"
-                      contentEditable={false}
-                      value={this.props.row.plot_label}
-                      onChange={() => false}
-                    />
-                  </InputGroup>
-            </Col>
-            <Col md="auto">
-                <InputGroup className="m-2">
-                  <InputGroup.Text id="assignment">Taxon assignment</InputGroup.Text>
-                    <Form.Control
-                      placeholder="Selected a Gene to get started"
-                      contentEditable={false}
-                      value={this.props.row.taxon_assignment}
-                      onChange={() => false}
-                    />
-                </InputGroup>
-              </Col>
-          </Row>
-          <Row>
-            <Col xs={7}>
+            <Col>
               <InputGroup className="m-2">
                   <InputGroup.Text id="ncbi-id">Best hit</InputGroup.Text>
                     <Form.Control
@@ -310,26 +289,6 @@ class SelectionView extends React.Component<Props, State> {
                       <span className="bi bi-box-arrow-up-right"></span>
                     </Button>
                 </InputGroup>
-              </Col>
-              <Col xs={5}>
-                <InputGroup className="m-2">
-                  <InputGroup.Text id="contig">Gene Pos</InputGroup.Text>
-                  <Form.Control
-                    placeholder="Selected a Gene to get started"
-                    contentEditable={false}
-                    value={this.state.gene_pos}
-                    onChange={() => false}
-                    disabled={!this.props.gene_pos_supported}
-                  />
-                  <Button disabled={!this.props.gene_pos_supported} variant='secondary' onClick={() => {this.nextCoordFormat()}}>{this.state.coord_type}</Button>
-                  <Button disabled={!this.props.gene_pos_supported} onClick={() => {navigator.clipboard.writeText(this.state.gene_pos)}}><span className='bi bi-clipboard2'/></Button>
-                  
-                </InputGroup>
-              </Col>
-            </Row>
-            <Row>
-              <Col className='md-2' xs={3}> 
-                
               </Col>
             </Row>
             <Modal show={this.state.show_field_modal} handleClose={this.hideModal}>
