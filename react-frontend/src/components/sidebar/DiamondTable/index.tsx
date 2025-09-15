@@ -76,9 +76,6 @@ class Table extends Component<Props, State> {
         }
 	}
 
-    // raw column data for dropdown selectors
-    raw_cols = require("./diamond_cols.json")
-
     // these are only initial values
     columns: tableCol[] = [
         {

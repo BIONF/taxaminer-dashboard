@@ -46,7 +46,7 @@ interface State {
     highlightedGenes: Set<string>
     highlightMode: boolean
     cooldown: boolean
-    brightness: string
+    brightness: boolean
 
     is_updating: boolean
 
@@ -82,7 +82,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
             highlightedGenes: new Set<string>(),
             highlightMode: false,
             cooldown: false,
-            brightness: "",
+            brightness: false,
             gene_order_supported: true,
             gene_pos_supported: true,
             g_searched: [],
@@ -128,7 +128,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                     } else if(Object.prototype.hasOwnProperty.call(first_row, "PC_1") && this.state.dim_string === "Dim.") {
                         this.setState({dim_string: "PC_"})
                     }
-
+                    console.log(first_row)
                     if (Object.prototype.hasOwnProperty.call(first_row, "protID")) {
                         this.setState({fasta_col: "protID"})
                     } else {
@@ -226,7 +226,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
         // update fasta data
         fetchFasta(this.props.base_url, this.state.dataset_id, this.state.data[keys[0]][this.state.fasta_col])
         .then(data => {
-            this.setState( {aa_seq: data} )
+            this.setState( {aa_seq: ">" + this.state.data[keys[0]][this.state.fasta_col] + "\n"+ data} )
         })
 
         // save selection
@@ -321,17 +321,13 @@ class TaxaminerDashboard extends React.Component<Props, State> {
      * Change the stylesheet accordingly
      */
     toggleDarkmode(): void {
-        if (this.state.brightness === "bootstrap-dark.css") {
-            this.setState({brightness: ""})
-        } else {
-            this.setState({brightness: "bootstrap-dark.css"})
-        }
+        this.setState({brightness: !this.state.brightness})
     }
 
     render() {
         return (
             <Container fluid>
-                <link rel="stylesheet" href={this.state.brightness}></link>
+                { this.state.brightness && <link rel="stylesheet" href={'bootstrap-dark.css'}></link>}
                 <Row><TopBar toggleDarkmode={this.toggleDarkmode}/></Row>
                 <Row>
                 <Col xs={7}>
@@ -350,7 +346,8 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                     filters={this.state.filters}
                     selected_row={this.state.selected_row}
                     gene_order_supported={this.state.gene_order_supported}
-                    dim_string={this.state.dim_string}/>
+                    dim_string={this.state.dim_string}
+                    dark_mode={this.state.brightness}/>
                 </Col>
                 <Col>
                      <Tabs>

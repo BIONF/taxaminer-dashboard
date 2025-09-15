@@ -396,7 +396,7 @@ class SelectionView extends React.Component<Props, State> {
                             <div className='md-2'>
                             <pre className='pre-scrollable m-2'>
                               <code>
-                              {this.props.aa_seq}
+                                {this.props.aa_seq}
                               </code>
                             </pre>
                             </div>

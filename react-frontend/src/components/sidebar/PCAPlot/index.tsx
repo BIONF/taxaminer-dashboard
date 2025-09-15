@@ -234,10 +234,10 @@ class PCAPlot extends Component<Props, State> {
 						scene: {camera: this.state.camera},
 						// @ts-ignore
 						// overrides are incomplete here, ignore for now
-						legend: {itemsizing: 'constant', tracegroupgap: 1, itemclick: false, itemdoubleclick: false},
+						legend: {itemsizing: 'constant', tracegroupgap: 1, itemclick: false, itemdoubleclick: false, orientation: "h"},
 						}}
 					useResizeHandler = {true}
-					style = {{width: "100%", minHeight: 600}}
+					style = {{width: "100%", height: "auto"}}
 					config={{scrollZoom: true}}
 					className='mt-2'
 					onClick={(e: any) => this.setVar(e.points[0].data.customdata[0])}

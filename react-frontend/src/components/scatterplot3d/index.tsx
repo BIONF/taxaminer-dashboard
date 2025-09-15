@@ -56,6 +56,8 @@ interface Props {
 	// backward compatibility
 	gene_order_supported: boolean
 	dim_string: string
+	
+	dark_mode: boolean
 }
 
 interface State {
@@ -85,6 +87,7 @@ interface State {
 	opacity: number
 	trace_order: string[]
 	gene_plot_data: any[]
+
 }
 
 /**
@@ -142,7 +145,7 @@ class Scatter3D extends Component<Props, State> {
 			opacity: 1,
 			trace_order: [],
 			gene_plot_data : [],
-			frozen_starsign_gene: ""
+			frozen_starsign_gene: "",
 		}
         this.sendClick = this.sendClick.bind(this);
 	}
@@ -805,10 +808,20 @@ class Scatter3D extends Component<Props, State> {
 			legend: {
 				itemsizing: 'constant', 
 				tracegroupgap: 1,
-				hovermode: 'closest'
+				hovermode: 'closest',
+				font: {color: this.props.dark_mode && "white" || "black"}
 			},
-			scene: {camera: this.state.camera},
-			updatemenus: updatemenus
+			scene: {
+				camera: this.state.camera, 
+				xaxis: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey"},
+				yaxis: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey"},
+				zaxis: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey"},
+				grid: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey"},
+			},
+			updatemenus: updatemenus,
+			plot_bgcolor: this.props.dark_mode && "#222222" || "white",
+			paper_bgcolor: this.props.dark_mode && "#222222" || "white",
+			
 		}
 		const new_config = {scrollZoom: true, doubleClickDelay: 2000}
 		const my_scene = this.state.figure.scene
@@ -888,9 +901,9 @@ class Scatter3D extends Component<Props, State> {
 						/>
 					</FadeIn>
 				}
-				<Row>
+				<Row className='gx-2'>
                     <Col xs={2}>
-						<Form.Label className='md-2'>Hoverdata</Form.Label>
+						<Form.Label>Hoverdata</Form.Label>
                         <InputGroup>
 						<ButtonGroup>
 								<Button variant={this.state.hover_buttons[0]} onClick={() => this.switchHoverData("full")}><span className='bi bi-eye-fill'/></Button>
@@ -900,14 +913,14 @@ class Scatter3D extends Component<Props, State> {
 						</InputGroup>
 					</Col>
 					<Col xs={1}>
-						<Form.Label className='md-1'>Export</Form.Label>
+						<Form.Label>Export</Form.Label>
 						<InputGroup>
-							<Button onClick={() => this.exportVisible()}><span className='bi bi-box-arrow-in-right ml-1'/></Button>
+							<Button onClick={() => this.exportVisible()}><span className='bi bi-box-arrow-in-right'/></Button>
 						</InputGroup>
 					</Col>
 					<Col xs={3}>
-						<Form.Label className='md-2'>Starsign plot</Form.Label>
-						<InputGroup className="md-2">
+						<Form.Label>Starsign plot</Form.Label>
+						<InputGroup>
 							<Button disabled={!this.props.gene_order_supported} onClick={() => {if(this.state.starsign_steps > 0){this.setState({starsign_steps: this.state.starsign_steps - 1})}}}><span className="bi bi-dash-circle"></span></Button>
 							<Form.Control
 							placeholder="None"
@@ -922,22 +935,22 @@ class Scatter3D extends Component<Props, State> {
 						</InputGroup>
 					</Col>
 					<Col xs={2}>
-						<Form.Label className='md-2'>Dot size</Form.Label>
+						<Form.Label className='md-2'>Dot size (px)</Form.Label>
 						<InputGroup className="md-2">
 							<Button disabled={this.state.auto_size} onClick={() => {if(this.state.manual_size >= 2){this.set_manual_size(this.state.manual_size - 1)}}}><span className="bi bi-dash-circle"></span></Button>
 							<Form.Control
 							placeholder="None"
 							contentEditable={false}
 							onChange={() => false}
-							value={`${this.state.manual_size} px`}
+							value={`${this.state.manual_size}`}
 							/>
 							<Button disabled={this.state.auto_size} onClick={() => this.set_manual_size(this.state.manual_size + 1)}><span className="bi bi-plus-circle"></span></Button>
 							<Button onClick={() => this.toggle_auto_size()} variant={(this.state.auto_size && "success") || "secondary"}><span className={(this.state.auto_size && "bi bi-lock-fill") || "bi bi-unlock-fill"}></span></Button>
 						</InputGroup>
 					</Col>
-					<Col>
-						<Form.Label className='md-2'>Opacity</Form.Label>
-						<InputGroup className="md-2">
+					<Col xs={2}>
+						<Form.Label>Opacity</Form.Label>
+						<InputGroup>
 							<Button onClick={() => {if(this.state.opacity >= 0.1){this.setState({opacity: this.state.opacity - 0.05})}}}><span className="bi bi-dash-circle"></span></Button>
 							<Form.Control
 							placeholder="None"
