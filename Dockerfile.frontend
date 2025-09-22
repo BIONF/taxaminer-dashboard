@@ -1,0 +1,17 @@
+FROM node:20-bullseye
+
+WORKDIR /app
+
+# Install dependencies
+COPY react-frontend/package.json react-frontend/yarn.lock ./
+RUN yarn install
+
+# Copy frontend source
+COPY react-frontend ./
+
+# Build production
+RUN yarn build
+
+EXPOSE 3000
+
+CMD ["yarn", "serve"]

@@ -37,5 +37,5 @@ if [ "$dev" == 'true' ]; then
     cd ./react-frontend && yarn run dev & cd ./api && python main.py
 else
     echo "Running in production mode"
-    cd ./react-frontend && npx serve -s build & cd ./api && python main.py
+    cd ./react-frontend && yarn serve & cd ./api && python main.py
 fi

@@ -1,0 +1,17 @@
+FROM python:3.8-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install --no-cache-dir flask flask-cors
+
+# Copy API code
+COPY api ./api
+
+# Create datasets directory
+RUN mkdir -p ./datasets
+RUN mkdir -p ./temp
+
+EXPOSE 5500
+
+CMD ["python", "api/main.py"]

@@ -1,3 +1,4 @@
+import React from 'react';
 import { Component } from 'react';
 import Plot from 'react-plotly.js';
 import { Card, Form, Row } from 'react-bootstrap';

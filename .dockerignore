@@ -1,0 +1,3 @@
+./api/datasets/*
+./react-frontend/node_modules
+./react-frontend/dist

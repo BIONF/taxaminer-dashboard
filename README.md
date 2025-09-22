@@ -1,11 +1,31 @@
 # taXaminer Dashboard
-`v1.0.0`
+<p align="center">
+<img src="https://img.shields.io/github/license/BIONF/taxaminer-dashboard" alt="License">
+<img src="https://img.shields.io/github/v/release/BIONF/taxaminer-dashboard" alt="Latest Release">
+<img src="https://img.shields.io/badge/Run%20with-Docker-blue?logo=docker">
+<img src="https://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda">
+
+</p>
 
 The program contained in this repository provides a interactive representation of the output of [taXaminer](https://github.com/BIONF/taXaminer).
 
 # Installation
-## Download
-`git clone https://github.com/BIONF/taxaminer-dashboard.git`
+
+# Build and run with docker locally
+We provide a `docker-compose.yml`, which builds the frontend and backend containers separately and exposes the required ports. Make sure you have `docker` and `docker-compose` installed. First, clone the repository:
+```bash
+git clone https://github.com/BIONF/taxaminer-dashboard.git
+```
+then build and run the containers
+```bash
+docker compose up
+```
+The dashboard is now available locally on [http://localhost:3000](http://localhost:3000).
+Press Ctrl+C in the terminal window to stop the containers. Data imported through the web frontend is stored in the filesystem of the `taxaminer-dashboard_data` container. Please note that deleting the volume will also remove the imported data.
+## Install using conda
+```bash
+git clone https://github.com/BIONF/taxaminer-dashboard.git
+```
 
 **Please note:** The dashboard is being developed parallel to taXaminer. Refer to section [Compatibility](##compatibility) to check if your output files are compatible.
 
