@@ -98,18 +98,36 @@ interface State {
  * @returns Hex-encoded color code
  */
 const custom_color_generator = (item_pos: number, max_item_number: number, color_descriptor: string) => {
-	if (color_descriptor == "spectrum") {
-		const my_scale = chroma.scale('Spectral');
-		return my_scale(item_pos/max_item_number).saturate(3).hex()
-	} else if(color_descriptor == "colorblind") {
-		// Map to a flat color scale
-		// Color are defined by https://colorbrewer2.org , the chose scale is coloblind-friendly
-		const my_scale = chroma.brewer.RdYlBu
-		return my_scale[item_pos % my_scale.length]
+	let scale: chroma.Scale | string[] = chroma.scale('Spectral');
+
+	switch (color_descriptor) {
+		case "spectrum": {
+			scale = chroma.scale('Spectral');
+			return scale(item_pos/max_item_number).saturate(3).hex()
+		}
+		case "colorblind": {
+			scale = chroma.brewer.RdYlBu;
+			break;
+		}
+		case "RdBu": {
+			scale = chroma.brewer.RdBu;
+			break;
+		}
+		default: {
+			scale = chroma.scale('Spectral');
+		}
 	}
+
+	//@ts-expect-error
+	return scale[item_pos % scale.length]
 }
 
-const palettes = [{"label": "Spectrum", "value": "spectrum"}, {"label": "Colorblind", "value": "colorblind"}]
+const palettes = [
+	{"label": "Spectrum", "value": "spectrum"},
+	{"label": "Colorblind", "value": "colorblind"},
+	{"label": "RdBu", "value": "RdBu"}
+]
+
 
 /**
  * Main Scatterplot Component
