@@ -102,8 +102,24 @@ const custom_color_generator = (item_pos: number, max_item_number: number, color
 
 	switch (color_descriptor) {
 		case "spectrum": {
-			scale = chroma.scale('Spectral');
+			scale = chroma.scale('Spectral').domain([1,0]);
 			return scale(item_pos/max_item_number).saturate(3).hex()
+		}
+		case "pair": {
+			scale = chroma.scale(['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#b15928']).colors(11);
+			break;
+		}
+		case "tol": {
+			scale = chroma.scale(['#332288', '#117733', '#44AA99', '#88CCEE', '#DDCC77', '#CC6677', '#AA4499', '#882255']).colors(9);
+			break;
+		}
+		case "viridis": {
+			scale = chroma.scale(['#fde725', '#a0da39', '#4ac16d', '#1fa187', '#277f8e', '#365c8d', '#46327e', '#440154']).colors(8);
+			break;
+		}
+		case "set": {
+			scale = chroma.scale(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#a65628','#f781bf','#999999']).colors(8);
+			break;
 		}
 		case "colorblind": {
 			scale = chroma.brewer.RdYlBu;
@@ -111,6 +127,14 @@ const custom_color_generator = (item_pos: number, max_item_number: number, color
 		}
 		case "RdBu": {
 			scale = chroma.brewer.RdBu;
+			break;
+		}
+		case "BrBG": {
+			scale = chroma.brewer.BrBG;
+			break;
+		}
+		case "Dark2": {
+			scale = chroma.brewer.Dark2;
 			break;
 		}
 		default: {
@@ -125,7 +149,13 @@ const custom_color_generator = (item_pos: number, max_item_number: number, color
 const palettes = [
 	{"label": "Spectrum", "value": "spectrum"},
 	{"label": "Colorblind", "value": "colorblind"},
-	{"label": "RdBu", "value": "RdBu"}
+	{"label": "Viridis", "value": "viridis"},
+	{"label": "TOL", "value": "tol"},
+	{"label": "RdBu", "value": "RdBu", "cb": true},
+	{"label": "BrBG", "value": "BrBG", "cb": true},
+	{"label": "Dark2", "value": "Dark2", "cb": true},
+	{"label": "Paired (w/o yellow)", "value": "pair", "cb": true},
+	{"label": "Set1 (w/o yellow)", "value": "set", "cb": true}
 ]
 
 
@@ -986,7 +1016,7 @@ class Scatter3D extends Component<Props, State> {
 						onChange={(e: any) => this.set_color_palette(e.target.value)}
 						>
 							{ palettes.map((each: any) => {
-								return <option value={each.value}>{each.label}</option>
+								return <option value={each.value} key={each.value}>{each.label}</option>
 							})}
 						</Form.Select>
 					</Col>
