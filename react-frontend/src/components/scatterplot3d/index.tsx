@@ -106,7 +106,7 @@ const custom_color_generator = (item_pos: number, max_item_number: number, color
 			return scale(item_pos/max_item_number).saturate(3).hex()
 		}
 		case "pair": {
-			scale = chroma.scale(['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#b15928']).colors(11);
+			scale = chroma.scale(['#1f78b4','#33a02c','#e31a1c','#ff7f00','#6a3d9a','#b15928', '#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6']).colors(11);
 			break;
 		}
 		case "tol": {
@@ -114,11 +114,11 @@ const custom_color_generator = (item_pos: number, max_item_number: number, color
 			break;
 		}
 		case "viridis": {
-			scale = chroma.scale(['#fde725', '#a0da39', '#4ac16d', '#1fa187', '#277f8e', '#365c8d', '#46327e', '#440154']).colors(8);
+			scale = chroma.scale(['#fde725', '#a0da39', '#4ac16d', '#1fa187', '#277f8e', '#365c8d', '#46327e', '#440154']).domain([1,0]).colors(8);
 			break;
 		}
 		case "set": {
-			scale = chroma.scale(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#a65628','#f781bf','#999999']).colors(8);
+			scale = chroma.scale(['#377eb8','#e41a1c','#4daf4a','#984ea3','#ff7f00','#a65628','#f781bf','#999999']).colors(8);
 			break;
 		}
 		case "colorblind": {
@@ -134,7 +134,7 @@ const custom_color_generator = (item_pos: number, max_item_number: number, color
 			break;
 		}
 		case "Dark2": {
-			scale = chroma.brewer.Dark2;
+			scale = chroma.brewer.Dark2.reverse();
 			break;
 		}
 		default: {
