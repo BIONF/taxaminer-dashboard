@@ -73,7 +73,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
             data: [],
             scatter_data: { colors: {}, legendonly: []},
             e_value: 1.0,
-            filters: {e_value: 1.0, show_unassinged: true, c_searched: []},
+            filters: {e_value: 1.0, show_unassigned: true, c_searched: []},
             g_options: [],
             contigs: [],
             customFields: [],
@@ -165,7 +165,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                     contigs.forEach((each: any) => contig_options.push({ "label": each, "value": each }))
 
                     this.setState({contigs: contig_options, g_options: gene_options})
-                    this.setState({filters: {e_value: 1.0, show_unassinged: true, g_searched: []}, highlightedGenes: new Set<string>()})
+                    this.setState({filters: {e_value: 1.0, show_unassigned: true, g_searched: []}, highlightedGenes: new Set<string>()})
                     this.setState({is_loading: false})
                 });
             }
@@ -339,7 +339,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                     sendClick={this.handleDataClick}
                     sendCameraData={this.callbackFunction}
                     e_value={this.state.filters.e_value}
-                    show_unassigned={this.state.filters.show_unassinged}
+                    show_unassigned={this.state.filters.show_unassigned}
                     g_searched={this.state.g_searched}
                     c_searched={this.state.filters.c_searched}
                     passScatterData={this.shareScatterData}
@@ -397,7 +397,7 @@ class TaxaminerDashboard extends React.Component<Props, State> {
                                 base_url={this.props.base_url}
                                 sendClick={this.handleDataClick}
                                 e_value={this.state.filters.e_value}
-                                show_unassigned={this.state.filters.show_unassinged}
+                                show_unassigned={this.state.filters.show_unassigned}
                                 scatter_data = {this.state.scatter_data}
                                 dataset_id={this.state.dataset_id}
                                 g_searched={this.state.filters.g_searched}

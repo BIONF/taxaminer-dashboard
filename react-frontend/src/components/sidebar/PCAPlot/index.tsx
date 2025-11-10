@@ -191,9 +191,9 @@ class PCAPlot extends Component<Props, State> {
 					legendgroup: pca_point.label,
 					type: "cone",
 					// shorten the cones such that the mouse hover hits the PCA trace
-					x: real_pca_x.map(each => {return parseFloat(each) - parseFloat(each) * 0.01}),
-					y: real_pca_y.map(each => {return parseFloat(each) - parseFloat(each) * 0.01}),
-					z: real_pca_z.map(each => {return parseFloat(each) - parseFloat(each) * 0.01}),
+					x: real_pca_x.map(each => {return parseFloat(each) - parseFloat(each) * 0.0075}),
+					y: real_pca_y.map(each => {return parseFloat(each) - parseFloat(each) * 0.0075}),
+					z: real_pca_z.map(each => {return parseFloat(each) - parseFloat(each) * 0.0075}),
 					u: cone_x,
 					v: cone_y,
 					w: cone_z,
@@ -206,7 +206,7 @@ class PCAPlot extends Component<Props, State> {
 					showscale: false,
 					sizemode: "absolute",
 					// scale size based on shortest vector
-					sizeref: 0.1,
+					sizeref: 0.075,
 					customdata: [pca_point.label]
 				}
 				traces.push(pca_trace)
@@ -232,10 +232,17 @@ class PCAPlot extends Component<Props, State> {
 						autosize: true,
 						showlegend: true,
 						uirevision: "true",
-						scene: {camera: this.state.camera},
+						margin: {l: 0, r: 0, b: 0, t: 25},
+						scene: {
+							camera: this.state.camera,
+							xaxis: {color: "grey", gridcolor: "lightgrey", title: {text: 'PC 1'}},
+							yaxis: {color: "grey", gridcolor: "lightgrey", title: {text: 'PC 2'}},
+							zaxis: {color: "grey", gridcolor: "lightgrey", title: {text: 'PC 3'}},
+							grid: {color: "grey", gridcolor: "lightgrey"},
+						},
 						// @ts-ignore
 						// overrides are incomplete here, ignore for now
-						legend: {itemsizing: 'constant', tracegroupgap: 1, itemclick: false, itemdoubleclick: false, orientation: "h"},
+						legend: {itemsizing: 'constant', tracegroupgap: 1, itemclick: false, itemdoubleclick: false, orientation: "v"},
 						}}
 					useResizeHandler = {true}
 					style = {{width: "100%", height: "auto"}}
@@ -274,23 +281,32 @@ class PCAPlot extends Component<Props, State> {
 	 */
 	render() {
 		return (
-			<Row>
-				<Col xs={8}>
+			<>
+				<Row className="mt-2">
+					<Col md={12}>
+						<Card>
+							<Card.Body>
+								<Card.Title>Contribution of variables</Card.Title>
 					{this.state.figure}
+							</Card.Body>
+						</Card>
 				</Col>
-				<Col>
-					<Card className='mt-2'>
+					
+				</Row>
+				<Row className="mt-2">
+					<Col md={6}>
+						<Card>
 						<Card.Header>Variable Info</Card.Header>
 						<Card.Body>
-							<Card.Title>Selected: {this.state.selected_var}</Card.Title>
-							<Card.Subtitle className="mb-2 text-muted">{this.state.selected_label}</Card.Subtitle>
+								<Card.Title>Selected: {this.state.selected_label}</Card.Title>
+								<Card.Subtitle className="mb-2 text-muted">{this.state.selected_var}</Card.Subtitle>
 							<Card.Text>{this.state.selected_verbose}</Card.Text>
 						</Card.Body>
 					</Card>
-					<Card className='mt-2'>
-						<Card.Header>
-							Plot settings
-						</Card.Header>
+					</Col>
+					<Col md={6}>
+						<Card>
+							<Card.Header>Plot settings</Card.Header>
 						<Card.Body>
 						<Form>
                             <Form.Check 
@@ -312,6 +328,7 @@ class PCAPlot extends Component<Props, State> {
 					</Card>
 				</Col>
 			</Row>
+			</>
 		)
 	}
 }

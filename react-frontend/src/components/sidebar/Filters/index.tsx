@@ -71,7 +71,7 @@ class FilterUI extends React.Component<Props, State> {
      */
     updateShowUnassigned(e: any) {
         this.setState({show_unassigned: e})
-        const values = {'show_unassinged': e, 'e_value': this.state.e_value, 'c_searched': this.state.c_searched}
+        const values = {'show_unassigned': e, 'e_value': this.state.e_value, 'c_searched': this.state.c_searched}
         this.props.sendValuesUp(values)
     }
 
@@ -80,11 +80,11 @@ class FilterUI extends React.Component<Props, State> {
      * @param slider_value Value of UI slider
      */
     setEValue(slider_value: any) {
-        const new_value = Math.E ** (-slider_value)
+        const new_value = (1 * (10 ** (-slider_value)))
         this.setState({e_value: new_value})
 
         // pass values up
-        const values = {'show_unassinged': this.state.show_unassigned, 'e_value': new_value, 'c_searched': this.state.c_searched}
+        const values = {'show_unassigned': this.state.show_unassigned, 'e_value': new_value, 'c_searched': this.state.c_searched}
         this.props.sendValuesUp(values)
     }
 
@@ -99,7 +99,7 @@ class FilterUI extends React.Component<Props, State> {
           new_keys.push(element.value)
         });
         this.setState({c_searched: new_keys}, () => {
-            const values = {'show_unassinged': this.state.show_unassigned, 'e_value': this.state.e_value, 'c_searched': this.state.c_searched}
+            const values = {'show_unassigned': this.state.show_unassigned, 'e_value': this.state.e_value, 'c_searched': this.state.c_searched}
             this.props.sendValuesUp(values)
         })
     }
@@ -123,13 +123,13 @@ class FilterUI extends React.Component<Props, State> {
                     <Form.Check 
                         type="switch"
                         id="show_unassigned"
-                        label="Show unassinged"
+                        label="Show unassigned"
                         defaultChecked={true}
                         onChange={(e) => this.updateShowUnassigned(e.target.checked)}
                     />
                     <Form.Label>e-value {"<"} {this.state.e_value}</Form.Label>
                     <Form.Range 
-                        min={0}
+                        min={-1}
                         max={300}
                         step={1}
                         defaultValue={0}

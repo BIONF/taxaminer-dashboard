@@ -105,36 +105,45 @@ const custom_color_generator = (item_pos: number, max_item_number: number, color
 			scale = chroma.scale('Spectral').domain([1,0]);
 			return scale(item_pos/max_item_number).saturate(3).hex()
 		}
-		case "pair": {
-			scale = chroma.scale(['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#b15928']).colors(11);
-			break;
-		}
 		case "tol": {
 			scale = chroma.scale(['#332288', '#117733', '#44AA99', '#88CCEE', '#DDCC77', '#CC6677', '#AA4499', '#882255']).colors(9);
 			break;
 		}
 		case "viridis": {
-			scale = chroma.scale(['#fde725', '#a0da39', '#4ac16d', '#1fa187', '#277f8e', '#365c8d', '#46327e', '#440154']).colors(8);
+			scale = chroma.brewer.Viridis;
 			break;
 		}
-		case "set": {
-			scale = chroma.scale(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#a65628','#f781bf','#999999']).colors(8);
+		case "D3": {
+			scale = chroma.scale(['#377eb8','#e41a1c','#4daf4a','#984ea3','#ff7f00','#a65628','#f781bf','#999999', '#bfc02dff', '#23c1d1ff']).colors(10);
 			break;
 		}
+		case "cubehelix": {			
+			scale = chroma.cubehelix().lightness([0.2, 0.8]).rotations(3);
+			return scale(item_pos/max_item_number).hex()
+		}
+		
 		case "colorblind": {
 			scale = chroma.brewer.RdYlBu;
-			break;
-		}
-		case "RdBu": {
-			scale = chroma.brewer.RdBu;
+			scale = scale.reverse();
 			break;
 		}
 		case "BrBG": {
 			scale = chroma.brewer.BrBG;
+			scale = scale.reverse();
 			break;
 		}
 		case "Dark2": {
 			scale = chroma.brewer.Dark2;
+			scale = scale.reverse();
+			break;
+		}
+		case "Accent": {
+			scale = chroma.brewer.Accent;
+			scale = scale.reverse();
+			break;
+		}
+		case "Set2": {
+			scale = chroma.brewer.Set2;
 			break;
 		}
 		default: {
@@ -150,12 +159,12 @@ const palettes = [
 	{"label": "Spectrum", "value": "spectrum"},
 	{"label": "Colorblind", "value": "colorblind"},
 	{"label": "Viridis", "value": "viridis"},
+	{"label": "Cubehelix", "value": "cubehelix"},
 	{"label": "TOL", "value": "tol"},
-	{"label": "RdBu", "value": "RdBu", "cb": true},
+	{"label": "D3", "value": "D3"},
 	{"label": "BrBG", "value": "BrBG", "cb": true},
 	{"label": "Dark2", "value": "Dark2", "cb": true},
-	{"label": "Paired (w/o yellow)", "value": "pair", "cb": true},
-	{"label": "Set1 (w/o yellow)", "value": "set", "cb": true}
+	{"label": "Set2", "value": "Set2", "cb": true}
 ]
 
 
@@ -379,7 +388,7 @@ class Scatter3D extends Component<Props, State> {
 	 */
 	switchHoverData(key: string) {
 		if (key === "full") {
-			this.setState({ hoverTemplate: "%{customdata[0]} <br>%{customdata[1]} <br><extra>Best hit: %{customdata[2]} <br>Best hit e-value: %{customdata[3]} <br>Taxonomic assignment: %{customdata[4]} <br>Contig name: %{customdata[5]} <br> </extra>", hover_buttons: ["primary", "secondary", "secondary"] }, () => {
+			this.setState({ hoverTemplate: "%{customdata[0]} <br>%{customdata[1]} <br>[%{customdata[5]}] <br><extra>Best hit: %{customdata[2]} <br>Best hit e-value: %{customdata[3]} <br>Taxonomic assignment: %{customdata[4]}</extra>", hover_buttons: ["primary", "secondary", "secondary"] }, () => {
 				this.build_plot()
 			})
 		} else if(key === "reduced") {
@@ -567,9 +576,9 @@ class Scatter3D extends Component<Props, State> {
 
 		searched_rows.forEach(each => {
 			// push 3D coordinates in arrays accordingly
-			x.push(each['PC_1'])
-			y.push(each['PC_2'])
-			z.push(each['PC_3'])
+			x.push(each['PC 1'])
+			y.push(each['PC 2'])
+			z.push(each['PC 3'])
 			my_customdata.push([each['plot_label'], each['g_name'], each['best_hit'], each['bh_evalue'], each['taxon_assignment'], each['c_name']])
         })
 
@@ -852,18 +861,23 @@ class Scatter3D extends Component<Props, State> {
 		const new_layout = {
 			autosize: true, 
 			showlegend: true, 
+			margin: {l: 15, r: 15, b: 35, t: 0}, 
 			uirevision: 1,
 			legend: {
 				itemsizing: 'constant', 
 				tracegroupgap: 1,
 				hovermode: 'closest',
-				font: {color: this.props.dark_mode && "white" || "black"}
+				font: {color: this.props.dark_mode && "white" || "black"},
+				yanchor: "top",
+				y: 0.95,
+				xanchor: "left",
+				x: 1
 			},
 			scene: {
 				camera: this.state.camera, 
-				xaxis: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey"},
-				yaxis: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey"},
-				zaxis: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey"},
+				xaxis: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey", title: {text: 'PC 1'}},
+				yaxis: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey", title: {text: 'PC 2'}},
+				zaxis: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey", title: {text: 'PC 3'}},
 				grid: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey"},
 			},
 			updatemenus: updatemenus,
