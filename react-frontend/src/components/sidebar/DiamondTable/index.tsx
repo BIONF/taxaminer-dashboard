@@ -140,6 +140,7 @@ class Table extends Component<Props, State> {
             { "label": "Seq ID", "value": "sseqid" },
             { "label": "e-value", "value": "evalue"},
             { "label": "Bitscore", "value": "bitscore"},
+            { "label": "Percentage identity", "value": "pident" },
             { "label": "scientific name", "value": "ssciname"}])
         
     }

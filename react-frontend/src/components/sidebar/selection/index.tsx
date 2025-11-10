@@ -11,7 +11,7 @@ import { Alert, Badge, Modal, OverlayTrigger, Placeholder, Tab, Tabs, Tooltip } 
 import MultiSelectFields from './MultiSelectFields'
 
 // dictionary
-import fields_glossary from "./field_options.json";
+import fields_glossary from "../../../static/tableRows.json";
 import { dictType } from '../../../api/interfaces';
 
 interface Props {
@@ -136,10 +136,11 @@ class SelectionView extends React.Component<Props, State> {
         for (const field of fields_glossary) {
             // exact match
             if (each as string === field.value) {
-              return { label: (field.label), value: each, tooltip: field.tooltip }
+              return { label: (field.label), value: each, tooltip: field.tooltip + " [" + each + "]" }
             } else {
               // match with suffix (c_cov_...)
-              const re = new RegExp(field.value + ".*");
+              // anchor "^" makes sure to match from beginning; '_' to avoid lcaID matching to lca etc.
+              const re = new RegExp("^" + field.value + "_.*");
               if (re.test(each)) {
                   ids.add(each.charAt(each.length - 1))
                   const new_id = each.charAt(each.length - 1)
@@ -147,15 +148,15 @@ class SelectionView extends React.Component<Props, State> {
                   // add new ID
                   if (!Object.prototype.hasOwnProperty.call(grouped_fields, new_id)) {
                     const prev = grouped_fields
-                    prev[new_id] = [{ label: (field.label + " (" + each + ")"), value: each, tooltip: field.tooltip }]
+                    prev[new_id] = [{ label: (field.label + " " + each.split('_').slice(-1)[0]), value: each, tooltip: field.tooltip + " [" + each + "]" }]
                     this.setState({ grouped_fields: prev})
                   // or append
                   } else {
                     const prev = grouped_fields
                     const prev_list = prev[new_id]
-                    prev_list.push({ label: (field.label + " (" + each + ")"), value: each, tooltip: field.tooltip })
+                    prev_list.push({ label: (field.label + " " + each.split('_').slice(-1)[0]), value: each, tooltip: field.tooltip + " [" + each + "]" })
                   }
-                  return { label: (field.label + " (" + each + ")"), value: each, tooltip: field.tooltip }
+                  return { label: (field.label + " " + each.split('_').slice(-1)[0]), value: each, tooltip: field.tooltip + " [" + each + "]" }
               }
             }
         }
@@ -238,7 +239,7 @@ class SelectionView extends React.Component<Props, State> {
             <Row>
             <Col xs={5}>
               <InputGroup className="m-2">
-                <InputGroup.Text id="gene-info-name">Gene Name</InputGroup.Text>
+                <InputGroup.Text id="gene-info-name">Gene ID</InputGroup.Text>
                   <Form.Control
                     placeholder="Select a Gene"
                     contentEditable={false}
@@ -250,7 +251,7 @@ class SelectionView extends React.Component<Props, State> {
             </Col>
             <Col>
                 <InputGroup className="m-2">
-                  <InputGroup.Text id="contig">Gene Pos</InputGroup.Text>
+                  <InputGroup.Text id="contig">Gene Position</InputGroup.Text>
                   <Form.Control
                     placeholder="Select a Gene"
                     contentEditable={false}

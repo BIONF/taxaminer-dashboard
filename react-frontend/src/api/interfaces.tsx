@@ -11,6 +11,7 @@ export interface DiamondRow {
     gapopen: number,
     qstart: number,
     qend: number,
+    sstart: number,
     send: number,
     staxids: string
 }
