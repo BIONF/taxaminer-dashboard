@@ -181,10 +181,15 @@ class Table extends Component<Props, State> {
 
     // Props of parent element changed (=> selected row)
     componentDidUpdate(prevProps: Props) {
+        let sequence_header = this.props.row.diamond_header
         if (prevProps.row !== this.props.row) {
             this.setState({loading: true})
+            // if no diamond header is available, use fasta header and split at first whitespace
+            if (this.props.row.diamond_header == undefined) {
+                sequence_header = this.props.row.fasta_header.split(" ")[0]
+            }
             // fetch the table data
-            fetchDiamond(this.props.base_url, this.props.dataset_id, this.props.row.fasta_header)
+            fetchDiamond(this.props.base_url, this.props.dataset_id, sequence_header)
             .then(data => {
                 // convert to appropriate datatype for proper sorting
                 data = data.map((row: any) => { row.evalue = Number(row.evalue); return row })
