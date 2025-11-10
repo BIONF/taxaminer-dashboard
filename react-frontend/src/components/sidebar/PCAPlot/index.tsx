@@ -25,6 +25,8 @@ interface State {
 	selected_verbose: string
 	arrows_on: boolean
 	sync_camera: boolean
+	color_mode: boolean
+	hover_verbosity: boolean
 	camera: any
 	figure: any
 }
@@ -45,6 +47,8 @@ class PCAPlot extends Component<Props, State> {
 			selected_verbose: "Click a point in the plot to get started",
 			arrows_on: true,
 			sync_camera: true,
+			color_mode: true,
+			hover_verbosity: true,
 			camera: this.props.camera,
 			figure: ""
 		}
@@ -93,6 +97,14 @@ class PCAPlot extends Component<Props, State> {
 		if (prevState.arrows_on !== this.state.arrows_on) {
 			this.setState({figure: this.build_plot()})
 		}
+
+		if (prevState.color_mode !== this.state.color_mode) {
+			this.setState({figure: this.build_plot()})
+		}
+
+		if (prevState.hover_verbosity !== this.state.hover_verbosity) {
+			this.setState({figure: this.build_plot()})
+		}
 	}
 
 	/**
@@ -112,6 +124,26 @@ class PCAPlot extends Component<Props, State> {
 	}
 
 	/**
+	 * Get variable label and tooltip from variable ID
+	 * @param var_id name of variable
+	 * @returns 
+	 */
+	getVar(var_id: string): { label: string; tooltip: string } | undefined {
+		for (const variable of variables) {
+			if (variable.value === var_id) {
+				return { label: variable.label, tooltip: variable.tooltip}
+			} else {
+				const re = new RegExp("^" + variable.value + "_.*");
+				if (re.test(var_id)) {
+					return { label: variable.label + " " + var_id.split('_').splice(-1)[0], tooltip: variable.tooltip}
+				}
+			}
+		}
+		return undefined;
+	}
+
+
+	/**
 	 * Convert API data into plotly traces
 	 * @param data API data
 	 * @returns list of traces
@@ -124,7 +156,12 @@ class PCAPlot extends Component<Props, State> {
 
 		// holds all plot traces
 		const traces: any[] = []
-		const my_scale = chroma.scale('Spectral');
+
+		let my_scale = chroma.scale('Spectral').colors(data.length).map(c => chroma(c).saturate(3).hex());
+		if (this.state.color_mode == false) {
+			my_scale = chroma.scale(['#ccccccff','#000000']).colors(data.length);
+		}
+
 
 		if (data.length !== 0) {
 			for (let i = 0; i < data.length; i ++) {
@@ -136,6 +173,7 @@ class PCAPlot extends Component<Props, State> {
 				const real_pca_x: any[] = []
 				const real_pca_y: any[] = []
 				const real_pca_z: any[] = []
+				const pca_var = this.getVar(pca_point.label)
 				// vector origin
 				pca_x.push(0)
 				pca_y.push(0)
@@ -146,7 +184,7 @@ class PCAPlot extends Component<Props, State> {
 				pca_x.push(pca_point['x'][0])
 				pca_y.push(pca_point['y'][0])
 				pca_z.push(pca_point['z'][0])
-				pca_labels.push(pca_point['label'])
+				pca_labels.push(pca_var.label)
 				real_pca_x.push(pca_point['x'][0])
 				real_pca_y.push(pca_point['y'][0])
 				real_pca_z.push(pca_point['z'][0])
@@ -157,22 +195,29 @@ class PCAPlot extends Component<Props, State> {
 				pca_z.push(undefined)
 				pca_labels.push("skip")
 
-		
+				let my_hovertemplate = pca_var.label + "<br>(PC1: %{x:.3f}, PC2: %{y:.3f}, PC3: %{z:.3f})<br>" + pca_point.label + "<extra></extra>"
+				if (this.state.hover_verbosity == false) {
+					my_hovertemplate = pca_var.label + "<extra></extra>";	
+				}
+
+
 				// create plotly trace
 				const pca_trace: any = {
-					legendgroup: pca_point.label,
+					legendgroup: pca_var.label,
 					type: 'scatter3d',
 					mode: 'lines',
 					width: 5,
 					x: pca_x,
 					y: pca_y,
 					z: pca_z,
-					name: pca_point.label,
+					name: pca_var.label,
 					text: pca_labels,
 					marker: {
-						color: my_scale(i/data.length).saturate(6).hex()
+						color: my_scale[i]
 					},
-					customdata: [pca_point.label]
+					customdata: [pca_point.label],
+					hovertemplate: my_hovertemplate,
+					hoverinfo: "all"
 				}
 
 				// scale cones based on max val
@@ -202,7 +247,7 @@ class PCAPlot extends Component<Props, State> {
 					hoverinfo: "skip",
 					name: "Cones",
 					// all black color gradient
-					colorscale: [[0, my_scale(i/data.length).saturate(6).hex()], [1, my_scale(i/data.length).saturate(6).hex()]],
+					colorscale: [[0, my_scale[i]], [1, my_scale[i]]],
 					showscale: false,
 					sizemode: "absolute",
 					// scale size based on shortest vector
@@ -245,7 +290,7 @@ class PCAPlot extends Component<Props, State> {
 						legend: {itemsizing: 'constant', tracegroupgap: 1, itemclick: false, itemdoubleclick: false, orientation: "v"},
 						}}
 					useResizeHandler = {true}
-					style = {{width: "100%", height: "auto"}}
+					style = {{width: "100%", height: "auto"}} 
 					config={{scrollZoom: true}}
 					className='mt-2'
 					onClick={(e: any) => this.setVar(e.points[0].data.customdata[0])}
@@ -268,6 +313,17 @@ class PCAPlot extends Component<Props, State> {
 	}
 
 	/**
+	 * Toggle color 
+	 */
+	toggleColor = () => {
+		this.setState({color_mode: !this.state.color_mode})
+	}
+
+	toggleHoverVerbosity = () => {
+		this.setState({hover_verbosity: !this.state.hover_verbosity})
+	}
+
+	/**
 	 * Update current camera settings
 	 * @param camera plotly camera
 	 */
@@ -287,47 +343,61 @@ class PCAPlot extends Component<Props, State> {
 						<Card>
 							<Card.Body>
 								<Card.Title>Contribution of variables</Card.Title>
-					{this.state.figure}
+								{this.state.figure}
 							</Card.Body>
 						</Card>
-				</Col>
+					</Col>
 					
 				</Row>
 				<Row className="mt-2">
 					<Col md={6}>
 						<Card>
-						<Card.Header>Variable Info</Card.Header>
-						<Card.Body>
+							<Card.Header>Variable Info</Card.Header>
+							<Card.Body>
 								<Card.Title>Selected: {this.state.selected_label}</Card.Title>
 								<Card.Subtitle className="mb-2 text-muted">{this.state.selected_var}</Card.Subtitle>
-							<Card.Text>{this.state.selected_verbose}</Card.Text>
-						</Card.Body>
-					</Card>
+								<Card.Text>{this.state.selected_verbose}</Card.Text>
+							</Card.Body>
+						</Card>
 					</Col>
 					<Col md={6}>
 						<Card>
 							<Card.Header>Plot settings</Card.Header>
-						<Card.Body>
-						<Form>
-                            <Form.Check 
-                                type="switch"
-                                id="custom-switch"
-                                label="Sync perspective to scatterplot"
-								checked={this.state.sync_camera}
-								onChange={() => this.toggleSync()}
-                            />
-							<Form.Check 
-                                type="switch"
-                                id="hoverdata-switch"
-                                label="Arrows"
-								checked={this.state.arrows_on}
-								onChange={() => this.toggleArrows()}
-                            />
-                        </Form>
-						</Card.Body>
-					</Card>
-				</Col>
-			</Row>
+							<Card.Body>
+							<Form>
+								<Form.Check 
+									type="switch"
+									id="custom-switch"
+									label="Sync perspective to scatterplot"
+									checked={this.state.sync_camera}
+									onChange={() => this.toggleSync()}
+								/>
+								<Form.Check 
+									type="switch"
+									id="hoverdata-switch"
+									label="Arrows"
+									checked={this.state.arrows_on}
+									onChange={() => this.toggleArrows()}
+								/>
+								<Form.Check 
+									type="switch"
+									id="color-switch"
+									label="Color"
+									checked={this.state.color_mode}
+									onChange={() => this.toggleColor()}
+								/>
+								<Form.Check 
+									type="switch"
+									id="hover-switch"
+									label="Verbose hover"
+									checked={this.state.hover_verbosity}
+									onChange={() => this.toggleHoverVerbosity()}
+								/>
+							</Form>
+							</Card.Body>
+						</Card>
+					</Col>
+				</Row>
 			</>
 		)
 	}
