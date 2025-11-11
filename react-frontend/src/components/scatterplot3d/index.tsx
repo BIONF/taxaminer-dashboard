@@ -710,6 +710,9 @@ class Scatter3D extends Component<Props, State> {
 			const gene_plot_hover_template = "%{customdata[1]}:%{customdata[2]}-%{customdata[3]}<br>Best hit: %{customdata[4]} <br> e-value: %{customdata[5]}"
 			const e_value_x = []
 			const e_value_y =[]
+			let min_evalue = Infinity; 
+			let second_min_evalue = Infinity;
+
 			let curr_stack_pos = 0
 			for (const gene of all_genes_ordered) {
 				let marker = {}
@@ -738,9 +741,13 @@ class Scatter3D extends Component<Props, State> {
 						},
 					}
 					if (gene.bh_evalue != "") {
-						if(parseFloat(gene.bh_evalue) != 0) {
-							e_value_y.push(parseFloat(gene.bh_evalue))
-							e_value_x.push(curr_stack_pos + 0.5 * gene.g_len);
+						e_value_y.push(parseFloat(gene.bh_evalue))
+						e_value_x.push(curr_stack_pos + 0.5 * gene.g_len);
+						if (parseFloat(gene.bh_evalue) < min_evalue) {
+							second_min_evalue = min_evalue;
+							min_evalue = parseFloat(gene.bh_evalue); 
+						} else if (parseFloat(gene.bh_evalue) > min_evalue && parseFloat(gene.bh_evalue) < second_min_evalue) {
+							second_min_evalue = parseFloat(gene.bh_evalue); 
 						}
 					}
 				} else {
@@ -754,9 +761,13 @@ class Scatter3D extends Component<Props, State> {
 						}
 					}
 					if (gene.bh_evalue != "") {
-						if(parseFloat(gene.bh_evalue) != 0) {
-							e_value_y.push(parseFloat(gene.bh_evalue))
-							e_value_x.push(curr_stack_pos + 0.5 * gene.g_len);
+						e_value_y.push(parseFloat(gene.bh_evalue))
+						e_value_x.push(curr_stack_pos + 0.5 * gene.g_len);
+						if (parseFloat(gene.bh_evalue) < min_evalue) {
+							second_min_evalue = min_evalue;
+							min_evalue = parseFloat(gene.bh_evalue); 
+						} else if (parseFloat(gene.bh_evalue) > min_evalue && parseFloat(gene.bh_evalue) < second_min_evalue) {
+							second_min_evalue = parseFloat(gene.bh_evalue); 
 						}
 					}
 				}
@@ -775,12 +786,44 @@ class Scatter3D extends Component<Props, State> {
 				gene_plot_traces.push(new_trace);
 				curr_stack_pos += parseInt(gene.g_len)
 			}
-			
+
 			// e-value scatter trace
 			const e_value_customdata = []
 			for (const e_value of e_value_y) {
 				e_value_customdata.push([e_value])
 			}
+
+			// Replace e-value of 0 with a pseudo-zero for log scaling
+			let has_zero = false
+			let pseudo_zero = 0
+			if (min_evalue == 0) {
+				min_evalue = second_min_evalue
+				has_zero = true
+			}
+			const max_evalue = Math.max(...e_value_y);
+			const max_evalue_log = Math.ceil(Math.log10(max_evalue));
+			let min_evalue_log = Math.floor(Math.log10(min_evalue));
+			const e_value_log_diff = max_evalue_log - min_evalue_log;
+			if (has_zero){
+				let zero_modifier = Math.max((e_value_log_diff / Math.min(4, e_value_y.length-1)) * 0.75, 20)
+				pseudo_zero = Math.max(min_evalue * (1 * 10**(-zero_modifier)), Number.MIN_VALUE);
+				min_evalue_log = Math.floor(Math.log10(pseudo_zero));
+
+			}
+			e_value_y.forEach((item, i) => { if (item == 0) e_value_y[i] = pseudo_zero; });
+
+			// Generate ticks and labels for e-value axis
+			const num_ticks = Math.min(Math.min(5, (e_value_y.length)), max_evalue_log - min_evalue_log + 1);
+			const step = Math.max(1, Math.floor((max_evalue_log - min_evalue_log) / (num_ticks - 1)));
+			const tick_vals = [];
+			for (let exp = max_evalue_log; exp >= min_evalue_log; exp -= step) {
+				tick_vals.push(10 ** exp);
+			}
+			if (has_zero) tick_vals[(tick_vals.length - 1)] = pseudo_zero;
+			const tick_text = tick_vals.map(v =>
+				v === pseudo_zero ? '0' : v.toExponential()
+			);
+
 			gene_plot_traces.push({
 				name: "e-value",
 				x: e_value_x,
@@ -793,7 +836,11 @@ class Scatter3D extends Component<Props, State> {
 					color: "black",
 				},
 				customdata: e_value_customdata,
-				hovertemplate: "%{customdata[0]}"
+				hovertemplate: "%{customdata[0]}",
+				y_tick_labels: tick_text,
+				y_tick_values: tick_vals,
+				
+
 			})
 			this.setState({gene_plot_data: gene_plot_traces});
 
@@ -860,7 +907,7 @@ class Scatter3D extends Component<Props, State> {
 		// Plot layout
 		const new_layout = {
 			autosize: true, 
-			showlegend: true, 
+			showlegend: true,
 			margin: {l: 15, r: 15, b: 35, t: 0}, 
 			uirevision: 1,
 			legend: {
@@ -936,7 +983,7 @@ class Scatter3D extends Component<Props, State> {
 				revision={this.state.revision}
 				onUpdate={(figure) => this.setState({figure: figure})}
 				/>
-				{this.state.starsign_steps > 0 &&
+				{this.state.starsign_steps > 0 && this.state.gene_plot_data.length > 2 &&
 					<FadeIn transitionDuration={700}>
 						<Plot
 						// @ts-ignore
@@ -953,7 +1000,11 @@ class Scatter3D extends Component<Props, State> {
 								ticks: 'outside',
 								tickformat: '.2e',
 								type: "log",
-								autorange:"reversed"
+								autorange:"reversed",
+								tickmode: "array",
+								tickvals: this.state.gene_plot_data.at(-1).y_tick_values,
+								ticktext: this.state.gene_plot_data.at(-1).y_tick_labels,
+
 							},
 						}}
 						style = {{width: "100%", minHeight: 150}}
