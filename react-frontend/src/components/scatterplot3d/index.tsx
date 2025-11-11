@@ -576,9 +576,9 @@ class Scatter3D extends Component<Props, State> {
 
 		searched_rows.forEach(each => {
 			// push 3D coordinates in arrays accordingly
-			x.push(each['PC 1'])
-			y.push(each['PC 2'])
-			z.push(each['PC 3'])
+			x.push(each['PC_1'])
+			y.push(each['PC_2'])
+			z.push(each['PC_3'])
 			my_customdata.push([each['plot_label'], each['g_name'], each['best_hit'], each['bh_evalue'], each['taxon_assignment'], each['c_name']])
         })
 
