@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import Plot from 'react-plotly.js';
+import { Card } from 'react-bootstrap';
 
 interface Props {
 	sendClick: (genes: string[]) => void
@@ -186,9 +187,9 @@ class ScatterMatrix extends Component<Props, any> {
             const trace = {
                 type: 'splom',
                 dimensions: [
-                    {label: "PC_1", values: x},
-                    {label: "PC_2", values: y},
-                    {label: "PC_3", values: z},
+                    {label: "PC 1", values: x},
+                    {label: "PC 2", values: y},
+                    {label: "PC 3", values: z},
                 ],
                 name: label,
                 text: label,
@@ -235,6 +236,7 @@ class ScatterMatrix extends Component<Props, any> {
 						autosize: true,
 						showlegend: true,
 						uirevision: this.state.ui_revision,
+						margin: {l: 0, r: 0, b: 0, t: 25},
 						// @ts-ignore
 						// overrides are incomplete here, ignore for now
 						legend: {itemsizing: 'constant', orientation: "h", y: -0.25,
@@ -247,7 +249,7 @@ class ScatterMatrix extends Component<Props, any> {
                         yaxis3:this.set_axis(),
                         yaxis4:this.set_axis()},
 						}}
-                    style = {{width: "95%", height: "100%", minHeight: 600}}
+                    style = {{width: "100%", height: "100%"}} //, minHeight: 600}}
 
 					// disable legend trace selection (=> slave to main plot)
 					onLegendClick={() => false}
@@ -263,9 +265,13 @@ class ScatterMatrix extends Component<Props, any> {
 	 */
 	render() {
 		return (
-			<div>
-				{this.state.my_plot}
-			</div>
+			<Card className="m-2">
+				<Card.Body>
+					<Card.Title>Scatter Matrix</Card.Title>
+					<Card.Subtitle className="mb-2 text-muted">Select "Box select" in the plot options for mass selection of genes</Card.Subtitle>
+					{this.state.my_plot}
+				</Card.Body>
+			</Card>
 		)
 	}
 }

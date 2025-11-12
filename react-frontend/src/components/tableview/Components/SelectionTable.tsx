@@ -47,6 +47,7 @@ interface State {
 
 const rich_cols = {
     g_name:  {dataField: "g_name", text: "ID", sort: true, filter: textFilter()},
+    c_name: {dataField: "c_name", text: "Contig ID", sort: true, filter: textFilter()},
     plot_label: {dataField: "plot_label", text: "Plot Label", sort: true, filter: textFilter()},
     bh_evalue: { dataField: "bh_evalue", text: "Best hit e-value", sort: true, sortFunc: numberSort}
 }
@@ -60,7 +61,7 @@ class SelectionTable extends Component<Props, State> {
             loading: false, 
             custom_fields: [], 
             show_field_modal: false,
-            cols: Object.values(rich_cols)}
+            cols: Object.values(rich_cols)} 
 	}
 
     /**
@@ -82,6 +83,7 @@ class SelectionTable extends Component<Props, State> {
         });
         this.setState({cols: new_cols})
     }
+
 
     /**
      * Props of parent element changed (=> selected row)

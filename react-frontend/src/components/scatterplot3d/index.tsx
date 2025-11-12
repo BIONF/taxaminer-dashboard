@@ -105,36 +105,45 @@ const custom_color_generator = (item_pos: number, max_item_number: number, color
 			scale = chroma.scale('Spectral').domain([1,0]);
 			return scale(item_pos/max_item_number).saturate(3).hex()
 		}
-		case "pair": {
-			scale = chroma.scale(['#1f78b4','#33a02c','#e31a1c','#ff7f00','#6a3d9a','#b15928', '#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6']).colors(11);
-			break;
-		}
 		case "tol": {
 			scale = chroma.scale(['#332288', '#117733', '#44AA99', '#88CCEE', '#DDCC77', '#CC6677', '#AA4499', '#882255']).colors(9);
 			break;
 		}
 		case "viridis": {
-			scale = chroma.scale(['#fde725', '#a0da39', '#4ac16d', '#1fa187', '#277f8e', '#365c8d', '#46327e', '#440154']).domain([1,0]).colors(8);
+			scale = chroma.brewer.Viridis;
 			break;
 		}
-		case "set": {
-			scale = chroma.scale(['#377eb8','#e41a1c','#4daf4a','#984ea3','#ff7f00','#a65628','#f781bf','#999999']).colors(8);
+		case "D3": {
+			scale = chroma.scale(['#377eb8','#e41a1c','#4daf4a','#984ea3','#ff7f00','#a65628','#f781bf','#999999', '#bfc02dff', '#23c1d1ff']).colors(10);
 			break;
 		}
+		case "cubehelix": {			
+			scale = chroma.cubehelix().lightness([0.2, 0.8]).rotations(3);
+			return scale(item_pos/max_item_number).hex()
+		}
+		
 		case "colorblind": {
 			scale = chroma.brewer.RdYlBu;
-			break;
-		}
-		case "RdBu": {
-			scale = chroma.brewer.RdBu;
+			scale = scale.reverse();
 			break;
 		}
 		case "BrBG": {
 			scale = chroma.brewer.BrBG;
+			scale = scale.reverse();
 			break;
 		}
 		case "Dark2": {
-			scale = chroma.brewer.Dark2.reverse();
+			scale = chroma.brewer.Dark2;
+			scale = scale.reverse();
+			break;
+		}
+		case "Accent": {
+			scale = chroma.brewer.Accent;
+			scale = scale.reverse();
+			break;
+		}
+		case "Set2": {
+			scale = chroma.brewer.Set2;
 			break;
 		}
 		default: {
@@ -150,12 +159,12 @@ const palettes = [
 	{"label": "Spectrum", "value": "spectrum"},
 	{"label": "Colorblind", "value": "colorblind"},
 	{"label": "Viridis", "value": "viridis"},
+	{"label": "Cubehelix", "value": "cubehelix"},
 	{"label": "TOL", "value": "tol"},
-	{"label": "RdBu", "value": "RdBu", "cb": true},
+	{"label": "D3", "value": "D3"},
 	{"label": "BrBG", "value": "BrBG", "cb": true},
 	{"label": "Dark2", "value": "Dark2", "cb": true},
-	{"label": "Paired (w/o yellow)", "value": "pair", "cb": true},
-	{"label": "Set1 (w/o yellow)", "value": "set", "cb": true}
+	{"label": "Set2", "value": "Set2", "cb": true}
 ]
 
 
@@ -379,7 +388,7 @@ class Scatter3D extends Component<Props, State> {
 	 */
 	switchHoverData(key: string) {
 		if (key === "full") {
-			this.setState({ hoverTemplate: "%{customdata[0]} <br>%{customdata[1]} <br><extra>Best hit: %{customdata[2]} <br>Best hit e-value: %{customdata[3]} <br>Taxonomic assignment: %{customdata[4]} <br>Contig name: %{customdata[5]} <br> </extra>", hover_buttons: ["primary", "secondary", "secondary"] }, () => {
+			this.setState({ hoverTemplate: "%{customdata[0]} <br>%{customdata[1]} <br>[%{customdata[5]}] <br><extra>Best hit: %{customdata[2]} <br>Best hit e-value: %{customdata[3]} <br>Taxonomic assignment: %{customdata[4]}</extra>", hover_buttons: ["primary", "secondary", "secondary"] }, () => {
 				this.build_plot()
 			})
 		} else if(key === "reduced") {
@@ -701,6 +710,9 @@ class Scatter3D extends Component<Props, State> {
 			const gene_plot_hover_template = "%{customdata[1]}:%{customdata[2]}-%{customdata[3]}<br>Best hit: %{customdata[4]} <br> e-value: %{customdata[5]}"
 			const e_value_x = []
 			const e_value_y =[]
+			let min_evalue = Infinity; 
+			let second_min_evalue = Infinity;
+
 			let curr_stack_pos = 0
 			for (const gene of all_genes_ordered) {
 				let marker = {}
@@ -729,9 +741,13 @@ class Scatter3D extends Component<Props, State> {
 						},
 					}
 					if (gene.bh_evalue != "") {
-						if(parseFloat(gene.bh_evalue) != 0) {
-							e_value_y.push(parseFloat(gene.bh_evalue))
-							e_value_x.push(curr_stack_pos + 0.5 * gene.g_len);
+						e_value_y.push(parseFloat(gene.bh_evalue))
+						e_value_x.push(curr_stack_pos + 0.5 * gene.g_len);
+						if (parseFloat(gene.bh_evalue) < min_evalue) {
+							second_min_evalue = min_evalue;
+							min_evalue = parseFloat(gene.bh_evalue); 
+						} else if (parseFloat(gene.bh_evalue) > min_evalue && parseFloat(gene.bh_evalue) < second_min_evalue) {
+							second_min_evalue = parseFloat(gene.bh_evalue); 
 						}
 					}
 				} else {
@@ -745,9 +761,13 @@ class Scatter3D extends Component<Props, State> {
 						}
 					}
 					if (gene.bh_evalue != "") {
-						if(parseFloat(gene.bh_evalue) != 0) {
-							e_value_y.push(parseFloat(gene.bh_evalue))
-							e_value_x.push(curr_stack_pos + 0.5 * gene.g_len);
+						e_value_y.push(parseFloat(gene.bh_evalue))
+						e_value_x.push(curr_stack_pos + 0.5 * gene.g_len);
+						if (parseFloat(gene.bh_evalue) < min_evalue) {
+							second_min_evalue = min_evalue;
+							min_evalue = parseFloat(gene.bh_evalue); 
+						} else if (parseFloat(gene.bh_evalue) > min_evalue && parseFloat(gene.bh_evalue) < second_min_evalue) {
+							second_min_evalue = parseFloat(gene.bh_evalue); 
 						}
 					}
 				}
@@ -766,12 +786,44 @@ class Scatter3D extends Component<Props, State> {
 				gene_plot_traces.push(new_trace);
 				curr_stack_pos += parseInt(gene.g_len)
 			}
-			
+
 			// e-value scatter trace
 			const e_value_customdata = []
 			for (const e_value of e_value_y) {
 				e_value_customdata.push([e_value])
 			}
+
+			// Replace e-value of 0 with a pseudo-zero for log scaling
+			let has_zero = false
+			let pseudo_zero = 0
+			if (min_evalue == 0) {
+				min_evalue = second_min_evalue
+				has_zero = true
+			}
+			const max_evalue = Math.max(...e_value_y);
+			const max_evalue_log = Math.ceil(Math.log10(max_evalue));
+			let min_evalue_log = Math.floor(Math.log10(min_evalue));
+			const e_value_log_diff = max_evalue_log - min_evalue_log;
+			if (has_zero){
+				let zero_modifier = Math.max((e_value_log_diff / Math.min(4, e_value_y.length-1)) * 0.75, 20)
+				pseudo_zero = Math.max(min_evalue * (1 * 10**(-zero_modifier)), Number.MIN_VALUE);
+				min_evalue_log = Math.floor(Math.log10(pseudo_zero));
+
+			}
+			e_value_y.forEach((item, i) => { if (item == 0) e_value_y[i] = pseudo_zero; });
+
+			// Generate ticks and labels for e-value axis
+			const num_ticks = Math.min(Math.min(5, (e_value_y.length)), max_evalue_log - min_evalue_log + 1);
+			const step = Math.max(1, Math.floor((max_evalue_log - min_evalue_log) / (num_ticks - 1)));
+			const tick_vals = [];
+			for (let exp = max_evalue_log; exp >= min_evalue_log; exp -= step) {
+				tick_vals.push(10 ** exp);
+			}
+			if (has_zero) tick_vals[(tick_vals.length - 1)] = pseudo_zero;
+			const tick_text = tick_vals.map(v =>
+				v === pseudo_zero ? '0' : v.toExponential()
+			);
+
 			gene_plot_traces.push({
 				name: "e-value",
 				x: e_value_x,
@@ -784,7 +836,11 @@ class Scatter3D extends Component<Props, State> {
 					color: "black",
 				},
 				customdata: e_value_customdata,
-				hovertemplate: "%{customdata[0]}"
+				hovertemplate: "%{customdata[0]}",
+				y_tick_labels: tick_text,
+				y_tick_values: tick_vals,
+				
+
 			})
 			this.setState({gene_plot_data: gene_plot_traces});
 
@@ -851,19 +907,24 @@ class Scatter3D extends Component<Props, State> {
 		// Plot layout
 		const new_layout = {
 			autosize: true, 
-			showlegend: true, 
+			showlegend: true,
+			margin: {l: 15, r: 15, b: 35, t: 0}, 
 			uirevision: 1,
 			legend: {
 				itemsizing: 'constant', 
 				tracegroupgap: 1,
 				hovermode: 'closest',
-				font: {color: this.props.dark_mode && "white" || "black"}
+				font: {color: this.props.dark_mode && "white" || "black"},
+				yanchor: "top",
+				y: 0.95,
+				xanchor: "left",
+				x: 1
 			},
 			scene: {
 				camera: this.state.camera, 
-				xaxis: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey"},
-				yaxis: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey"},
-				zaxis: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey"},
+				xaxis: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey", title: {text: 'PC 1'}},
+				yaxis: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey", title: {text: 'PC 2'}},
+				zaxis: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey", title: {text: 'PC 3'}},
 				grid: {color: this.props.dark_mode && "white" || "grey", gridcolor: this.props.dark_mode && "white" || "lightgrey"},
 			},
 			updatemenus: updatemenus,
@@ -922,7 +983,7 @@ class Scatter3D extends Component<Props, State> {
 				revision={this.state.revision}
 				onUpdate={(figure) => this.setState({figure: figure})}
 				/>
-				{this.state.starsign_steps > 0 &&
+				{this.state.starsign_steps > 0 && this.state.gene_plot_data.length > 2 &&
 					<FadeIn transitionDuration={700}>
 						<Plot
 						// @ts-ignore
@@ -939,7 +1000,11 @@ class Scatter3D extends Component<Props, State> {
 								ticks: 'outside',
 								tickformat: '.2e',
 								type: "log",
-								autorange:"reversed"
+								autorange:"reversed",
+								tickmode: "array",
+								tickvals: this.state.gene_plot_data.at(-1).y_tick_values,
+								ticktext: this.state.gene_plot_data.at(-1).y_tick_labels,
+
 							},
 						}}
 						style = {{width: "100%", minHeight: 150}}

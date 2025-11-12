@@ -1,5 +1,6 @@
 [
-  { "label": "ID", "value": "g_name" },
-  { "label": "Plot Label", "value": "plot_label" },
-  { "label": "e-value", "value": "bh_evalue" }
+	{ "value": "g_name", "tooltip" : "Gene ID (as given in GFF file, 9th column, ID attribute)", "label" : "Gene ID"},
+	{ "value": "c_name", "tooltip" : "Contig ID", "label" : "Contig ID"},
+	{ "value": "bh_evalue", "tooltip" : "E-value of best hit ", "label" : "Best hit e-value"},
+	{ "value": "plot_label", "tooltip" : "Taxonomic label of the gene in the plot (might be a taxon at a higher rank than the actual taxonomic assignment)", "label" : "Plot label"}
 ]
