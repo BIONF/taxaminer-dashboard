@@ -1,58 +1,56 @@
-import  { Component } from 'react';
+import { Component } from 'react';
 import Select from 'react-select';
 import makeAnimated from 'react-select/animated';
-import { Container, Form } from 'react-bootstrap';
-
-// possible options
-import options from "./diamond_cols.json";
 const animatedComponents = makeAnimated();
 
 interface Props {
-    default_fields: any[]
-    set_fields: (fields: any) => void
+	passCols: (cols: any) => void
+	options: any[]
 }
 
 interface State {
-    is_valid: boolean
+	synced: boolean
+	selection: any
 }
 
-/**
- * Dropdown selector for custom fields to be displayed in the sidebar
- */
 class ColumnSelector extends Component<Props, State> {
-    constructor(props: Props){
-        super(props)
-        this.state = {  
-            is_valid: false
+
+	/**
+	 * Init
+	 * @param props Props passed
+	 */
+	constructor(props: any){
+		super(props);
+		this.state = {
+			synced: false,
+			selection: [{ "label": "Seq ID", "value": "sseqid" }]
         }
-        
-    }
+	}
 
-    /**
-     * Pass changed dropdown values to parent
-     * @param values Dropdown values (JSON)
-     */
-    passSelectionUp = (values: any) => {
-        return this.props.set_fields(values)
-    }
+	/**
+	 * Update state and pass selection up
+	 * @param selection event emitted by <Select>
+	 */
+	updateSelection(selection: any) {
+		this.props.passCols(selection)
+		this.setState({selection: selection})
+	}
 
-    render() {
-        return (
-            <Container>
-                <Form validated={this.state.is_valid}>
-                    <Form.Group>
-                        <Form.Text>Select table columns</Form.Text>
-                        <Select 
-                        options={options} 
-                        components={animatedComponents} 
-                        onChange={(e) => this.passSelectionUp(e)} 
-                        defaultValue={this.props.default_fields}
-                        placeholder="Select at least one column!"
-                        isMulti/>
-                    </Form.Group>
-                </Form>
-            </Container>
-        );
-    }
+
+	render() {
+		return (
+			<div>
+				<Select 
+					options={this.props.options} 
+					components={animatedComponents} 
+					isMulti defaultValue={["A", "C"]}
+					value={this.state.selection}
+					onChange={(e: any) => this.updateSelection(e)}
+					isClearable={false}
+					isDisabled={this.state.synced}/>
+		</div>
+		)
+	}
 }
-export default ColumnSelector;
+
+export default ColumnSelector

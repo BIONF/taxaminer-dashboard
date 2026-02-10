@@ -151,7 +151,7 @@ const custom_color_generator = (item_pos: number, max_item_number: number, color
 		}
 	}
 
-	//@ts-expect-error
+	// @ts-expect-error Claims color scale cannot be indexed, but it can
 	return scale[item_pos % scale.length]
 }
 
@@ -408,7 +408,7 @@ class Scatter3D extends Component<Props, State> {
 	 * This is tied to onRestyle to avoid desync with onClick() events
 	 * @param e restyle event
 	 */
-	updateLegendSelection(e: any, ) {
+	updateLegendSelection() {
 		const plot: any = document.getElementById('scatter3d')
 		const legendonly = plot.data.filter((trace: any) => trace.visible === "legendonly")
 		if (legendonly !== this.state.legendonly) {
@@ -567,7 +567,6 @@ class Scatter3D extends Component<Props, State> {
 			}
 		}
 
-
 		// New trace setup
 		const x : string[] = [];
 		const y : string[] = [];
@@ -612,9 +611,6 @@ class Scatter3D extends Component<Props, State> {
 			traces.push(trace)
 		}
 		
-		// Apply continous color palette
-		
-
 		// Stores the color assigned to a gene in the scatterplot
 		const my_color_dict : color_dict = {};
 
@@ -622,7 +618,6 @@ class Scatter3D extends Component<Props, State> {
 			if (traces[i].name === "Search results") {
 				continue
 			}
-			// @ts-ignore
 			traces[i]['marker']['color'] = custom_color_generator(i, traces.length, this.state.color_palette)
 			my_color_dict[traces[i].text as string] = custom_color_generator(i, traces.length, this.state.color_palette)
 			if (doubleclicked) {
@@ -934,7 +929,7 @@ class Scatter3D extends Component<Props, State> {
 		}
 		const new_config = {scrollZoom: true, doubleClickDelay: 2000}
 		const my_scene = this.state.figure.scene
-		// @ts-ignore
+		// @ts-expect-error Incomplete Types
 		this.setState({figure: {data: new_data[0], layout: new_layout, config: new_config}, g_search_len: this.props.g_searched.length, scene: my_scene, color_dict: new_data[1]})
 		return true
 	}
@@ -970,6 +965,7 @@ class Scatter3D extends Component<Props, State> {
 		return (
 			<div>
                 <br></br>
+				{/** @ts-expect-error Type definitions*/}
 				<Plot
 				divId='scatter3d'
 				data={this.state.figure.data}
@@ -979,14 +975,14 @@ class Scatter3D extends Component<Props, State> {
 				onRelayout={(e: any) => this.passCameraData(e)}
 				useResizeHandler = {true}
 				style = {{width: "100%", minHeight: 750}}
-				onRestyle={(e: any) => this.updateLegendSelection(e)}
+				onRestyle={() => this.updateLegendSelection()}
 				revision={this.state.revision}
 				onUpdate={(figure) => this.setState({figure: figure})}
 				/>
 				{this.state.starsign_steps > 0 && this.state.gene_plot_data.length > 2 &&
 					<FadeIn transitionDuration={700}>
+						{/** @ts-expect-error Type definitions*/}
 						<Plot
-						// @ts-ignore
 						data={this.state.gene_plot_data}
 						layout={{
 							barmode: 'stack',

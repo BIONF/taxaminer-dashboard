@@ -6,10 +6,10 @@ import Container from 'react-bootstrap/esm/Container';
 // Stylesheet
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SelectionModeSelector from './Components/SelectionModeSelector';
-import SelectionTable from './Components/SelectionTable';
 import ColumnSelector from './Components/ColumnSelector'
 
 import fields_glossary from "../../static/tableRows.json";
+import SimpleTable from './Components/SimpleTable';
 
 interface Props {
     data: []
@@ -160,12 +160,11 @@ class TableView extends React.Component<Props, State> {
             <Container fluid>
                 <Row>
                     <Col xs={7}>
-                        <SelectionTable
+                        <SimpleTable
                         master_data={this.props.data}
-                        keys={this.props.keys}
-                        // pass table click events up
                         passClick={this.props.passClick}
-                        col_keys = {this.state.col_keys}
+                        row_keys = {Array.from(this.props.keys)}
+                        col_keys={this.state.col_keys  || []}
                         trackTable = {this.trackTable}
                         />
                     </Col>
