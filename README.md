@@ -9,9 +9,9 @@
 
 The program contained in this repository provides a interactive representation of the output of [taXaminer](https://github.com/BIONF/taXaminer).
 
-# Installation
-
-# Build and run with docker locally
+# Running the dashboard
+Installation is possible through [conda](conda.io) or Docker. Both installation methods will download dependencies for front- and backend and build locally. Docker containers are not available on registries (yet).
+## Build and run with docker locally
 We provide a `docker-compose.yml`, which builds the frontend and backend containers separately and exposes the required ports. Make sure you have `docker` and `docker-compose` installed. First, clone the repository:
 ```bash
 git clone https://github.com/BIONF/taxaminer-dashboard.git
@@ -21,33 +21,35 @@ then build and run the containers
 docker compose up
 ```
 The dashboard is now available locally on [http://localhost:3000](http://localhost:3000).
-Press Ctrl+C in the terminal window to stop the containers. Data imported through the web frontend is stored in the filesystem of the `taxaminer-dashboard_data` container. Please note that deleting the volume will also remove the imported data.
+Press Ctrl+C in the terminal window to stop the containers. Data imported through the web frontend is stored in the filesystem of the `taxaminer-dashboard_data` volume. Please note that deleting the volume will also remove the imported data.
+
 ## Install using conda
+First, clone the repository:
 ```bash
 git clone https://github.com/BIONF/taxaminer-dashboard.git
 ```
+We provide an installer script for all dependencies:
+```bash
+chmod +x install.sh
+bash install.sh
+```
+If you have already set up a taxaminer conda env, you may use `add_to_taxaminer.sh` to add the required packages to you taXaminer env. Please note that this uses the default name from taXaminer's installer script. To start the dashboard, simply run `start.sh`. Press Ctrl+C to exit.
 
-**Please note:** The dashboard is being developed parallel to taXaminer. Refer to section [Compatibility](##compatibility) to check if your output files are compatible.
-
-# Installation
-The dashboard is optimized for Linux / Unix operation system and MacOS. Bash scripts are provided for the installation and execution. Manual installation on Windows is possible but, if possible, consider installing the dashboard on the Windows subsystem for Linux (WSL) instead.
-
-This tool requires [conda](conda.io) to install dependencies. Simply make `install.sh` executable (`chmod +x install.sh`) and run it `./install.sh`.
-
-If you have already set up a taxaminer conda env, you may use `add_to_taxaminer.sh` to add the required packages to you taXaminer env. Please note that this uses the default name from taXaminer's installer script.
-
-# Usage
-## Adding Datasets
-### Using the import assistant
+# Adding data
+## Using the import assistant
 Next to the dataset selector in the top right corner you'll find an "import" button. Clicking on it will open a dialogue asking you to choose a custom name for your new dataset, select a .zip / .tar.gz file to import and decide whether you want to keep the original .zip after import or discard it. There are several conditions to be met here:
 
 1. The name chosen for you new dataset must be unique and cannot be empty (=> there is no subdirectoy of /datasets with this name)
-2. The selected .zip file must contain the taXaminer output directory at top level (=> you should see paths like foo.zip > proteins.faa)
+2. The selected .zip file must contain the following output files:
+   * contribution_of_variables.csv
+   * gene_table_taxon_assignment.csv
+   * proteins.faa
+   * summary.txt
+   * taxonomic_hits.txt
 
-Alternatively you may enter a path to a taXaminer output directory into the designated textbox. The dashboard will validate the existence of all relevant files and will allow you to add the datasets accordingly.
+Alternatively you may enter a path to a taXaminer output directory into the designated textbox. The dashboard will validate the existence of all relevant files and will allow you to add the datasets accordingly. When using docker to run the dashboard, you may have to edit the `docker-compose.yml` file to mount the relevant directories.
 
-### Adding data manually
-
+## Manually create data directories
 To add a dataset, create a new subdirectoy with a name of your choice in the "datasets" directory. Each folder should include the follow files from the taXaminer output directory:
 * gene_table_taxon_assignment.csv
 * pca_loadings.csv
@@ -55,27 +57,8 @@ To add a dataset, create a new subdirectoy with a name of your choice in the "da
 * summary.txt
 * taxonomic_hits.txt
 
-## Starting the application
-The dashboard requires both a Node.js and python process to be running in the background. `start.sh` will auto-detect you conda installation options (see above) and launch the processes. Do not close the terminal the processes are running in. Please wait until you the terminal provides an output similar to this:
-```
-   ┌────────────────────────────────────────────┐
-   │                                            │
-   │   Serving!                                 │
-   │                                            │
-   │   - Local:    http://localhost:3000        │
-   │   - Network:  http://172.21.157.104:3000   │
-   │                                            │
-   │   Copied local address to clipboard!       │
-   │                                            │
-   └────────────────────────────────────────────┘
-```
-Then use one of the available links to open the dashboard in you browser. If you're running the dashboard on a remote system the "Local" address **will not** work. Depending one the size of your dataset it might take a few seconds to load all data.
-
 ## Switching datasets
 The drowdown selector "Dataset Selection" at the top right will allow you to switch between datasets contained in subfolder of "datasets".
-
-## Stopping the application
-You may use `Ctrl+C` in your original terminal to kill both processes and shutdown the application.
 
 # Compatibility
 
