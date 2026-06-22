@@ -6,10 +6,10 @@ import Container from 'react-bootstrap/esm/Container';
 // Stylesheet
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SelectionModeSelector from './Components/SelectionModeSelector';
-import SelectionTable from './Components/SelectionTable';
 import ColumnSelector from './Components/ColumnSelector'
 
-import fields_glossary from "./Components/field_options.json";
+import fields_glossary from "../../static/tableRows.json";
+import SimpleTable from './Components/SimpleTable';
 
 interface Props {
     data: []
@@ -46,8 +46,8 @@ class TableView extends React.Component<Props, State> {
             select_mode: 'neutral',
             selected_data: new Set(),
             data: undefined,
-            col_keys: [{ label: "ID", value: "g_name"}, { label: "Plot label", value: "plot_label" }, { label: "e-value", value: "bh_evalue" }],
-            options: [{ label: "ID", value: "g_name"}, { label: "Plot label", value: "plot_label" }, { label: "e-value", value: "bh_evalue" }],
+            col_keys: [{ label: "ID", value: "g_name"}, { label: "Contig ID", value: "c_name"}, { label: "Plot label", value: "plot_label" }, { label: "e-value", value: "bh_evalue" }],
+            options: [{ label: "ID", value: "g_name"}, { label: "Contig ID", value: "c_name"}, { label: "Plot label", value: "plot_label" }, { label: "e-value", value: "bh_evalue" }],
             child_cols: [],
             child_data: []
         }
@@ -92,12 +92,13 @@ class TableView extends React.Component<Props, State> {
             for (const field of fields_glossary) {
                 // exact match
                 if (each === field.value) {
-                    return { label: (field.label), value: each }
+                    return { label: (field.label), value: each, tooltip: field.tooltip + " [" + each + "]" }
                 } else {
                     // match with suffix (c_cov_...)
-                    const re = new RegExp(field.value + ".*");
+                    // anchor "^" makes sure to match from beginning; '_' to avoid lcaID matching to lca etc.
+                    const re = new RegExp("^" + field.value + "_.*");
                     if (re.test(each)) {
-                        return { label: (field.label + " (" + each + ")"), value: each }
+                        return { label: (field.label) + " " + each.split('_').slice(-1)[0], value: each, tooltip: field.tooltip + " [" + each + "]" }
                     }
                 }
             }
@@ -159,12 +160,11 @@ class TableView extends React.Component<Props, State> {
             <Container fluid>
                 <Row>
                     <Col xs={7}>
-                        <SelectionTable
+                        <SimpleTable
                         master_data={this.props.data}
-                        keys={this.props.keys}
-                        // pass table click events up
                         passClick={this.props.passClick}
-                        col_keys = {this.state.col_keys}
+                        row_keys = {Array.from(this.props.keys)}
+                        col_keys={this.state.col_keys  || []}
                         trackTable = {this.trackTable}
                         />
                     </Col>

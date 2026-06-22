@@ -75,17 +75,16 @@ def upload_file():
     try:
         os.renames(f"./temp/{file_name}/taxonomic_hits.txt", f"./datasets/{file_name}/taxonomic_hits.txt")
         os.renames(f"./temp/{file_name}/proteins.faa", f"./datasets/{file_name}/proteins.faa")
-        os.renames(f"./temp/{file_name}/taxonomic_assignment/gene_table_taxon_assignment.csv", f"./datasets/{file_name}/gene_table_taxon_assignment.csv")
-        os.renames(f"./temp/{file_name}/gene_info/summary.txt", f"./datasets/{file_name}/summary.txt")
-        os.renames(f"./temp/{file_name}/PCA/contribution_of_variables.csv", f"./datasets/{file_name}/contribution_of_variables.csv")
-
+        os.renames(f"./temp/{file_name}/gene_table_taxon_assignment.csv", f"./datasets/{file_name}/gene_table_taxon_assignment.csv")
+        os.renames(f"./temp/{file_name}/summary.txt", f"./datasets/{file_name}/summary.txt")
+        os.renames(f"./temp/{file_name}/contribution_of_variables.csv", f"./datasets/{file_name}/contribution_of_variables.csv")
         if keep_zip:
             os.renames(temp_path, f"./datasets/{file_name}/{file_name}.{file_type}")
         else:
             os.remove(temp_path)
 
         # clean up
-        shutil.rmtree("./temp/" + file_name + "/")
+        # shutil.rmtree("./temp/" + file_name + "/")
 
     except FileNotFoundError as e:
         print(e)
